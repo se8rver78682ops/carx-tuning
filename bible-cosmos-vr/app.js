@@ -79,7 +79,7 @@ const I18N = {
     fileError: (m) => `Не получилось прочитать файл: ${m} Формат описан в README.`,
     noBooks: 'В файле нет списка книг.', noChapters: (n) => `У книги «${n}» нет глав.`, bookN: (i) => `Книга ${i}`,
     ownName: 'Свой перевод',
-    search: 'Найти', searchPh: 'Ин 3:16', searchLabel: 'Перейти к месту', random: '✦ Случайный стих',
+    search: 'Найти', searchPh: 'Ин 3:16 или слово', searchLabel: 'Перейти к месту', random: '✦ Случайный стих',
     own: 'Свой перевод…', ownTitle: 'Открыть свой файл Библии в формате JSON. Файл не покидает ваш браузер.',
     genresBtn: 'Жанры', crumbs: 'Где вы сейчас', legendLabel: 'Цвета жанров',
     vrCheck: 'Проверяем VR…', vrEnter: 'Войти в VR', vrExit: 'Выйти из VR', vrNo: 'VR недоступен',
@@ -104,6 +104,19 @@ const I18N = {
     home: '⌂ В начало', homeTitle: 'Вернуться к галактике книг', xrHome: '⌂ Начало',
     hintsOn: 'Подсказки: вкл', hintsOff: 'Подсказки: выкл', hintsTitle: 'Показывать или скрывать подсказки',
     hideHint: 'Скрыть подсказку',
+    tapAgain: (w) => `Коснитесь ещё раз: ${w}`, cont: (r) => `▶ Продолжить: ${r}`,
+    bookmarks: 'Закладки', addBm: '☆ В закладки', inBm: '★ В закладках', xrAddBm: '☆ Закладка', xrInBm: '★ Закладка',
+    noBm: 'Закладок пока нет. Откройте стих и нажмите «☆ В закладки».',
+    topics: 'Созвездия тем', topicsNote: 'Выберите тему: её стихи соединятся линиями в созвездие на небе.',
+    votd: 'Стих дня', votdGo: 'Перейти', votdListen: '▶ Слушать',
+    settings: 'Настройки', textSize: 'Размер текста', rate: 'Скорость чтения', voice: 'Голос', voiceAuto: 'Самый естественный (автоматически)',
+    gyro: 'Обзор поворотом телефона', gyroNo: 'Датчик поворота здесь недоступен. Он работает в приложении для Android и при открытии ссылки в браузере телефона.',
+    order: 'Порядок книг', orderCanon: 'Библейский', orderTime: 'По времени написания',
+    resetProgress: 'Сбросить прогресс чтения', resetConfirm: 'Нажмите ещё раз, чтобы сбросить', progressDone: 'Прогресс сброшен.',
+    progress: (r, t) => `Прочитано глав: ${r} из ${t}`, readMark: 'прочитана',
+    found: (n) => `Найдено стихов: ${n}`, foundMore: (n) => `Показаны первые ${n}. Уточните запрос.`, nothingFound: (q) => `По запросу «${q}» ничего не найдено.`,
+    searchTitle: (q) => `Поиск: «${q}»`, searchShort: 'Введите хотя бы 3 буквы.',
+    bce: 'до н. э.', ce: 'н. э.', eraBce: 'ДО НАШЕЙ ЭРЫ', eraCe: 'НАША ЭРА', close2: 'Закрыть',
     whoWas: (n) => `Кто это был: ${n}`, narrate: '▶ Рассказать', narrateStop: '■ Остановить рассказ',
     quiz: 'Викторина', quizTitle: 'Угадай книгу', quizScore: (c, t) => `Верно: ${c} из ${t}`, quizQ: 'Из какой книги этот стих?',
     quizRight: 'Верно!', quizWrong: (b) => `Нет, это книга «${b}»`, quizRead: '▶ Прочитать', quizShow: 'Показать в космосе',
@@ -144,7 +157,7 @@ const I18N = {
     fileError: (m) => `Fișierul nu a putut fi citit: ${m} Formatul este descris în README.`,
     noBooks: 'Fișierul nu conține o listă de cărți.', noChapters: (n) => `Cartea „${n}” nu are capitole.`, bookN: (i) => `Cartea ${i}`,
     ownName: 'Traducerea voastră',
-    search: 'Caută', searchPh: 'Ioan 3:16', searchLabel: 'Mergi la pasaj', random: '✦ Verset la întâmplare',
+    search: 'Caută', searchPh: 'Ioan 3:16 sau cuvânt', searchLabel: 'Mergi la pasaj', random: '✦ Verset la întâmplare',
     own: 'Traducerea voastră…', ownTitle: 'Deschideți propriul fișier Biblie în format JSON. Fișierul nu părăsește browserul.',
     genresBtn: 'Genuri', crumbs: 'Unde vă aflați', legendLabel: 'Culorile genurilor',
     vrCheck: 'Verificăm VR…', vrEnter: 'Intră în VR', vrExit: 'Ieși din VR', vrNo: 'VR indisponibil',
@@ -169,6 +182,19 @@ const I18N = {
     home: '⌂ Început', homeTitle: 'Înapoi la galaxia cărților', xrHome: '⌂ Început',
     hintsOn: 'Indicii: pornite', hintsOff: 'Indicii: oprite', hintsTitle: 'Arată sau ascunde indiciile',
     hideHint: 'Ascunde indiciul',
+    tapAgain: (w) => `Atingeți din nou: ${w}`, cont: (r) => `▶ Continuă: ${r}`,
+    bookmarks: 'Semne de carte', addBm: '☆ Adaugă semn', inBm: '★ Are semn', xrAddBm: '☆ Semn', xrInBm: '★ Semn',
+    noBm: 'Încă nu aveți semne de carte. Deschideți un verset și apăsați „☆ Adaugă semn”.',
+    topics: 'Constelații pe teme', topicsNote: 'Alegeți o temă: versetele ei se vor uni prin linii într-o constelație.',
+    votd: 'Versetul zilei', votdGo: 'Mergi', votdListen: '▶ Ascultă',
+    settings: 'Setări', textSize: 'Mărimea textului', rate: 'Viteza citirii', voice: 'Vocea', voiceAuto: 'Cea mai naturală (automat)',
+    gyro: 'Privire prin rotirea telefonului', gyroNo: 'Senzorul de rotire nu este disponibil aici. Funcționează în aplicația Android și în browserul telefonului.',
+    order: 'Ordinea cărților', orderCanon: 'Biblică', orderTime: 'După data scrierii',
+    resetProgress: 'Resetează progresul citirii', resetConfirm: 'Apăsați din nou pentru a reseta', progressDone: 'Progresul a fost resetat.',
+    progress: (r, t) => `Capitole citite: ${r} din ${t}`, readMark: 'citit',
+    found: (n) => `Versete găsite: ${n}`, foundMore: (n) => `Sunt afișate primele ${n}. Precizați căutarea.`, nothingFound: (q) => `Nu s-a găsit nimic pentru „${q}”.`,
+    searchTitle: (q) => `Căutare: „${q}”`, searchShort: 'Introduceți cel puțin 3 litere.',
+    bce: 'î.e.n.', ce: 'e.n.', eraBce: 'ÎNAINTE DE ERA NOASTRĂ', eraCe: 'ERA NOASTRĂ', close2: 'Închide',
     whoWas: (n) => `Cine a fost: ${n}`, narrate: '▶ Povestește', narrateStop: '■ Oprește povestirea',
     quiz: 'Test', quizTitle: 'Ghicește cartea', quizScore: (c, t) => `Corect: ${c} din ${t}`, quizQ: 'Din ce carte este acest verset?',
     quizRight: 'Corect!', quizWrong: (b) => `Nu, este cartea „${b}”`, quizRead: '▶ Citește', quizShow: 'Arată în cosmos',
@@ -198,7 +224,7 @@ const ui = {
   stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
   loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
   q: $('q'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
-  legendToggle: $('legendToggle'), home: $('home'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
+  legendToggle: $('legendToggle'), home: $('home'), listPanel: $('listPanel'), votd: $('votd'), continueBtn: $('continueBtn'), settingsPanel: $('settingsPanel'), bmBtn: $('bmBtn'), topicsBtn: $('topicsBtn'), votdBtn: $('votdBtn'), settingsBtn: $('settingsBtn'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
 };
 
 /* ---------- Three.js: сцена ---------- */
@@ -469,13 +495,22 @@ function buildGalaxy() {
   if (galaxy.group) { scene.remove(galaxy.group); disposeTree(galaxy.group); }
   const g = new THREE.Group();
   const R = 64, TURNS = 1.5, EL_A = -0.32, EL_B = 0.64, START = -0.45;
+  // Порядок книг: библейский или по времени написания.
+  const timeline = settings.order === 'time' && BOOKS.every((b) => bookYear(b) != null);
+  galaxy.timeline = timeline;
+  const order = BOOKS.map((b) => b.i);
+  if (timeline) order.sort((a, b) => bookYear(BOOKS[a]) - bookYear(BOOKS[b]) || a - b);
   const slots = [];
   let cum = 0;
-  BOOKS.forEach((b, i) => {
-    if (i > 0 && BOOKS[i - 1].g !== b.g) cum += 5;
-    if (i > 0 && NT_GENRES.has(b.g) && !NT_GENRES.has(BOOKS[i - 1].g)) cum += 18;
+  order.forEach((bi, j) => {
+    const b = BOOKS[bi], prev = j > 0 ? BOOKS[order[j - 1]] : null;
+    if (prev && timeline && bookYear(prev) < 0 && bookYear(b) > 0) cum += 18;
+    if (prev && !timeline) {
+      if (prev.g !== b.g) cum += 5;
+      if (NT_GENRES.has(b.g) && !NT_GENRES.has(prev.g)) cum += 18;
+    }
     const w = Math.pow(b.n, 0.35) + 4;
-    slots.push({ start: cum, w });
+    slots[bi] = { start: cum, w };
     cum += w;
   });
   const total = cum, totalAng = TURNS * Math.PI * 2;
@@ -524,16 +559,16 @@ function buildGalaxy() {
     g.add(core);
 
     const lh = THREE.MathUtils.clamp(arc * 0.15, 1.0, 2.2);
-    const label = makeLabel(b.name, { px: 72, weight: 500, color: '#' + base.clone().lerp(white, 0.35).getHexString(), height: lh });
+    const label = makeLabel(timeline ? `${b.name} · ${fmtYear(bookYear(b))}` : b.name, { px: 72, weight: 500, color: '#' + base.clone().lerp(white, 0.35).getHexString(), height: lh });
     label.position.copy(center).addScaledVector(upFlat, -(r * 0.95 + lh * 0.7));
     g.add(label);
 
-    return { bi: i, center, r, hitR: Math.max(r * 1.15, arc * 0.5), pts, label, pos, f };
+    return { bi: i, center, r, hitR: Math.max(r * 1.15, arc * 0.5), pts, label, pos, f, base: col.slice() };
   });
 
   // Подписи жанров, туманности и заветов.
   let runStart = 0;
-  for (let i = 1; i <= BOOKS.length; i++) {
+  for (let i = 1; i <= BOOKS.length && !timeline; i++) {
     if (i < BOOKS.length && BOOKS[i].g === BOOKS[runStart].g) continue;
     const g0 = BOOKS[runStart].g;
     const fA = slots[runStart].start / total, fB = (slots[i - 1].start + slots[i - 1].w) / total;
@@ -550,15 +585,22 @@ function buildGalaxy() {
     runStart = i;
   }
   const ntIndex = BOOKS.findIndex((b) => NT_GENRES.has(b.g));
-  const testaments = [[0, T().ot], [ntIndex, T().nt]];
+  const testaments = timeline
+    ? [[order[0], T().eraBce], [order.find((bi) => bookYear(BOOKS[bi]) > 0), T().eraCe]]
+    : [[0, T().ot], [ntIndex, T().nt]];
   for (const [bi, text] of testaments) {
-    if (bi < 0) continue;
+    if (bi == null || bi < 0) continue;
     const t = makeLabel(text, { font: FONT_TITLE, px: 96, weight: 600, color: '#f6e7c1', height: 4.4, letter: 14 });
     t.position.copy(place(slots[bi].start / total, R * 1.02, 0.25).pos);
     g.add(t);
   }
   scene.add(g);
   galaxy.group = g;
+  g.visible = state.mode === 'galaxy';
+  galaxy.bmPts = galaxy.searchPts = galaxy.topic = null;
+  votdStar = null;
+  BOOKS.forEach((b) => updateBookColors(b.i));
+  refreshBmStars();
 }
 
 /* ---------- Уровни 2 и 3 ---------- */
@@ -613,10 +655,11 @@ function buildBook(bi) {
       grp[k] = c;
       ph[k] = Math.random() * 6.28;
     }
-    const lbl = makeLabel(String(c + 1), { font: FONT_TITLE, px: 96, weight: 600, color: '#' + base.clone().lerp(white, 0.5).getHexString(), height: 0.78 });
+    const read = isRead(bi, c);
+    const lbl = makeLabel(read ? `✓ ${c + 1}` : String(c + 1), { font: FONT_TITLE, px: 96, weight: 600, color: read ? '#f3c35b' : '#' + base.clone().lerp(white, 0.5).getHexString(), height: 0.78 });
     lbl.position.copy(center).addScaledVector(up, -(rc + 0.52));
     g.add(lbl);
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: base, transparent: true, opacity: 0.26, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: read ? new THREE.Color('#f3c35b') : base, transparent: true, opacity: read ? 0.5 : 0.26, depthWrite: false, blending: THREE.AdditiveBlending }));
     halo.position.copy(center);
     halo.scale.setScalar(rc * 3);
     g.add(halo);
@@ -638,6 +681,7 @@ function buildBook(bi) {
 }
 
 const CARD = { R: 3.2, W: 1.3, PX: 720, pad: 26, font: 36, lh: 52, maxLines: 22, numW: 76 };
+function applyCardScale(k) { CARD.font = Math.round(36 * k); CARD.lh = Math.round(52 * k); CARD.numW = Math.round(76 * Math.sqrt(k)); }
 CARD.ppm = CARD.PX / CARD.W;
 
 function drawCard(b, ci, vi, focused) {
@@ -673,6 +717,13 @@ function drawCard(b, ci, vi, focused) {
   g.fillStyle = '#f2f4fb';
   g.font = `${CARD.font}px ${FONT_CARD}`;
   lines.forEach((ln, k) => g.fillText(ln, CARD.pad + CARD.numW, CARD.pad + k * CARD.lh + 4));
+  if (isBookmarked(b.i, ci, vi)) {
+    g.fillStyle = '#f3c35b';
+    g.font = `40px ${FONT_UI}`;
+    g.textAlign = 'right';
+    g.fillText('★', c.width - 14, 8);
+    g.textAlign = 'left';
+  }
   return { canvas: c, truncated: all.length > lines.length, h: c.height / CARD.ppm };
 }
 
@@ -914,12 +965,20 @@ async function go(mode, opts = {}) {
   updateChrome();
   if (tts.reading) markReading(tts.reading.vi);
   if (mode === 'chapter' && opts.select != null && opts.select >= 0) selectVerse(opts.select);
+  clearTimeout(readTimer);
+  if (mode === 'chapter') {
+    const { bi, ci } = state;
+    store.set('last', refKey(bi, ci));
+    readTimer = setTimeout(() => { if (state.mode === 'chapter' && state.bi === bi && state.ci === ci) markRead(bi, ci); }, 12000);
+  }
   if (flashy) fx.enter(mode);
   await waitFade(0);
   busy = false;
 }
 
 function goHome() {
+  if (renderer.xr.isPresenting) rig.position.set(0, 0, 0);
+  closeList();
   closeDetail();
   closeQuiz();
   stopNarration();
@@ -965,6 +1024,10 @@ if (hasTts) {
 // Самый приятный доступный голос: сначала «естественные» нейронные голоса, затем Google и Microsoft.
 function pickVoice() {
   const code = LANG;
+  if (settings.voice) {
+    const v = tts.voices.find((x) => x.name === settings.voice && x.lang.toLowerCase().startsWith(code));
+    if (v) return v;
+  }
   const list = tts.voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(code));
   const score = (v) => {
     const n = v.name.toLowerCase();
@@ -985,6 +1048,7 @@ function speak(text, onDone) {
     const token = ++tts.token;
     const id = 'u' + token;
     androidDone[id] = () => { if (token === tts.token) onDone(); };
+    if (window.AndroidTTS.setRate) window.AndroidTTS.setRate(settings.rate);
     window.AndroidTTS.speak(text.replace(/\u0301/g, ''), T().speech, id);
     return true;
   }
@@ -996,7 +1060,7 @@ function speak(text, onDone) {
   if (v) u.voice = v;
   else if (!tts.warned[LANG]) { tts.warned[LANG] = true; toast(T().noVoice, 7000); }
   u.lang = T().speech;
-  u.rate = 0.92;
+  u.rate = settings.rate;
   u.pitch = 1;
   u.onend = () => { if (token === tts.token) onDone(); };
   u.onerror = (e) => { if (token === tts.token && e.error !== 'interrupted' && e.error !== 'canceled') stopReading(); };
@@ -1046,7 +1110,7 @@ async function readFrom(vi) {
   const ok = speak(`${vi === 0 ? T().chapterComma(BOOKS[bi].name, ci + 1) + '. ' : ''}${verseText(bi, ci, vi)}`, () => {
     if (!tts.reading) return;
     const next = vi + 1;
-    if (next >= BOOKS[bi].chapters[ci].length) { stopReading(); return; }
+    if (next >= BOOKS[bi].chapters[ci].length) { stopReading(); markRead(bi, ci); return; }
     readFrom(next);
   });
   if (!ok) stopReading();
@@ -1099,6 +1163,8 @@ async function setLang(lang) {
 async function reloadLang(message) {
   stopReading();
   closeQuiz();
+  closeList();
+  searchIndex2 = null;
   try {
     const data = await loadBible(LANG, () => {});
     prepare(data);
@@ -1372,8 +1438,11 @@ function renderDetail(vi, rel) {
   const listen = el2('button', 'btn primary', L.listenFrom);
   listen.type = 'button';
   listen.addEventListener('click', () => readFrom(vi));
+  const bm = el2('button', 'btn', isBookmarked(bi, ci, vi) ? L.inBm : L.addBm);
+  bm.type = 'button';
+  bm.addEventListener('click', () => { toggleBookmark(bi, ci, vi); bm.textContent = isBookmarked(bi, ci, vi) ? L.inBm : L.addBm; });
   box.append(el2('div', 'actions'));
-  box.lastChild.append(listen);
+  box.lastChild.append(listen, bm);
   box.append(el2('h3', '', L.related));
   if (!XREF) box.append(el2('p', 'muted', L.relatedLoading));
   else if (!rel.length) box.append(el2('p', 'muted', L.noRelated));
@@ -1518,11 +1587,13 @@ function buildVrDetail(vi, rel) {
     grp.add(btn); buttons.push(btn);
   }
   const listen = makeButton(L.xrListen, () => readFrom(vi), 0.3);
+  const bmb = makeButton(isBookmarked(bi, ci, vi) ? L.xrInBm : L.xrAddBm, () => { toggleBookmark(bi, ci, vi); buildVrDetail(vi, rel); }, 0.3);
   const close = makeButton(L.xrClose, closeDetail, 0.3);
   const bh = listen.geometry.parameters.height;
-  listen.position.set(-0.17, by - bh / 2 - 0.01, 0);
-  close.position.set(0.17, by - bh / 2 - 0.01, 0);
-  grp.add(listen, close); buttons.push(listen, close);
+  listen.position.set(-0.34, by - bh / 2 - 0.01, 0);
+  bmb.position.set(0, by - bh / 2 - 0.01, 0);
+  close.position.set(0.34, by - bh / 2 - 0.01, 0);
+  grp.add(listen, bmb, close); buttons.push(listen, bmb, close);
   const { pos, yaw } = headInfo();
   const a = yaw + 0.62;
   grp.position.set(Math.sin(a) * 1.35, -0.05, -Math.cos(a) * 1.35).add(pos);
@@ -1709,6 +1780,452 @@ function buildVrQuiz() {
   quiz.vrButtons = buttons;
 }
 
+
+/* ---------- Личное: настройки, прогресс, закладки (хранятся только на этом устройстве) ---------- */
+
+const store = (() => {
+  let d = {};
+  try { d = JSON.parse(localStorage.getItem('bc-user') || '{}') || {}; } catch { d = {}; }
+  const save = () => { try { localStorage.setItem('bc-user', JSON.stringify(d)); } catch {} };
+  return { get: (k, def) => (d[k] === undefined ? def : d[k]), set: (k, v) => { d[k] = v; save(); } };
+})();
+const settings = Object.assign({ ts: 1, rate: 0.92, voice: '', gyro: false, order: 'canon' }, store.get('settings', {}));
+function saveSettings() { store.set('settings', settings); }
+let readTimer = 0;
+
+// Год завершения книги (традиционная датировка; отрицательный — до н. э.) для режима «по времени».
+const BOOK_YEARS = {
+  Gen: -1513, Exod: -1512, Lev: -1512, Num: -1473, Deut: -1473, Josh: -1450, Judg: -1100, Ruth: -1090, '1Sam': -1078, '2Sam': -1040,
+  '1Kgs': -580, '2Kgs': -580, '1Chr': -460, '2Chr': -460, Ezra: -460, Neh: -443, Esth: -475, Job: -1473, Ps: -460, Prov: -717,
+  Eccl: -1000, Song: -1020, Isa: -732, Jer: -580, Lam: -607, Ezek: -591, Dan: -536, Hos: -745, Joel: -820, Amos: -804, Obad: -607,
+  Jonah: -844, Mic: -717, Nah: -632, Hab: -628, Zeph: -648, Hag: -520, Zech: -518, Mal: -443, Matt: 41, Mark: 62, Luke: 57, John: 98,
+  Acts: 61, Rom: 56, '1Cor': 55, '2Cor': 55, Gal: 51, Eph: 60, Phil: 60, Col: 60, '1Thess': 50, '2Thess': 51, '1Tim': 62, '2Tim': 65,
+  Titus: 62, Phlm: 60, Heb: 61, Jas: 61, '1Pet': 63, '2Pet': 64, '1John': 98, '2John': 98, '3John': 98, Jude: 65, Rev: 96,
+  PrMan: -150, '1Esd': -150, Tob: -200, Jdt: -150, Wis: -50, Sir: -180, EpJer: -300, Bar: -150, '1Macc': -100, '2Macc': -120, '3Macc': -50, '2Esd': 90,
+};
+const bookYear = (b) => (b && b.code && BOOK_YEARS[b.code] != null ? BOOK_YEARS[b.code] : null);
+const fmtYear = (y) => (y < 0 ? `${-y} ${T().bce}` : `${y} ${T().ce}`);
+
+// Ключ места не зависит от перевода: «John.3.16». Поэтому закладки и прогресс общие для всех переводов.
+function refKey(bi, ci, vi) {
+  const b = BOOKS[bi];
+  return `${b.code || '#' + bi}.${ci + 1}${vi != null ? '.' + (vi + 1) : ''}`;
+}
+function parseKey(k) {
+  const [code, c, v] = String(k).split('.');
+  const bi = code.startsWith('#') ? +code.slice(1) : CODE_TO_BI[code];
+  if (bi == null || !BOOKS[bi]) return null;
+  const b = BOOKS[bi];
+  const ci = THREE.MathUtils.clamp(+c || 1, 1, b.chapters.length) - 1;
+  const vi = v ? THREE.MathUtils.clamp(+v, 1, b.chapters[ci].length) - 1 : null;
+  return { bi, ci, vi };
+}
+// Ссылка вида «John.3.16» в обычной нумерации 66 книг -> место в текущем переводе (с пересчётом псалмов).
+function fromRef(ref) {
+  const [code, c, v] = ref.split('.');
+  if (!CODE_NUM[code]) return null;
+  return fromId(CODE_NUM[code] * 1000000 + (+c) * 1000 + (+v));
+}
+
+/* Прогресс чтения: прочитанные главы светятся ярче. */
+function isRead(bi, ci) { return !!store.get('read', {})[refKey(bi, ci)]; }
+function readCount() {
+  const r = store.get('read', {});
+  let n = 0;
+  BOOKS.forEach((b) => b.chapters.forEach((_, ci) => { if (r[refKey(b.i, ci)]) n++; }));
+  return n;
+}
+function markRead(bi, ci) {
+  if (isRead(bi, ci)) return;
+  const r = store.get('read', {});
+  r[refKey(bi, ci)] = 1;
+  store.set('read', r);
+  updateBookColors(bi);
+  buildLegend();
+}
+function updateBookColors(bi) {
+  const it = galaxy.items[bi];
+  if (!it || !it.base) return;
+  const b = BOOKS[bi];
+  const attr = it.pts.geometry.attributes.aColor;
+  const arr = attr.array;
+  const readCh = b.chapters.map((_, ci) => isRead(bi, ci));
+  for (let k = 0; k < b.n; k++) {
+    const read = readCh[b.ci[k]];
+    for (let j = 0; j < 3; j++) {
+      const v = it.base[k * 3 + j];
+      arr[k * 3 + j] = read ? (v + (1 - v) * 0.45) * 1.35 : v;
+    }
+  }
+  attr.needsUpdate = true;
+}
+function resetProgress() {
+  store.set('read', {});
+  BOOKS.forEach((b) => updateBookColors(b.i));
+  buildLegend();
+  toast(T().progressDone, 4000);
+}
+
+/* Закладки: золотые звёзды в галактике и список. */
+function bmList() { return store.get('bm', []); }
+function isBookmarked(bi, ci, vi) { return bmList().includes(refKey(bi, ci, vi)); }
+function toggleBookmark(bi, ci, vi) {
+  const k = refKey(bi, ci, vi);
+  const list = bmList();
+  const i = list.indexOf(k);
+  if (i >= 0) list.splice(i, 1); else list.unshift(k);
+  store.set('bm', list);
+  refreshBmStars();
+  refreshCard(bi, ci, vi);
+  if (!ui.listPanel.hidden && ui.listPanel.dataset.kind === 'bm') showBookmarks();
+}
+function refreshCard(bi, ci, vi) {
+  const ch = state.chapter;
+  if (!ch || ch.bi !== bi || ch.ci !== ci) return;
+  const mesh = ch.items.find((m) => m.userData.vi === vi);
+  if (!mesh) return;
+  const card = drawCard(BOOKS[bi], ci, vi, vi === state.focus);
+  mesh.material.map.dispose();
+  mesh.material.map = makeTexture(card.canvas);
+  mesh.material.needsUpdate = true;
+}
+function pointsAt(list, color, size) {
+  const pos = [], col = [];
+  const c = new THREE.Color(color);
+  for (const r of list) {
+    const it = galaxy.items[r.bi];
+    if (!it) continue;
+    const k = BOOKS[r.bi].chStart[r.ci] + r.vi;
+    pos.push(it.pos[k * 3], it.pos[k * 3 + 1], it.pos[k * 3 + 2]);
+    col.push(c.r, c.g, c.b);
+  }
+  const n = pos.length / 3;
+  if (!n) return null;
+  return makePoints(new Float32Array(pos), new Float32Array(col), new Float32Array(n).fill(size), new Float32Array(n).fill(-3), new Float32Array(n).map(() => Math.random() * 6.28));
+}
+function setGalaxyLayer(name, obj) {
+  if (galaxy[name]) { galaxy.group.remove(galaxy[name]); disposeTree(galaxy[name]); }
+  galaxy[name] = obj;
+  if (obj) galaxy.group.add(obj);
+}
+function refreshBmStars() {
+  if (!galaxy.group) return;
+  const list = bmList().map(parseKey).filter((r) => r && r.vi != null);
+  setGalaxyLayer('bmPts', pointsAt(list, '#ffd36b', 1.1));
+}
+
+/* Общая панель-список: закладки, результаты поиска, созвездия тем. */
+function openList(kind, title, note, items, extra) {
+  const box = ui.listPanel;
+  box.dataset.kind = kind;
+  box.replaceChildren();
+  const close = el2('button', 'close', '✕');
+  close.type = 'button';
+  close.setAttribute('aria-label', T().close2);
+  close.addEventListener('click', closeList);
+  box.append(close, el2('h3', '', title));
+  if (note) box.append(el2('p', 'muted small', note));
+  if (extra) box.append(extra);
+  if (items && items.length) {
+    const ul = el2('ul', 'links');
+    for (const r of items) {
+      const li = el2('li');
+      const btn = el2('button');
+      btn.type = 'button';
+      btn.append(el2('span', 'r', r.label || refOf(r.bi, r.ci, r.vi)), el2('span', 't', r.vi != null ? verseText(r.bi, r.ci, r.vi) : ''));
+      btn.addEventListener('click', () => {
+        if (innerWidth < 720) closeList();
+        if (r.onClick) r.onClick(); else jumpTo(r);
+      });
+      li.append(btn);
+      ul.append(li);
+    }
+    box.append(ul);
+  }
+  box.hidden = false;
+  box.scrollTop = 0;
+  box.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
+}
+function closeList() {
+  const kind = ui.listPanel.dataset.kind;
+  ui.listPanel.hidden = true;
+  ui.listPanel.dataset.kind = '';
+  if (kind === 'search') setGalaxyLayer('searchPts', null);
+  if (kind === 'topic') setGalaxyLayer('topic', null);
+}
+function showBookmarks() {
+  const items = bmList().map(parseKey).filter((r) => r && r.vi != null);
+  openList('bm', T().bookmarks, items.length ? '' : T().noBm, items);
+}
+
+/* Поиск по словам во всём тексте; найденные стихи подсвечиваются в галактике. */
+let searchIndex2 = null;
+const normText = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ё/g, 'е');
+function textSearch(q) {
+  const nq = normText(q.trim());
+  if (nq.replace(/\s/g, '').length < 3) { toast(T().searchShort, 4000); return; }
+  if (!searchIndex2) {
+    searchIndex2 = [];
+    BOOKS.forEach((b) => b.chapters.forEach((c, ci) => c.forEach((v, vi) => searchIndex2.push([b.i, ci, vi, normText(v)]))));
+  }
+  const words = nq.split(/\s+/).filter(Boolean);
+  const all = [];
+  for (const [bi, ci, vi, t] of searchIndex2) {
+    if (words.every((w) => t.includes(w))) all.push({ bi, ci, vi });
+  }
+  if (!all.length) { toast(T().nothingFound(q), 5000); return; }
+  const shown = all.slice(0, 200);
+  closeList();
+  openList('search', T().searchTitle(q), all.length > shown.length ? `${T().found(all.length)}. ${T().foundMore(shown.length)}` : T().found(all.length), shown);
+  setGalaxyLayer('searchPts', pointsAt(all.slice(0, 4000), '#7fe7ff', 0.75));
+  if (state.mode !== 'galaxy') go('galaxy');
+}
+
+/* Созвездия тем: стихи одной темы соединяются линиями через всю галактику. */
+const TOPICS = [
+  { ru: 'Любовь', ro: 'Iubirea', refs: ['John.3.16', '1Cor.13.4', '1Cor.13.13', '1John.4.8', 'Rom.5.8', 'Rom.8.38', 'Matt.22.37', 'Deut.6.5', 'Song.8.6', 'John.15.13', '1Pet.4.8', 'Mic.6.8'] },
+  { ru: 'Вера', ro: 'Credința', refs: ['Heb.11.1', 'Heb.11.6', 'Gen.15.6', 'Hab.2.4', 'Rom.10.17', 'Mark.11.22', 'Jas.2.17', 'Eph.2.8', 'Matt.17.20', '2Cor.5.7', 'Gal.2.20'] },
+  { ru: 'Надежда', ro: 'Speranța', refs: ['Jer.29.11', 'Rom.15.13', 'Isa.40.31', 'Ps.42.11', 'Lam.3.22', 'Rom.8.28', 'Rev.21.4', 'Heb.6.19', '1Pet.1.3', 'Ps.37.29', 'Isa.65.17'] },
+  { ru: 'Воскресение', ro: 'Învierea', refs: ['John.11.25', 'Acts.24.15', '1Cor.15.20', '1Cor.15.55', 'Job.14.14', 'Dan.12.2', 'John.5.28', 'Matt.28.6', 'Rev.20.13', 'Isa.26.19'] },
+  { ru: 'Молитва', ro: 'Rugăciunea', refs: ['Matt.6.9', 'Phil.4.6', '1Thess.5.17', 'Jas.5.16', 'Ps.65.2', 'Matt.7.7', '1John.5.14', 'Luke.18.1', 'Ps.145.18', 'Jer.33.3'] },
+  { ru: 'Мир', ro: 'Pacea', refs: ['Isa.2.4', 'John.14.27', 'Phil.4.7', 'Ps.46.9', 'Mic.4.3', 'Isa.9.6', 'Rom.12.18', 'Matt.5.9', 'Ps.37.11', 'Isa.11.6'] },
+  { ru: 'Прощение', ro: 'Iertarea', refs: ['1John.1.9', 'Ps.103.12', 'Isa.1.18', 'Eph.4.32', 'Col.3.13', 'Matt.6.14', 'Luke.23.34', 'Mic.7.18', 'Acts.3.19', 'Ps.86.5'] },
+  { ru: 'Мудрость', ro: 'Înțelepciunea', refs: ['Prov.1.7', 'Prov.3.5', 'Jas.1.5', 'Prov.4.7', 'Eccl.12.13', 'Ps.111.10', 'Prov.9.10', 'Col.2.3', 'Prov.2.6', 'Matt.7.24'] },
+  { ru: 'Царство Бога', ro: 'Regatul lui Dumnezeu', refs: ['Matt.6.10', 'Dan.2.44', 'Matt.6.33', 'Matt.24.14', 'Isa.9.7', 'Rev.11.15', 'Ps.145.13', 'Dan.7.14', 'Matt.5.3', 'Luke.4.43'] },
+  { ru: 'Творение', ro: 'Creația', refs: ['Gen.1.1', 'Ps.19.1', 'Rom.1.20', 'Isa.40.26', 'Ps.104.24', 'Rev.4.11', 'Heb.11.3', 'Job.38.4', 'Neh.9.6', 'Ps.139.14'] },
+];
+const topicName = (t) => t[LANG] || t.ru;
+function showTopicsMenu() {
+  const items = TOPICS.map((t) => ({ label: topicName(t), vi: null, onClick: () => showTopic(t) }));
+  openList('topics', T().topics, T().topicsNote, items);
+}
+async function showTopic(t) {
+  const verses = t.refs.map(fromRef).filter(Boolean);
+  if (state.mode !== 'galaxy') await go('galaxy');
+  const grp = new THREE.Group();
+  const pts = [];
+  for (const r of verses) {
+    const it = galaxy.items[r.bi];
+    if (!it) continue;
+    const k = BOOKS[r.bi].chStart[r.ci] + r.vi;
+    pts.push(new THREE.Vector3(it.pos[k * 3], it.pos[k * 3 + 1], it.pos[k * 3 + 2]));
+  }
+  if (pts.length) {
+    const seg = [];
+    for (let i = 1; i < pts.length; i++) seg.push(pts[i - 1].x, pts[i - 1].y, pts[i - 1].z, pts[i].x, pts[i].y, pts[i].z);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(seg), 3));
+    grp.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: '#cfe3ff', transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false })));
+    for (const p of pts) {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#e8f2ff', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      s.position.copy(p);
+      s.scale.setScalar(2.6);
+      grp.add(s);
+    }
+    const lbl = makeLabel(topicName(t).toUpperCase(), { font: FONT_TITLE, px: 96, weight: 600, color: '#e8f2ff', height: 3.2, letter: 12 });
+    lbl.position.copy(pts[0]).sub(EYE).multiplyScalar(0.92).add(EYE).add(new THREE.Vector3(0, 4, 0));
+    grp.add(lbl);
+    if (!renderer.xr.isPresenting) {
+      const d = pts[0].clone().sub(EYE);
+      look.target = Math.atan2(d.x, -d.z);
+    }
+  }
+  setGalaxyLayer('topic', grp);
+  openList('topic', topicName(t), T().topicsNote, verses);
+}
+
+/* Стих дня. */
+const VOTD = ['John.3.16', 'Ps.23.1', 'Isa.41.10', 'Phil.4.13', 'Prov.3.5', 'Matt.5.9', 'Rom.8.28', 'Jer.29.11', 'Ps.46.1', 'Matt.6.33',
+  '1Cor.13.4', 'Josh.1.9', 'Ps.119.105', 'Matt.11.28', 'Rev.21.4', 'Isa.40.31', '2Tim.3.16', 'Jas.1.5', 'Heb.11.1', '1John.4.8',
+  'Ps.37.29', 'Matt.6.9', 'Gen.1.1', 'Mic.6.8', 'Ps.145.18', 'Phil.4.6', 'John.14.27', 'Rom.12.18', 'Ps.139.14', 'Eccl.12.13',
+  'Isa.9.6', 'Dan.2.44', 'Acts.20.35', 'Gal.6.7', 'Prov.4.23', 'Col.3.13', 'Matt.5.3', 'Ps.65.2', 'Lam.3.22', 'Prov.17.17'];
+const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+function votdPlace() {
+  const d = new Date();
+  const day = Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000);
+  return fromRef(VOTD[day % VOTD.length]);
+}
+let votdStar = null;
+function maybeShowVotd() { if (store.get('votdDay', '') !== todayKey()) renderVotd(); }
+function renderVotd() {
+  const r = votdPlace();
+  if (!r) return;
+  const L = T(), box = ui.votd;
+  box.replaceChildren();
+  const close = el2('button', 'close', '✕');
+  close.type = 'button';
+  close.setAttribute('aria-label', L.close2);
+  close.addEventListener('click', closeVotd);
+  box.append(close, el2('div', 'ref', `${L.votd} · ${refOf(r.bi, r.ci, r.vi)}`), el2('p', 'text', verseText(r.bi, r.ci, r.vi)));
+  const act = el2('div', 'actions');
+  const listen = el2('button', 'btn', L.votdListen); listen.type = 'button';
+  listen.addEventListener('click', () => { stopReading(); speak(`${refOf(r.bi, r.ci, r.vi)}. ${verseText(r.bi, r.ci, r.vi)}`, () => {}); });
+  const goBtn = el2('button', 'btn primary', L.votdGo); goBtn.type = 'button';
+  goBtn.addEventListener('click', () => { closeVotd(); jumpTo(r); });
+  act.append(listen, goBtn);
+  box.append(act);
+  box.hidden = state.mode !== 'galaxy';
+  // Звезда дня вспыхивает в галактике.
+  const it = galaxy.items[r.bi];
+  if (it && !votdStar) {
+    const k = BOOKS[r.bi].chStart[r.ci] + r.vi;
+    votdStar = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ffe7a3', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    votdStar.position.set(it.pos[k * 3], it.pos[k * 3 + 1], it.pos[k * 3 + 2]);
+    votdStar.scale.setScalar(3.5);
+    galaxy.group.add(votdStar);
+    if (!renderer.xr.isPresenting) { const d = votdStar.position.clone().sub(EYE); look.target = Math.atan2(d.x, -d.z); }
+  }
+}
+function closeVotd() {
+  store.set('votdDay', todayKey());
+  ui.votd.hidden = true;
+  if (votdStar) { if (votdStar.parent) votdStar.parent.remove(votdStar); votdStar.material.dispose(); votdStar = null; }
+}
+
+/* «Продолжить с того же места». */
+function renderContinue() {
+  const r = parseKey(store.get('last', ''));
+  const show = state.mode === 'galaxy' && r && BOOKS.length;
+  ui.continueBtn.hidden = !show;
+  if (show) {
+    ui.continueBtn.textContent = T().cont(`${BOOKS[r.bi].short} ${r.ci + 1}`);
+    ui.continueBtn.onclick = () => go('chapter', { bi: r.bi, ci: r.ci });
+  }
+}
+
+/* Настройки. */
+function applyTextScale() {
+  document.documentElement.style.setProperty('--ts', String(settings.ts));
+  applyCardScale(settings.ts);
+}
+let resetArmed = false;
+function renderSettings() {
+  const L = T(), box = ui.settingsPanel;
+  box.replaceChildren();
+  const close = el2('button', 'close', '✕');
+  close.type = 'button';
+  close.setAttribute('aria-label', L.close2);
+  close.addEventListener('click', () => { box.hidden = true; });
+  box.append(close, el2('h3', '', L.settings));
+  const row = (label, ...ctrls) => { const r = el2('div', 'set-row'); r.append(el2('span', 'set-label', label), ...ctrls); box.append(r); return r; };
+  // Размер текста
+  const minus = el2('button', 'btn', 'A−'); minus.type = 'button';
+  const val = el2('span', 'set-val', `${Math.round(settings.ts * 100)}%`);
+  const plus = el2('button', 'btn', 'A+'); plus.type = 'button';
+  const setTs = (d) => {
+    settings.ts = Math.round(THREE.MathUtils.clamp(settings.ts + d, 0.8, 1.5) * 100) / 100;
+    saveSettings(); applyTextScale(); val.textContent = `${Math.round(settings.ts * 100)}%`;
+    if (state.mode === 'chapter') go('chapter', { bi: state.bi, ci: state.ci, page: state.page });
+  };
+  minus.addEventListener('click', () => setTs(-0.1));
+  plus.addEventListener('click', () => setTs(0.1));
+  row(L.textSize, minus, val, plus);
+  // Скорость чтения
+  const rate = el2('input'); rate.type = 'range'; rate.min = '0.6'; rate.max = '1.4'; rate.step = '0.05'; rate.value = String(settings.rate); rate.id = 'setRate';
+  const rv = el2('span', 'set-val', `${settings.rate.toFixed(2)}×`);
+  rate.addEventListener('input', () => { settings.rate = +rate.value; rv.textContent = `${settings.rate.toFixed(2)}×`; saveSettings(); });
+  row(L.rate, rate, rv);
+  // Голос
+  const voices = hasTts && !window.AndroidTTS ? tts.voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(LANG)) : [];
+  if (voices.length) {
+    const sel = el2('select'); sel.id = 'setVoice';
+    sel.append(Object.assign(document.createElement('option'), { value: '', textContent: L.voiceAuto }));
+    for (const v of voices) sel.append(Object.assign(document.createElement('option'), { value: v.name, textContent: v.name }));
+    sel.value = settings.voice;
+    sel.addEventListener('change', () => { settings.voice = sel.value; saveSettings(); });
+    row(L.voice, sel);
+  }
+  // Гироскоп
+  const gy = el2('input'); gy.type = 'checkbox'; gy.id = 'setGyro'; gy.checked = gyro.on;
+  gy.addEventListener('change', () => setGyro(gy.checked));
+  row(L.gyro, gy);
+  // Порядок книг
+  const ord = el2('select'); ord.id = 'setOrder';
+  ord.append(Object.assign(document.createElement('option'), { value: 'canon', textContent: L.orderCanon }), Object.assign(document.createElement('option'), { value: 'time', textContent: L.orderTime }));
+  ord.value = settings.order;
+  ord.addEventListener('change', () => {
+    settings.order = ord.value; saveSettings();
+    closeList(); closeVotd();
+    buildGalaxy();
+    if (state.mode !== 'galaxy') go('galaxy');
+  });
+  row(L.order, ord);
+  // Подсказки
+  const hi = el2('input'); hi.type = 'checkbox'; hi.id = 'setHints'; hi.checked = hintsOn;
+  hi.addEventListener('change', () => setHints(hi.checked));
+  row(L.hintsTitle, hi);
+  // Сброс прогресса (с подтверждением вторым нажатием)
+  const reset = el2('button', 'btn danger', L.resetProgress); reset.type = 'button';
+  reset.addEventListener('click', () => {
+    if (!resetArmed) { resetArmed = true; reset.textContent = L.resetConfirm; setTimeout(() => { resetArmed = false; reset.textContent = L.resetProgress; }, 4000); return; }
+    resetArmed = false; resetProgress(); reset.textContent = L.resetProgress;
+  });
+  box.append(el2('p', 'muted small', T().progress(readCount(), BOOKS.reduce((n, b) => n + b.chapters.length, 0))), reset);
+  box.hidden = false;
+  box.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
+}
+
+/* Обзор поворотом телефона (гироскоп). */
+function syncGyroBox() { const cb = document.getElementById('setGyro'); if (cb) cb.checked = gyro.on; }
+const gyro = { on: false, data: null, got: false, drag: 0, dragStart: 0, base: null };
+const _gq = new THREE.Quaternion(), _q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
+const _qz = new THREE.Quaternion(), _qo = new THREE.Quaternion(), _eu = new THREE.Euler();
+const _Z = new THREE.Vector3(0, 0, 1), _Y = new THREE.Vector3(0, 1, 0), _f = new THREE.Vector3();
+function onOrient(e) {
+  if (e.alpha == null && e.beta == null) return;
+  gyro.data = { a: e.alpha || 0, b: e.beta || 0, g: e.gamma || 0 };
+  gyro.got = true;
+}
+function applyGyro() {
+  const d = gyro.data, D = THREE.MathUtils.degToRad;
+  const orient = D((screen.orientation && screen.orientation.angle) || window.orientation || 0);
+  _eu.set(D(d.b), D(d.a), -D(d.g), 'YXZ');
+  _gq.setFromEuler(_eu).multiply(_q1).multiply(_qz.setFromAxisAngle(_Z, -orient));
+  if (gyro.base == null) {
+    _f.set(0, 0, -1).applyQuaternion(_gq);
+    gyro.base = Math.atan2(_f.x, -_f.z) - look.yaw;
+  }
+  _qo.setFromAxisAngle(_Y, gyro.base + gyro.drag);
+  camera.quaternion.copy(_qo).multiply(_gq);
+}
+async function setGyro(on) {
+  if (on && !gyro.on) {
+    try {
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // Если браузер так и не ответит на запрос разрешения, не ждём вечно.
+        const res = await Promise.race([DeviceOrientationEvent.requestPermission(), new Promise((r) => setTimeout(() => r('timeout'), 8000))]);
+        if (res !== 'granted') throw new Error('denied');
+      }
+    } catch {
+      toast(T().gyroNo, 7000);
+      settings.gyro = false; saveSettings();
+      syncGyroBox();
+      return;
+    }
+    gyro.on = true; gyro.got = false; gyro.base = null; gyro.drag = 0;
+    addEventListener('deviceorientation', onOrient);
+    setTimeout(() => { if (gyro.on && !gyro.got) { toast(T().gyroNo, 7000); setGyro(false); } }, 1800);
+  } else if (!on && gyro.on) {
+    removeEventListener('deviceorientation', onOrient);
+    gyro.on = false;
+    gyro.data = null;
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    look.yaw = Math.atan2(dir.x, -dir.z);
+    look.pitch = THREE.MathUtils.clamp(Math.asin(dir.y), -1.45, 1.45);
+    applyLook();
+  }
+  settings.gyro = gyro.on;
+  saveSettings();
+  syncGyroBox();
+}
+
+/* Пункты меню. */
+ui.bmBtn.addEventListener('click', showBookmarks);
+ui.topicsBtn.addEventListener('click', showTopicsMenu);
+ui.votdBtn.addEventListener('click', () => { if (state.mode !== 'galaxy') go('galaxy').then(renderVotd); else renderVotd(); });
+ui.settingsBtn.addEventListener('click', () => { if (ui.settingsPanel.hidden) renderSettings(); else ui.settingsPanel.hidden = true; });
+
 /* ---------- Наведение ---------- */
 
 const raycaster = new THREE.Raycaster();
@@ -1832,7 +2349,7 @@ function applyHover() {
     } else showInfo(null);
   }
 }
-const xrHint = (what) => `${renderer.xr.isPresenting ? T().trigger : T().click}: ${what}`;
+const xrHint = (what) => (renderer.xr.isPresenting ? `${T().trigger}: ${what}` : lastPointer === 'touch' ? T().tapAgain(what) : `${T().click}: ${what}`);
 
 const marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#fff6d8', transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending }));
 marker.visible = false;
@@ -2008,7 +2525,7 @@ for (let i = 0; i < 2; i++) {
   line.scale.z = 30;
   ctrl.add(line);
   const entry = { ctrl, line, gamepad: null, hover: null, turnArmed: true, bWas: false };
-  ctrl.addEventListener('connected', (e) => { entry.gamepad = e.data.gamepad || null; entry.hand = !!e.data.hand; line.visible = true; });
+  ctrl.addEventListener('connected', (e) => { entry.gamepad = e.data.gamepad || null; entry.hand = !!e.data.hand; entry.handedness = e.data.handedness || ''; line.visible = true; });
   ctrl.addEventListener('disconnected', () => { entry.gamepad = null; line.visible = false; });
   ctrl.addEventListener('selectstart', () => { primary = entry; hideIntro(); activate(entry.hover); });
   rig.add(ctrl);
@@ -2037,13 +2554,24 @@ function snapTurn(angle) {
   xrPanel.snap = true;
 }
 
-function pollGamepads() {
+function pollGamepads(dt = 0.016) {
+  const sided = controllers.some((c) => c.gamepad && c.handedness === 'left') && controllers.some((c) => c.gamepad && c.handedness === 'right');
   for (const c of controllers) {
     const gp = c.gamepad;
     if (!gp) continue;
     const x = gp.axes.length >= 4 ? gp.axes[2] : gp.axes[0] || 0;
-    if (Math.abs(x) > 0.7 && c.turnArmed) { snapTurn(x > 0 ? -Math.PI / 6 : Math.PI / 6); c.turnArmed = false; }
+    const y = gp.axes.length >= 4 ? gp.axes[3] : gp.axes[1] || 0;
+    const turns = !sided || c.handedness === 'right';
+    const flies = !sided || c.handedness === 'left';
+    if (turns && Math.abs(x) > 0.7 && c.turnArmed) { snapTurn(x > 0 ? -Math.PI / 6 : Math.PI / 6); c.turnArmed = false; }
     if (Math.abs(x) < 0.3) c.turnArmed = true;
+    // Полёт: левый стик вперёд/назад — по направлению взгляда (только в галактике).
+    if (flies && state.mode === 'galaxy' && Math.abs(y) > 0.18 && (sided || Math.abs(x) < 0.5)) {
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      rig.position.addScaledVector(dir, -y * 9 * dt);
+      if (rig.position.length() > 120) rig.position.setLength(120);
+    }
     const b = gp.buttons[5]?.pressed || false;
     if (b && !c.bWas) back();
     c.bWas = b;
@@ -2057,7 +2585,9 @@ function applyLook() { camera.rotation.set(look.pitch, -look.yaw, 0); }
 look.target = null;
 applyLook();
 const el = renderer.domElement;
-el.addEventListener('pointerdown', (e) => { look.target = null; look.down = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; look.moved = false; el.setPointerCapture(e.pointerId); });
+let lastPointer = 'mouse';
+let tapArmed = null;
+el.addEventListener('pointerdown', (e) => { lastPointer = e.pointerType || 'mouse'; look.target = null; if (gyro.on) gyro.dragStart = gyro.drag; look.down = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; look.moved = false; el.setPointerCapture(e.pointerId); });
 el.addEventListener('pointermove', (e) => {
   look.ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   look.has = true;
@@ -2066,6 +2596,7 @@ el.addEventListener('pointermove', (e) => {
   if (Math.hypot(dx, dy) > 5) look.moved = true;
   if (!look.moved) return;
   const k = (camera.fov / 70) * 0.0042;
+  if (gyro.on) { gyro.drag = gyro.dragStart + dx * k; return; }
   look.yaw = look.down.yaw - dx * k;
   look.pitch = THREE.MathUtils.clamp(look.down.pitch + dy * k, -1.45, 1.45);
   applyLook();
@@ -2078,6 +2609,17 @@ el.addEventListener('pointerup', (e) => {
   raycaster.setFromCamera(look.ndc, camera);
   const h = pick(raycaster.ray.clone());
   hideToast();
+  // На сенсорном экране нет наведения: первое касание показывает стих и книгу, второе открывает.
+  if (e.pointerType !== 'mouse' && h && (h.type === 'book' || h.type === 'chapter')) {
+    const key = h.type === 'book' ? `b${h.bi}` : `c${h.ci}`;
+    if (tapArmed !== key) {
+      tapArmed = key;
+      look.has = true;
+      hover = h; lastHoverKey = hoverKey(h); applyHover();
+      return;
+    }
+  }
+  tapArmed = null;
   activate(h);
 });
 el.addEventListener('pointerleave', () => { look.has = false; });
@@ -2088,7 +2630,9 @@ el.addEventListener('wheel', (e) => {
 }, { passive: false });
 addEventListener('keydown', (e) => {
   if (e.target === ui.q) return;
-  if (e.key === 'Escape' && quiz.open) closeQuiz();
+  if (e.key === 'Escape' && !ui.settingsPanel.hidden) ui.settingsPanel.hidden = true;
+  else if (e.key === 'Escape' && !ui.listPanel.hidden) closeList();
+  else if (e.key === 'Escape' && quiz.open) closeQuiz();
   else if (e.key === 'Escape' && detail.open) closeDetail();
   else if (e.key === 'Escape' && tts.reading) stopReading();
   else if (e.key === 'Escape' || e.key === 'Backspace') back();
@@ -2131,6 +2675,8 @@ function updateChrome() {
   ui.prevPage.disabled = state.page <= 0;
   ui.nextPage.disabled = state.page >= state.pages - 1;
   ui.legend.hidden = state.mode !== 'galaxy';
+  renderContinue();
+  if (state.mode !== 'galaxy') ui.votd.hidden = true;
   renderBookPanel();
   if (state.mode === 'book') toast(T().toastBook, 6000, true);
   if (state.mode === 'chapter' && !tts.reading) toast(T().toastChapter, 6000, true);
@@ -2156,6 +2702,8 @@ function buildLegend() {
   note.className = 'note';
   note.textContent = T().legendNote(translationName, BOOKS.some((b) => b.deutero));
   L.append(note);
+  const prog = el2('div', 'note progress', T().progress(readCount(), BOOKS.reduce((n, b) => n + b.chapters.length, 0)));
+  L.append(prog);
   if (customActive) {
     const n2 = document.createElement('div');
     n2.className = 'note';
@@ -2269,7 +2817,7 @@ function findPlace(q) {
 ui.search.addEventListener('submit', (e) => {
   e.preventDefault();
   const p = findPlace(ui.q.value);
-  if (!p) { toast(T().notFound(ui.q.value), 5000); return; }
+  if (!p) { ui.q.blur(); textSearch(ui.q.value); return; }
   ui.q.blur();
   if (p.ci < 0) go('book', { bi: p.bi });
   else go('chapter', { bi: p.bi, ci: p.ci, focus: p.vi });
@@ -2439,6 +2987,7 @@ function tick() {
   updateScale();
   if (sky) sky.update(shared.uTime.value, dt, shared.uScale.value);
   // На экране камера чуть покачивается: близкая пыль и далёкие звёзды смещаются по-разному, и появляется глубина.
+  if (!renderer.xr.isPresenting && gyro.on && gyro.data) applyGyro();
   if (!renderer.xr.isPresenting && !reducedMotion) {
     const t = shared.uTime.value;
     camera.position.set(0.09 * Math.sin(t * 0.11), 1.6 + 0.05 * Math.sin(t * 0.17), 0.07 * Math.sin(t * 0.13));
@@ -2446,7 +2995,7 @@ function tick() {
 
   let h = null;
   if (renderer.xr.isPresenting) {
-    pollGamepads();
+    pollGamepads(dt);
     updatePanel(dt);
     const ray = new THREE.Ray();
     for (const c of controllers) {
@@ -2487,6 +3036,7 @@ function tick() {
 async function start() {
   try {
     applyLangDom();
+    applyTextScale();
     const sample = 'Ая ăâîșț';
     const fontsReady = Promise.all([
       document.fonts.load(`40px "PT Serif"`, sample),
@@ -2514,6 +3064,9 @@ async function start() {
     toast(T().toastGalaxy, 9000, true);
     setupVR();
     loadExtras();
+    renderContinue();
+    maybeShowVotd();
+    if (settings.gyro) setGyro(true);
   } catch (err) {
     ui.status.textContent = T().loadFail(err.message);
   }
@@ -2522,10 +3075,16 @@ start();
 
 // Кнопка «Назад» телефона в APK: сначала закрываем окна и поднимаемся на уровень выше.
 window.__androidBack = () => {
+  if (!ui.settingsPanel.hidden) { ui.settingsPanel.hidden = true; return true; }
+  if (!ui.listPanel.hidden) { closeList(); return true; }
   if (quiz.open) { closeQuiz(); return true; }
   if (detail.open || state.mode !== 'galaxy') { back(); return true; }
   return false;
 };
 
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
-window.__bibleCosmos = { buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, get sky() { return sky; } };
+window.__bibleCosmos = {
+  buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro,
+  get sky() { return sky; },
+  project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },
+};

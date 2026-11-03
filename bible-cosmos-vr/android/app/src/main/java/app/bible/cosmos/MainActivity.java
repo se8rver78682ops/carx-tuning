@@ -100,13 +100,20 @@ public class MainActivity extends Activity {
 
     /** Мост для app.js: window.AndroidTTS.speak(text, 'ru-RU', id) и window.AndroidTTS.stop(). */
     private class TtsBridge {
+        private float rate = 0.95f;
+
+        @JavascriptInterface
+        public void setRate(float r) {
+            rate = Math.max(0.5f, Math.min(2f, r));
+        }
+
         @JavascriptInterface
         public void speak(String text, String lang, String id) {
             if (!ttsReady) { notifyDone(id); return; }
             tts.stop();
             Locale locale = Locale.forLanguageTag(lang == null ? "ru-RU" : lang);
             tts.setLanguage(locale);
-            tts.setSpeechRate(0.95f);
+            tts.setSpeechRate(rate);
             int max = Math.max(200, TextToSpeech.getMaxSpeechInputLength() - 50);
             String rest = text == null ? "" : text;
             int part = 0;
