@@ -1,8 +1,8 @@
-"""Собирает компактный data/bible.json из RusSynodal.json (scrollmapper/bible_databases).
+"""Собирает компактный data/bible-ru.json из RusSynodal.json (scrollmapper/bible_databases).
 
 Запуск:
   curl -L -o RusSynodal.json https://raw.githubusercontent.com/scrollmapper/bible_databases/master/formats/json/RusSynodal.json
-  python3 -I tools/build_data.py RusSynodal.json data/bible.json
+  python3 -I tools/build_data.py RusSynodal.json data/bible-ru.json
 """
 import json
 import sys
