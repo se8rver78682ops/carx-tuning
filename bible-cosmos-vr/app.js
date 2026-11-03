@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { parseRtfBible, parseEpubBible } from './bible-import.js';
 
 /* ---------- Справочники ---------- */
 
@@ -61,7 +62,7 @@ const I18N = {
     toastBook: 'Каждое скопление — глава. Наведите на звезду, чтобы прочитать стих. Щелчок открывает главу.',
     toastChapter: 'Стихи стоят вокруг вас колонками. Щелчок по стиху читает его вслух, кнопка «Слушать главу» читает всю главу.',
     notFound: (q) => `Не нашли «${q}». Попробуйте так: «Ин 3:16», «Бытие 1», «Пс 22».`,
-    loaded: (t, nb, nv) => `Загружено: ${t}. Книг: ${nb}, ${nv}. Файл остался только в вашем браузере.`,
+    loaded: (t, nb, nv) => `Загружено: ${t}. Книг: ${nb}, ${nv}.`,
     fileError: (m) => `Не получилось прочитать файл: ${m} Формат описан в README.`,
     noBooks: 'В файле нет списка книг.', noChapters: (n) => `У книги «${n}» нет глав.`, bookN: (i) => `Книга ${i}`,
     ownName: 'Свой перевод',
@@ -81,6 +82,12 @@ const I18N = {
     loading: 'Загружаем текст Синодального перевода…', lighting: 'Зажигаем звёзды…',
     loadFail: (m) => `Не удалось загрузить Библию: ${m}`, httpFail: (c) => `Файл данных не загрузился (HTTP ${c}).`,
     switching: 'Загружаем русский текст…',
+    ownTitle2: 'Открыть свой файл Библии: EPUB, RTF, zip с ними или JSON. Файл не покидает ваше устройство.',
+    reading: (p) => `Читаем файл… ${p}%`,
+    unsupported: 'Подходят файлы EPUB, RTF, zip-архив с ними или JSON.',
+    savedHere: 'Перевод сохранён на этом устройстве, открывать файл снова не нужно.',
+    resetCustom: 'Вернуть Синодальный перевод',
+    customNote: 'Свой перевод, хранится только на этом устройстве.',
   },
   ro: {
     htmlLang: 'ro', speech: 'ro-RO', file: 'data/bible-ro.json',
@@ -107,7 +114,7 @@ const I18N = {
     toastBook: 'Fiecare roi este un capitol. Duceți cursorul pe o stea ca să citiți versetul. Clic deschide capitolul.',
     toastChapter: 'Versetele stau în coloane în jurul vostru. Clic pe un verset îl citește cu voce tare, butonul „Ascultă capitolul” citește tot capitolul.',
     notFound: (q) => `Nu am găsit „${q}”. Încercați: „Ioan 3:16”, „Geneza 1”, „Ps 23”.`,
-    loaded: (t, nb, nv) => `S-a încărcat: ${t}. Cărți: ${nb}, ${nv}. Fișierul rămâne doar în browserul vostru.`,
+    loaded: (t, nb, nv) => `S-a încărcat: ${t}. Cărți: ${nb}, ${nv}.`,
     fileError: (m) => `Fișierul nu a putut fi citit: ${m} Formatul este descris în README.`,
     noBooks: 'Fișierul nu conține o listă de cărți.', noChapters: (n) => `Cartea „${n}” nu are capitole.`, bookN: (i) => `Cartea ${i}`,
     ownName: 'Traducerea voastră',
@@ -127,6 +134,12 @@ const I18N = {
     loading: 'Se încarcă textul Bibliei (Cornilescu)…', lighting: 'Aprindem stelele…',
     loadFail: (m) => `Biblia nu s-a putut încărca: ${m}`, httpFail: (c) => `Fișierul de date nu s-a încărcat (HTTP ${c}).`,
     switching: 'Se încarcă textul românesc…',
+    ownTitle2: 'Deschideți propriul fișier Biblie: EPUB, RTF, o arhivă zip cu ele sau JSON. Fișierul nu părăsește dispozitivul.',
+    reading: (p) => `Se citește fișierul… ${p}%`,
+    unsupported: 'Sunt acceptate fișiere EPUB, RTF, o arhivă zip cu ele sau JSON.',
+    savedHere: 'Traducerea este salvată pe acest dispozitiv, nu trebuie deschisă din nou.',
+    resetCustom: 'Revino la traducerea Cornilescu',
+    customNote: 'Traducerea voastră, păstrată doar pe acest dispozitiv.',
   },
 };
 const readLang = () => {
@@ -298,6 +311,7 @@ function makeLabel(text, { font = FONT_UI, weight = 500, px = 64, color = '#fff'
 let BOOKS = [];
 let TOTAL = 0;
 let translationName = '';
+let customActive = false;
 
 function prepare(data) {
   const raw = data.b;
@@ -316,6 +330,7 @@ function prepare(data) {
   });
   TOTAL = acc;
   translationName = data.t || T().ownName;
+  customActive = !!data.custom;
   buildSearchIndex();
 }
 const verseText = (bi, ci, vi) => BOOKS[bi].chapters[ci][vi];
@@ -328,8 +343,34 @@ function bookColor(b) {
 }
 
 const dataCache = {};
+const idb = {
+  open() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('bible-cosmos', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('tr');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+  },
+  async run(mode, fn) {
+    try {
+      const db = await idb.open();
+      return await new Promise((res) => {
+        const q = fn(db.transaction('tr', mode).objectStore('tr'));
+        q.onsuccess = () => res(q.result ?? null);
+        q.onerror = () => res(null);
+      });
+    } catch { return null; }
+  },
+  get: (k) => idb.run('readonly', (st) => st.get(k)),
+  set: (k, v) => idb.run('readwrite', (st) => st.put(v, k)),
+  del: (k) => idb.run('readwrite', (st) => st.delete(k)),
+};
+
 async function loadBible(lang, onProgress) {
   if (dataCache[lang]) return dataCache[lang];
+  const custom = await idb.get(lang);
+  if (custom && Array.isArray(custom.b)) { custom.custom = true; dataCache[lang] = custom; return custom; }
   const res = await fetch(I18N[lang].file);
   if (!res.ok) throw new Error(T().httpFail(res.status));
   const total = +res.headers.get('content-length') || 7400000;
@@ -751,7 +792,7 @@ function speak(text, onDone) {
   if (!hasTts) { toast(T().noTts, 5000); return false; }
   speechSynthesis.cancel();
   const token = ++tts.token;
-  const u = new SpeechSynthesisUtterance(text);
+  const u = new SpeechSynthesisUtterance(text.replace(/\u0301/g, '').replace(/\(([^)]*)\)\s*/, '$1. '));
   const v = pickVoice();
   if (v) u.voice = v;
   else if (!tts.warned[LANG]) { tts.warned[LANG] = true; toast(T().noVoice, 7000); }
@@ -850,13 +891,17 @@ async function setLang(lang) {
   try { localStorage.setItem('lang', lang); } catch {}
   applyLangDom();
   if (!dataCache[lang]) toast(T().switching, 20000);
+  await reloadLang();
+}
+async function reloadLang(message) {
+  stopReading();
   try {
-    const data = await loadBible(lang, () => {});
+    const data = await loadBible(LANG, () => {});
     prepare(data);
     buildGalaxy();
     buildLegend();
     await go('galaxy');
-    toast(T().toastGalaxy, 7000);
+    toast(message || T().toastGalaxy, 8000);
   } catch (err) {
     toast(T().loadFail(err.message), 8000);
   }
@@ -1290,11 +1335,27 @@ function buildLegend() {
   note.className = 'note';
   note.textContent = T().legendNote(translationName, BOOKS.some((b) => b.deutero));
   L.append(note);
+  if (customActive) {
+    const n2 = document.createElement('div');
+    n2.className = 'note';
+    n2.textContent = T().customNote;
+    const reset = document.createElement('button');
+    reset.type = 'button';
+    reset.className = 'btn';
+    reset.textContent = T().resetCustom;
+    reset.addEventListener('click', async () => {
+      await idb.del(LANG);
+      delete dataCache[LANG];
+      await reloadLang();
+    });
+    L.append(n2, reset);
+  }
 }
 
 let toastTimer = 0;
 function toast(text, ms = 7000) {
   ui.toast.textContent = text;
+  ui.toast.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
   ui.toast.classList.remove('gone');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(hideToast, ms);
@@ -1365,24 +1426,75 @@ function parseUserFile(text) {
   });
   return { t: data.t || data.translation || T().ownName, b };
 }
-if (ui.file) {
-  ui.fileBtn.addEventListener('click', () => ui.file.click());
-  ui.file.addEventListener('change', async () => {
-    const f = ui.file.files[0];
-    if (!f) return;
-    try {
-      const data = parseUserFile(await f.text());
-      prepare(data);
-      buildGalaxy();
-      buildLegend();
-      await go('galaxy');
-      toast(T().loaded(data.t, BOOKS.length, versesWord(TOTAL)), 7000);
-    } catch (err) {
-      toast(T().fileError(err.message), 8000);
-    }
-    ui.file.value = '';
+let jszipPromise = null;
+function loadJSZip() {
+  if (window.JSZip) return Promise.resolve(window.JSZip);
+  jszipPromise = jszipPromise || new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    sc.onload = () => res(window.JSZip);
+    sc.onerror = () => rej(new Error('JSZip'));
+    document.head.appendChild(sc);
   });
+  return jszipPromise;
 }
+const latin1 = (buf) => new TextDecoder('iso-8859-1').decode(buf);
+function parseXml(text) {
+  let doc = new DOMParser().parseFromString(text, 'application/xhtml+xml');
+  if (doc.getElementsByTagName('parsererror').length) doc = new DOMParser().parseFromString(text, 'text/html');
+  return doc;
+}
+async function readBibleFiles(fileList, progress) {
+  const files = Array.from(fileList);
+  const ext = (f) => f.name.toLowerCase().split('.').pop();
+  if (files.length === 1 && ext(files[0]) === 'json') return parseUserFile(await files[0].text());
+  if (files.every((f) => ext(f) === 'rtf')) {
+    const list = [];
+    for (const f of files) list.push({ name: f.name, text: latin1(await f.arrayBuffer()) });
+    return parseRtfBible(list, progress);
+  }
+  if (files.length === 1 && (ext(files[0]) === 'epub' || ext(files[0]) === 'zip')) {
+    const JSZip = await loadJSZip();
+    const z = await JSZip.loadAsync(await files[0].arrayBuffer());
+    if (z.file('META-INF/container.xml')) {
+      return parseEpubBible({ text: (p) => z.file(p).async('string') }, parseXml, progress);
+    }
+    const rtfs = z.file(/\.rtf$/i);
+    if (rtfs.length) {
+      const list = [];
+      for (const f of rtfs) list.push({ name: f.name.split('/').pop(), text: latin1(await f.async('uint8array')) });
+      return parseRtfBible(list, progress);
+    }
+  }
+  throw new Error(T().unsupported);
+}
+ui.fileBtn.addEventListener('click', () => ui.file.click());
+ui.file.addEventListener('change', async () => {
+  if (!ui.file.files.length) return;
+  const files = ui.file.files;
+  stopReading();
+  toast(T().reading(0), 60000);
+  try {
+    let shown = 0;
+    const data = await readBibleFiles(files, (f) => {
+      const p = Math.round(f * 100);
+      if (p >= shown + 5) { shown = p; toast(T().reading(p), 60000); }
+    });
+    const lang = data.lang && I18N[data.lang] ? data.lang : LANG;
+    delete data.lang;
+    data.custom = true;
+    await idb.set(lang, { t: data.t, b: data.b });
+    dataCache[lang] = data;
+    LANG = lang;
+    try { localStorage.setItem('lang', lang); } catch {}
+    applyLangDom();
+    prepare(data);
+    await reloadLang(`${T().loaded(data.t, BOOKS.length, versesWord(TOTAL))} ${T().savedHere}`);
+  } catch (err) {
+    toast(T().fileError(err.message === 'no-books' ? T().noBooks : err.message), 9000);
+  }
+  ui.file.value = '';
+});
 
 /* ---------- Кнопка VR ---------- */
 
