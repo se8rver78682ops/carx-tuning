@@ -176,7 +176,24 @@
   </div>
 </div>
 
-<script type="importmap">
-{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+<script>
+  // Если программа не стартовала, показываем причину вместо бесконечной загрузки.
+  (function () {
+    var ro = false;
+    try { ro = (localStorage.getItem('lang') || navigator.language || '').toLowerCase().indexOf('ro') === 0; } catch (e) {}
+    function say(msg) { var s = document.getElementById('status'); if (s && !window.__started) s.textContent = msg; }
+    window.addEventListener('error', function (e) {
+      var what = e.message || (e.target && (e.target.src || e.target.href)) || '';
+      say((ro ? 'Eroare la pornire: ' : 'Ошибка запуска: ') + what);
+    }, true);
+    window.addEventListener('unhandledrejection', function (e) {
+      say((ro ? 'Eroare la pornire: ' : 'Ошибка запуска: ') + ((e.reason && e.reason.message) || e.reason));
+    });
+    setTimeout(function () {
+      if (!window.__appRan) say(ro
+        ? 'Biblioteca 3D nu s-a încărcat. Verificați internetul sau deschideți linkul în Chrome.'
+        : 'Не загрузилась библиотека 3D-графики. Проверьте интернет или откройте ссылку в браузере Chrome.');
+    }, 15000);
+  })();
 </script>
 <script type="module" src="app.js"></script>

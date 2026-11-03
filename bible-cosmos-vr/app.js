@@ -1,4 +1,14 @@
-import * as THREE from 'three';
+// three.js грузится с запасного адреса, если основной недоступен.
+const THREE_URLS = [
+  'https://unpkg.com/three@0.160.0/build/three.module.js',
+  'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
+];
+let THREE = null;
+for (const url of THREE_URLS) {
+  try { THREE = await import(url); break; } catch (err) { console.warn('three.js:', url, err); }
+}
+if (!THREE) throw new Error('three.js');
+window.__appRan = true;
 import { parseRtfBible, parseEpubBible } from './bible-import.js';
 
 /* ---------- Справочники ---------- */
@@ -353,6 +363,11 @@ const idb = {
     });
   },
   async run(mode, fn) {
+    // В некоторых встроенных браузерах хранилище не отвечает вовсе, поэтому ждём не больше 2,5 с.
+    const timeout = new Promise((res) => setTimeout(() => res(null), 2500));
+    return Promise.race([idb.exec(mode, fn), timeout]);
+  },
+  async exec(mode, fn) {
     try {
       const db = await idb.open();
       return await new Promise((res) => {
@@ -1619,7 +1634,10 @@ async function start() {
       document.fonts.load(`600 40px "Cormorant Garamond"`, sample),
       document.fonts.load(`500 40px "IBM Plex Sans Condensed"`, sample),
     ]).catch(() => {});
-    const data = await loadBible(LANG, (f) => { ui.bar.style.width = `${Math.round(f * 100)}%`; });
+    const data = await loadBible(LANG, (f) => {
+      ui.bar.style.width = `${Math.round(f * 100)}%`;
+      ui.status.textContent = `${T().loading} ${Math.round(f * 100)}%`;
+    });
     ui.status.textContent = T().lighting;
     await Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]);
     prepare(data);
@@ -1629,6 +1647,7 @@ async function start() {
     updateChrome();
     renderer.setAnimationLoop(tick);
     ui.loader.classList.add('done');
+    window.__started = true;
     toast(T().toastGalaxy, 9000);
     setupVR();
   } catch (err) {
