@@ -51,9 +51,9 @@ const roDe = (n) => (n >= 20 && (n % 100 === 0 || n % 100 >= 20) ? 'de ' : '');
 
 const I18N = {
   ru: {
-    htmlLang: 'ru', speech: 'ru-RU', file: 'data/bible-ru.json',
+    htmlLang: 'ru', speech: 'ru-RU',
     title: 'Библейский космос',
-    quote: '«Он исчисляет звёзды, всех их называет по имени» (Пс 146:4)',
+    quote: '«Он знает число звёзд и всех их называет по имени» (Псалом 147:4)',
     galaxy: 'Галактика книг', galaxyShort: 'Галактика',
     chapter: (n) => `Глава ${n}`,
     chapterOf: (b, n) => `${b} · глава ${n}`,
@@ -80,7 +80,7 @@ const I18N = {
     noBooks: 'В файле нет списка книг.', noChapters: (n) => `У книги «${n}» нет глав.`, bookN: (i) => `Книга ${i}`,
     ownName: 'Свой перевод',
     search: 'Найти', searchPh: 'Ин 3:16 или слово', searchLabel: 'Перейти к месту', random: '✦ Случайный стих',
-    own: 'Свой перевод…', ownTitle: 'Открыть свой файл Библии в формате JSON. Файл не покидает ваш браузер.',
+    own: 'Открыть EPUB…', ownTitle: 'Открыть свой файл Библии в формате JSON. Файл не покидает ваш браузер.',
     genresBtn: 'Жанры', crumbs: 'Где вы сейчас', legendLabel: 'Цвета жанров',
     vrCheck: 'Проверяем VR…', vrEnter: 'Войти в VR', vrExit: 'Выйти из VR', vrNo: 'VR недоступен',
     vrNoTitle: 'Откройте страницу в браузере VR-шлема, например Meta Quest Browser.',
@@ -92,7 +92,7 @@ const I18N = {
     xrGalaxy: '← Галактика', xrChapters: '← Главы', xrPrev: '◀ Глава', xrNext: 'Глава ▶', xrListen: '▶ Слушать', xrStop: '■ Стоп', xrRandom: '✦ Случайный стих',
     introTitle: 'Библейский космос',
     intro: ['Каждая звезда — стих. Каждое скопление — книга.', 'Наведите луч на звезду, чтобы прочитать стих.', 'Курок: войти в книгу, затем в главу.', 'В главе курок по стиху открывает его связи.', 'B или Y: назад. Стик: поворот. Кнопки — внизу.'],
-    loading: 'Загружаем текст Синодального перевода…', lighting: 'Зажигаем звёзды…',
+    loading: 'Открываем Библию…', lighting: 'Зажигаем звёзды…',
     loadFail: (m) => `Не удалось загрузить Библию: ${m}`, httpFail: (c) => `Файл данных не загрузился (HTTP ${c}).`,
     switching: 'Загружаем русский текст…',
     related: 'Связанные стихи', noRelated: 'Для этого стиха связей нет.', relatedLoading: 'Связи ещё загружаются…',
@@ -125,11 +125,16 @@ const I18N = {
     reading: (p) => `Читаем файл… ${p}%`,
     unsupported: 'Подходят файлы EPUB, RTF, zip-архив с ними или JSON.',
     savedHere: 'Перевод сохранён на этом устройстве, открывать файл снова не нужно.',
-    resetCustom: 'Вернуть Синодальный перевод',
+    welcomeTitle: 'Откройте вашу Библию',
+    welcomeText: 'Выберите файлы EPUB (можно сразу русский и румынский). Текст разбирается и хранится только на этом устройстве, открывать файлы нужно один раз.',
+    welcomeBtn: 'Открыть файлы EPUB',
+    needLang: 'Румынская Библия ещё не открыта. Выберите её файл EPUB.',
+    needLangRu: 'Русская Библия ещё не открыта. Выберите её файл EPUB.',
+    loadedMany: (list) => `Загружено: ${list}. Файлы остались только на этом устройстве.`,
     customNote: 'Свой перевод, хранится только на этом устройстве.',
   },
   ro: {
-    htmlLang: 'ro', speech: 'ro-RO', file: 'data/bible-ro.json',
+    htmlLang: 'ro', speech: 'ro-RO',
     title: 'Cosmosul biblic',
     quote: '„El socotește numărul stelelor și le dă nume la toate.” (Psalmul 147:4)',
     galaxy: 'Galaxia cărților', galaxyShort: 'Galaxia',
@@ -158,7 +163,7 @@ const I18N = {
     noBooks: 'Fișierul nu conține o listă de cărți.', noChapters: (n) => `Cartea „${n}” nu are capitole.`, bookN: (i) => `Cartea ${i}`,
     ownName: 'Traducerea voastră',
     search: 'Caută', searchPh: 'Ioan 3:16 sau cuvânt', searchLabel: 'Mergi la pasaj', random: '✦ Verset la întâmplare',
-    own: 'Traducerea voastră…', ownTitle: 'Deschideți propriul fișier Biblie în format JSON. Fișierul nu părăsește browserul.',
+    own: 'Deschide EPUB…', ownTitle: 'Deschideți propriul fișier Biblie în format JSON. Fișierul nu părăsește browserul.',
     genresBtn: 'Genuri', crumbs: 'Unde vă aflați', legendLabel: 'Culorile genurilor',
     vrCheck: 'Verificăm VR…', vrEnter: 'Intră în VR', vrExit: 'Ieși din VR', vrNo: 'VR indisponibil',
     vrNoTitle: 'Deschideți pagina în browserul căștii VR, de exemplu Meta Quest Browser.',
@@ -170,7 +175,7 @@ const I18N = {
     xrGalaxy: '← Galaxia', xrChapters: '← Capitole', xrPrev: '◀ Cap.', xrNext: 'Cap. ▶', xrListen: '▶ Ascultă', xrStop: '■ Stop', xrRandom: '✦ Verset aleatoriu',
     introTitle: 'Cosmosul biblic',
     intro: ['Fiecare stea este un verset. Fiecare roi este o carte.', 'Îndreptați raza spre o stea ca să citiți versetul.', 'Trăgaciul: intrați în carte, apoi în capitol.', 'În capitol, trăgaciul pe un verset arată legăturile.', 'B sau Y: înapoi. Stick: rotire. Butoanele sunt jos.'],
-    loading: 'Se încarcă textul Bibliei (Cornilescu)…', lighting: 'Aprindem stelele…',
+    loading: 'Se deschide Biblia…', lighting: 'Aprindem stelele…',
     loadFail: (m) => `Biblia nu s-a putut încărca: ${m}`, httpFail: (c) => `Fișierul de date nu s-a încărcat (HTTP ${c}).`,
     switching: 'Se încarcă textul românesc…',
     related: 'Versete legate', noRelated: 'Acest verset nu are legături.', relatedLoading: 'Legăturile se încarcă încă…',
@@ -203,7 +208,12 @@ const I18N = {
     reading: (p) => `Se citește fișierul… ${p}%`,
     unsupported: 'Sunt acceptate fișiere EPUB, RTF, o arhivă zip cu ele sau JSON.',
     savedHere: 'Traducerea este salvată pe acest dispozitiv, nu trebuie deschisă din nou.',
-    resetCustom: 'Revino la traducerea Cornilescu',
+    welcomeTitle: 'Deschideți Biblia voastră',
+    welcomeText: 'Alegeți fișierele EPUB (puteți alege deodată rusă și română). Textul este citit și păstrat doar pe acest dispozitiv; fișierele se deschid o singură dată.',
+    welcomeBtn: 'Deschide fișierele EPUB',
+    needLang: 'Biblia în română nu este încă deschisă. Alegeți fișierul ei EPUB.',
+    needLangRu: 'Biblia în rusă nu este încă deschisă. Alegeți fișierul ei EPUB.',
+    loadedMany: (list) => `S-a încărcat: ${list}. Fișierele rămân doar pe acest dispozitiv.`,
     customNote: 'Traducerea voastră, păstrată doar pe acest dispozitiv.',
   },
 };
@@ -224,7 +234,7 @@ const ui = {
   stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
   loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
   q: $('q'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
-  legendToggle: $('legendToggle'), home: $('home'), listPanel: $('listPanel'), votd: $('votd'), continueBtn: $('continueBtn'), settingsPanel: $('settingsPanel'), bmBtn: $('bmBtn'), topicsBtn: $('topicsBtn'), votdBtn: $('votdBtn'), settingsBtn: $('settingsBtn'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
+  legendToggle: $('legendToggle'), home: $('home'), welcome: $('welcome'), welcomeBtn: $('welcomeBtn'), listPanel: $('listPanel'), votd: $('votd'), continueBtn: $('continueBtn'), settingsPanel: $('settingsPanel'), bmBtn: $('bmBtn'), topicsBtn: $('topicsBtn'), votdBtn: $('votdBtn'), settingsBtn: $('settingsBtn'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
 };
 
 /* ---------- Three.js: сцена ---------- */
@@ -441,26 +451,13 @@ const idb = {
   del: (k) => idb.run('readwrite', (st) => st.delete(k)),
 };
 
-async function loadBible(lang, onProgress) {
+async function loadBible(lang) {
   if (dataCache[lang]) return dataCache[lang];
   const custom = await idb.get(lang);
   if (custom && Array.isArray(custom.b)) { custom.custom = true; dataCache[lang] = custom; return custom; }
-  const res = await fetch(I18N[lang].file);
-  if (!res.ok) throw new Error(T().httpFail(res.status));
-  const total = +res.headers.get('content-length') || 7400000;
-  if (!res.body || !res.body.getReader) return (dataCache[lang] = await res.json());
-  const reader = res.body.getReader();
-  const chunks = [];
-  let got = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    got += value.length;
-    onProgress(Math.min(1, got / total));
-  }
-  dataCache[lang] = JSON.parse(await new Blob(chunks).text());
-  return dataCache[lang];
+  const err = new Error('need-import');
+  err.needImport = true;
+  throw err;
 }
 
 /* ---------- Фон: звёздная пыль ---------- */
@@ -1153,6 +1150,11 @@ function applyLangDom() {
 }
 async function setLang(lang) {
   if (lang === LANG || busy) return;
+  if (!dataCache[lang] && !(await idb.get(lang))) {
+    toast(lang === 'ro' ? T().needLang : T().needLangRu, 9000);
+    ui.file.click();
+    return;
+  }
   stopReading();
   LANG = lang;
   try { localStorage.setItem('lang', lang); } catch {}
@@ -2704,21 +2706,7 @@ function buildLegend() {
   L.append(note);
   const prog = el2('div', 'note progress', T().progress(readCount(), BOOKS.reduce((n, b) => n + b.chapters.length, 0)));
   L.append(prog);
-  if (customActive) {
-    const n2 = document.createElement('div');
-    n2.className = 'note';
-    n2.textContent = T().customNote;
-    const reset = document.createElement('button');
-    reset.type = 'button';
-    reset.className = 'btn';
-    reset.textContent = T().resetCustom;
-    reset.addEventListener('click', async () => {
-      await idb.del(LANG);
-      delete dataCache[LANG];
-      await reloadLang();
-    });
-    L.append(n2, reset);
-  }
+
 }
 
 let toastTimer = 0;
@@ -2862,6 +2850,13 @@ function parseXml(text) {
 async function readBibleFiles(fileList, progress) {
   const files = Array.from(fileList);
   const ext = (f) => f.name.toLowerCase().split('.').pop();
+  if (files.length > 1 && files.every((f) => ext(f) === 'epub')) {
+    const list = [];
+    for (let k = 0; k < files.length; k++) {
+      list.push(await readBibleFiles([files[k]], (f) => progress((k + f) / files.length)));
+    }
+    return list;
+  }
   if (files.length === 1 && ext(files[0]) === 'json') return parseUserFile(await files[0].text());
   if (files.every((f) => ext(f) === 'rtf')) {
     const list = [];
@@ -2895,21 +2890,52 @@ ui.file.addEventListener('change', async () => {
       const p = Math.round(f * 100);
       if (p >= shown + 5) { shown = p; toast(T().reading(p), 60000); }
     });
-    const lang = data.lang && I18N[data.lang] ? data.lang : LANG;
-    delete data.lang;
-    data.custom = true;
-    await idb.set(lang, { t: data.t, b: data.b });
-    dataCache[lang] = data;
+    const list = Array.isArray(data) ? data : [data];
+    const names = [];
+    let lang = LANG;
+    for (const d of list) {
+      const l = d.lang && I18N[d.lang] ? d.lang : LANG;
+      delete d.lang;
+      d.custom = true;
+      await idb.set(l, { t: d.t, b: d.b });
+      dataCache[l] = d;
+      names.push(`${d.t} (${l.toUpperCase()})`);
+      lang = l;
+    }
+    // Если открыт и текущий язык, остаёмся на нём; иначе переключаемся на загруженный.
+    if (list.some((d) => dataCache[LANG] === d)) lang = LANG;
     LANG = lang;
     try { localStorage.setItem('lang', lang); } catch {}
     applyLangDom();
-    prepare(data);
-    await reloadLang(`${T().loaded(data.t, BOOKS.length, versesWord(TOTAL))} ${T().savedHere}`);
+    if (welcome.resolve) { const r = welcome.resolve; welcome.resolve = null; welcome.message = T().loadedMany(names.join(', ')); r(dataCache[LANG]); }
+    else await reloadLang(T().loadedMany(names.join(', ')));
   } catch (err) {
-    toast(T().fileError(err.message === 'no-books' ? T().noBooks : err.message), 9000);
+    const msg = T().fileError(err.message === 'no-books' ? T().noBooks : err.message);
+    if (welcome.resolve) ui.status.textContent = msg;
+    toast(msg, 9000);
   }
   ui.file.value = '';
 });
+
+/* ---------- Первый запуск: Библия пользователя ---------- */
+
+const welcome = { resolve: null };
+async function openFirstBible() {
+  for (const l of [LANG, LANG === 'ru' ? 'ro' : 'ru']) {
+    try {
+      const d = await loadBible(l);
+      if (l !== LANG) { LANG = l; try { localStorage.setItem('lang', l); } catch {} applyLangDom(); }
+      return d;
+    } catch (err) {
+      if (!err.needImport) throw err;
+    }
+  }
+  // Ничего не открыто: показываем приглашение открыть EPUB и ждём выбора файлов.
+  ui.status.textContent = '';
+  ui.welcome.hidden = false;
+  return new Promise((resolve) => { welcome.resolve = (d) => { ui.welcome.hidden = true; ui.status.textContent = T().lighting; resolve(d); }; });
+}
+ui.welcomeBtn.addEventListener('click', () => ui.file.click());
 
 /* ---------- Кнопка VR ---------- */
 
@@ -3045,10 +3071,7 @@ async function start() {
       document.fonts.load(`40px "Lora"`, sample),
       document.fonts.load(`600 80px "Cormorant Garamond"`, '0123456789'),
     ]).catch(() => {});
-    const data = await loadBible(LANG, (f) => {
-      ui.bar.style.width = `${Math.round(f * 100)}%`;
-      ui.status.textContent = `${T().loading} ${Math.round(f * 100)}%`;
-    });
+    const data = await openFirstBible();
     ui.status.textContent = T().lighting;
     await Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]);
     prepare(data);
@@ -3061,7 +3084,7 @@ async function start() {
     renderer.setAnimationLoop(tick);
     ui.loader.classList.add('done');
     window.__started = true;
-    toast(T().toastGalaxy, 9000, true);
+    if (welcome.message) toast(welcome.message, 9000); else toast(T().toastGalaxy, 9000, true);
     setupVR();
     loadExtras();
     renderContinue();
