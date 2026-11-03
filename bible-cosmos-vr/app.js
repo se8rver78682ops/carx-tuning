@@ -2212,12 +2212,22 @@ ui.legendToggle.addEventListener('click', () => { document.body.classList.toggle
 ui.legendClose.addEventListener('click', () => { document.body.classList.add('legend-closed'); document.body.classList.remove('legend-open'); });
 ui.home.addEventListener('click', goHome);
 ui.quizBtn.addEventListener('click', () => (quiz.open ? closeQuiz() : openQuiz()));
+// Список меню ставится под кнопкой и не выходит за края экрана (на телефоне кнопка стоит слева).
+function placeMenu() {
+  const r = ui.menuBtn.getBoundingClientRect();
+  const w = ui.menuList.offsetWidth;
+  const left = Math.max(12, Math.min(r.left, innerWidth - w - 12));
+  ui.menuList.style.left = `${Math.round(left)}px`;
+  ui.menuList.style.top = `${Math.round(r.bottom + 6)}px`;
+}
 ui.menuBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   const open = ui.menuList.hidden;
   ui.menuList.hidden = !open;
   ui.menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) placeMenu();
 });
+addEventListener('resize', () => { if (!ui.menuList.hidden) placeMenu(); });
 ui.menuList.addEventListener('click', () => { ui.menuList.hidden = true; ui.menuBtn.setAttribute('aria-expanded', 'false'); });
 document.addEventListener('click', (e) => {
   if (!ui.menuList.hidden && !e.target.closest('.menu')) { ui.menuList.hidden = true; ui.menuBtn.setAttribute('aria-expanded', 'false'); }
