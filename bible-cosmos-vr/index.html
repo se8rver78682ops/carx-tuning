@@ -1,0 +1,172 @@
+<title>Библейский космос</title>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  /* Layout: full-screen WebGL sky; thin glass HUD pinned to the screen edges. Single deliberate dark look. */
+  :root {
+    --void: #04050c;
+    --ink: #e8ebf6;
+    --dim: #9aa2bf;
+    --glass: rgba(10, 13, 28, 0.74);
+    --line: rgba(150, 165, 215, 0.2);
+    --gold: #f3c35b;
+    --gold-ink: #1b1405;
+    --font-title: "Cormorant Garamond", "PT Serif", Georgia, serif;
+    --font-text: "PT Serif", Georgia, "Times New Roman", serif;
+    --font-ui: "IBM Plex Sans Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--void); color: var(--ink); font-family: var(--font-ui); overflow: hidden; }
+  #stage { position: fixed; inset: 0; }
+  #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  #stage canvas.pointing { cursor: pointer; }
+  #stage canvas:active { cursor: grabbing; }
+
+  .hud { position: fixed; z-index: 5; }
+  .glass { background: var(--glass); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+
+  #top {
+    top: 0; left: 0; right: 0;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    pointer-events: none;
+  }
+  #top > * { pointer-events: auto; }
+  .brand { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; min-width: 0; }
+  .brand h1 { margin: 0; font-family: var(--font-title); font-weight: 600; font-size: 26px; letter-spacing: 0.02em; text-shadow: 0 1px 12px #000; }
+  #crumbs { display: flex; gap: 4px; align-items: center; font-size: 14px; color: var(--dim); flex-wrap: wrap; }
+  #crumbs button { all: unset; cursor: pointer; color: var(--ink); padding: 2px 4px; border-radius: 4px; }
+  #crumbs button:hover, #crumbs button:focus-visible { color: var(--gold); outline: 1px solid var(--line); }
+  #crumbs span.sep { opacity: 0.5; }
+  #crumbs span.here { color: var(--gold); padding: 2px 4px; }
+
+  .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #search { display: flex; }
+  #q {
+    width: 150px; font: 15px var(--font-ui); color: var(--ink); background: var(--glass);
+    border: 1px solid var(--line); border-right: 0; border-radius: 8px 0 0 8px; padding: 8px 10px; outline: none;
+  }
+  #q:focus-visible { border-color: var(--gold); }
+  #q::placeholder { color: var(--dim); }
+  .btn {
+    font: 500 14px var(--font-ui); color: var(--ink); background: var(--glass); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 12px; cursor: pointer; white-space: nowrap;
+  }
+  .btn:hover { border-color: rgba(243, 195, 91, 0.6); }
+  .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  #search .btn { border-radius: 0 8px 8px 0; }
+  .btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); font-weight: 600; }
+
+  #info {
+    left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: min(460px, calc(100vw - 32px)); padding: 14px 16px; pointer-events: none;
+  }
+  #info .ref { font: 600 12px var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  #info .title { font: 600 24px/1.1 var(--font-title); margin-top: 4px; }
+  #info .meta { font-size: 13px; color: var(--dim); margin-top: 2px; }
+  #info .text { font: 17px/1.5 var(--font-text); margin-top: 8px; max-height: 40vh; overflow: hidden; }
+  #info .hint { font-size: 12px; color: var(--dim); margin-top: 8px; }
+
+  #nav {
+    left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  }
+  body.has-info #nav { left: auto; right: max(16px, env(safe-area-inset-right, 0px)); transform: none; }
+
+  #legend {
+    right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 12px; font-size: 13px; display: grid; gap: 5px; max-width: 260px;
+  }
+  #legend .row { display: flex; align-items: center; gap: 8px; }
+  #legend i { width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: 0 0 8px currentColor; background: currentColor; }
+  #legend .head { font: 600 11px var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-top: 4px; }
+  #legend .note { font-size: 12px; color: var(--dim); margin-top: 4px; }
+
+  #toast {
+    left: 50%; top: calc(76px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
+    padding: 9px 14px; font-size: 14px; color: var(--ink); text-align: center; max-width: calc(100vw - 32px);
+    transition: opacity 0.6s;
+  }
+  #toast.gone { opacity: 0; pointer-events: none; }
+
+  #loader { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: var(--void); transition: opacity 0.8s; }
+  #loader.done { opacity: 0; pointer-events: none; }
+  #loader .box { width: min(360px, calc(100vw - 32px)); text-align: center; }
+  #loader h2 { font: 600 34px var(--font-title); margin: 0 0 6px; }
+  #loader p { color: var(--dim); margin: 0 0 18px; font: 16px var(--font-text); font-style: italic; }
+  #loader .bar { height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  #loader .bar div { height: 100%; width: 0; background: var(--gold); transition: width 0.2s; }
+  #loader .status { margin-top: 10px; font-size: 13px; color: var(--dim); }
+
+  @media (max-width: 720px) {
+    .brand h1 { font-size: 21px; }
+    #q { width: 110px; }
+    #legend { display: none; }
+    body.legend-open #legend { display: grid; bottom: auto; top: calc(120px + env(safe-area-inset-top, 0px)); }
+    #info .text { font-size: 15px; max-height: 28vh; }
+    body.has-info #nav { left: 50%; right: auto; transform: translateX(-50%); bottom: auto; top: calc(120px + env(safe-area-inset-top, 0px)); }
+  }
+  @media (min-width: 721px) { #legendToggle { display: none; } }
+  @media (prefers-reduced-motion: reduce) { #toast, #loader { transition: none; } }
+</style>
+
+<div id="stage"></div>
+
+<header id="top" class="hud">
+  <div class="brand">
+    <h1>Библейский космос</h1>
+    <nav id="crumbs" aria-label="Где вы сейчас"></nav>
+  </div>
+  <div class="tools">
+    <form id="search" role="search">
+      <label for="q" hidden>Перейти к месту</label>
+      <input id="q" name="q" placeholder="Ин 3:16" autocomplete="off" spellcheck="false">
+      <button class="btn" type="submit">Найти</button>
+    </form>
+    <button id="random" class="btn" type="button">✦ Случайный стих</button>
+    <button id="fileBtn" class="btn" type="button" title="Открыть свой файл Библии в формате JSON. Файл не покидает ваш браузер.">Свой перевод…</button>
+    <input id="file" type="file" accept=".json,application/json" hidden>
+    <button id="legendToggle" class="btn" type="button">Жанры</button>
+    <button id="vr" class="btn primary" type="button" disabled>Проверяем VR…</button>
+  </div>
+</header>
+
+<div id="toast" class="hud glass">Перетаскивайте, чтобы осмотреться. Наведите на звезду, чтобы прочитать стих. Щелчок по скоплению открывает книгу.</div>
+
+<aside id="info" class="hud glass" hidden aria-live="polite">
+  <div class="ref"></div>
+  <div class="title"></div>
+  <div class="meta"></div>
+  <div class="text"></div>
+  <div class="hint"></div>
+</aside>
+
+<div id="nav" class="hud" hidden>
+  <button id="prevCh" class="btn" type="button">◀ Предыдущая глава</button>
+  <button id="prevPage" class="btn" type="button" hidden>◀ Стр.</button>
+  <button id="nextPage" class="btn" type="button" hidden>Стр. ▶</button>
+  <button id="nextCh" class="btn" type="button">Следующая глава ▶</button>
+</div>
+
+<aside id="legend" class="hud glass" aria-label="Цвета жанров"></aside>
+
+<div id="loader">
+  <div class="box">
+    <h2>Библейский космос</h2>
+    <p>«Он исчисляет звёзды, всех их называет по имени» (Пс 146:4)</p>
+    <div class="bar"><div id="bar"></div></div>
+    <div class="status" id="status">Загружаем текст Синодального перевода…</div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module" src="app.js"></script>

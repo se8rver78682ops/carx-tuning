@@ -1,0 +1,1239 @@
+import * as THREE from 'three';
+
+/* ---------- Справочники ---------- */
+
+const GENRES = {
+  law:    { name: 'Пятикнижие (Закон)',       color: '#f3c35b' },
+  hist:   { name: 'Исторические книги',        color: '#ee9a5c' },
+  wisdom: { name: 'Учительные книги',          color: '#ef86b0' },
+  proph:  { name: 'Пророческие книги',         color: '#b298ff' },
+  hist2:  { name: 'Маккавейские книги',        color: '#d98b6a' },
+  gospel: { name: 'Евангелия',                 color: '#e6f2ff' },
+  acts:   { name: 'Деяния апостолов',          color: '#72e0c8' },
+  cath:   { name: 'Соборные послания',         color: '#a3e07e' },
+  paul:   { name: 'Послания апостола Павла',   color: '#79b4ff' },
+  rev:    { name: 'Откровение',                color: '#ff7a6e' },
+};
+const NT_GENRES = new Set(['gospel', 'acts', 'cath', 'paul', 'rev']);
+// Жанры для 66 книг в протестантском порядке (если пользователь загрузит такой перевод).
+const GENRES_66 = [
+  ...Array(5).fill('law'), ...Array(12).fill('hist'), ...Array(5).fill('wisdom'), ...Array(17).fill('proph'),
+  ...Array(4).fill('gospel'), 'acts', ...Array(14).fill('paul'), ...Array(7).fill('cath'), 'rev',
+];
+const FONT_UI = '"IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
+const FONT_TEXT = '"PT Serif", Georgia, serif';
+const FONT_TITLE = '"Cormorant Garamond", "PT Serif", Georgia, serif';
+
+const plural = (n, f) => {
+  const a = n % 100, b = n % 10;
+  if (a > 10 && a < 20) return f[2];
+  if (b === 1) return f[0];
+  if (b >= 2 && b <= 4) return f[1];
+  return f[2];
+};
+const chaptersWord = (n) => `${n} ${plural(n, ['глава', 'главы', 'глав'])}`;
+const versesWord = (n) => `${n.toLocaleString('ru-RU')} ${plural(n, ['стих', 'стиха', 'стихов'])}`;
+
+/* ---------- DOM ---------- */
+
+const $ = (id) => document.getElementById(id);
+const ui = {
+  stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
+  loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
+  q: $('q'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
+  legendToggle: $('legendToggle'), file: $('file'), fileBtn: $('fileBtn'),
+};
+
+/* ---------- Three.js: сцена ---------- */
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local-floor');
+ui.stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#03040a');
+const rig = new THREE.Group();
+scene.add(rig);
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 3000);
+camera.rotation.order = 'YXZ';
+camera.position.set(0, 1.6, 0);
+rig.add(camera);
+
+const EYE = new THREE.Vector3(0, 1.6, 0);
+const shared = { uScale: { value: 700 }, uTime: { value: 0 }, uMinPx: { value: 1.4 } };
+
+const texCache = new Set();
+function makeTexture(canvas) {
+  const t = new THREE.CanvasTexture(canvas);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+  return t;
+}
+function disposeTree(obj) {
+  obj.traverse((o) => {
+    if (o.geometry) o.geometry.dispose();
+    if (o.material) {
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of mats) {
+        if (m.map && !m.map.userData.keep) m.map.dispose();
+        m.dispose();
+      }
+    }
+  });
+}
+
+const glowTex = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, 'rgba(255,255,255,1)');
+  grd.addColorStop(0.25, 'rgba(255,255,255,0.45)');
+  grd.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 128, 128);
+  const t = makeTexture(c);
+  t.userData.keep = true;
+  return t;
+})();
+
+function starMaterial(extra = {}) {
+  return new THREE.ShaderMaterial({
+    uniforms: { ...shared, uHover: { value: -1 }, uBoost: { value: 1 } },
+    vertexShader: `
+      attribute float aSize; attribute vec3 aColor; attribute float aGroup; attribute float aPhase;
+      uniform float uScale; uniform float uTime; uniform float uHover; uniform float uBoost; uniform float uMinPx;
+      varying vec3 vColor; varying float vAlpha;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        float hov = abs(aGroup - uHover) < 0.5 ? 1.0 : 0.0;
+        float tw = 0.82 + 0.18 * sin(uTime * 1.6 + aPhase);
+        float s = aSize * (1.0 + 0.5 * hov) * uScale / max(-mv.z, 0.01);
+        gl_PointSize = clamp(s, uMinPx, 64.0);
+        vAlpha = clamp(s / uMinPx, 0.3, 1.0);
+        vColor = aColor * tw * (1.0 + 0.9 * hov) * uBoost;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      varying vec3 vColor; varying float vAlpha;
+      void main() {
+        float d = length(gl_PointCoord - 0.5);
+        if (d > 0.5) discard;
+        float core = 1.0 - d * 2.0;
+        float a = core * core;
+        gl_FragColor = vec4(vColor * (a + pow(core, 6.0)), a * vAlpha);
+      }`,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    ...extra,
+  });
+}
+
+function makePoints(pos, col, size, group, phase) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
+  geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+  geo.setAttribute('aGroup', new THREE.BufferAttribute(group, 1));
+  geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+  const p = new THREE.Points(geo, starMaterial());
+  p.frustumCulled = false;
+  return p;
+}
+
+/* ---------- Текст на холсте ---------- */
+
+function wrap(ctx, text, maxW) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const t = line ? line + ' ' + w : w;
+    if (!line || ctx.measureText(t).width <= maxW) line = t;
+    else { lines.push(line); line = w; }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+function clampLines(lines, max) {
+  if (lines.length <= max) return lines;
+  const out = lines.slice(0, max);
+  out[max - 1] = out[max - 1].replace(/[\s,.;:]*\S*$/, '') + ' …';
+  return out;
+}
+
+function makeLabel(text, { font = FONT_UI, weight = 500, px = 64, color = '#fff', height = 1, letter = 0 } = {}) {
+  const c = document.createElement('canvas');
+  const g = c.getContext('2d');
+  const setFont = () => { g.font = `${weight} ${px}px ${font}`; if (letter) g.letterSpacing = `${letter}px`; };
+  setFont();
+  const w = Math.ceil(g.measureText(text).width + px * 0.9);
+  c.width = w;
+  c.height = Math.ceil(px * 1.6);
+  setFont();
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.shadowColor = 'rgba(0,0,0,0.9)';
+  g.shadowBlur = px * 0.3;
+  g.fillStyle = color;
+  g.fillText(text, w / 2, c.height / 2);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeTexture(c), transparent: true, depthWrite: false }));
+  s.scale.set((height * w) / c.height, height, 1);
+  s.userData.base = s.scale.clone();
+  return s;
+}
+
+/* ---------- Данные ---------- */
+
+let BOOKS = [];
+let TOTAL = 0;
+let translationName = '';
+
+function prepare(data) {
+  const raw = data.b;
+  const use66 = raw.length === 66 && raw.some((b) => !GENRES[b.g]);
+  let acc = 0;
+  BOOKS = raw.map((b, i) => {
+    const chapters = b.c.map((c) => (Array.isArray(c) ? c : c.v));
+    const n = chapters.reduce((s, c) => s + c.length, 0);
+    const g = GENRES[b.g] ? b.g : use66 ? GENRES_66[i] : (i >= raw.length - 27 ? 'paul' : 'hist');
+    const ci = new Uint16Array(n), vi = new Uint16Array(n), chStart = [];
+    let k = 0;
+    chapters.forEach((c, cIdx) => { chStart.push(k); c.forEach((_, vIdx) => { ci[k] = cIdx; vi[k] = vIdx; k++; }); });
+    const book = { i, name: b.n, short: b.s || b.n, g, deutero: !!b.d, chapters, n, ci, vi, chStart, offset: acc };
+    acc += n;
+    return book;
+  });
+  TOTAL = acc;
+  translationName = data.t || 'Свой перевод';
+  buildSearchIndex();
+}
+const verseText = (bi, ci, vi) => BOOKS[bi].chapters[ci][vi];
+const refOf = (bi, ci, vi) => `${BOOKS[bi].short} ${ci + 1}${vi != null ? ':' + (vi + 1) : ''}`;
+
+function bookColor(b) {
+  const c = new THREE.Color(GENRES[b.g].color);
+  if (b.deutero) c.lerp(new THREE.Color('#8a8f9e'), 0.45);
+  return c;
+}
+
+async function loadBible(onProgress) {
+  const res = await fetch('data/bible.json');
+  if (!res.ok) throw new Error(`Файл данных не загрузился (HTTP ${res.status}).`);
+  const total = +res.headers.get('content-length') || 7400000;
+  if (!res.body || !res.body.getReader) return res.json();
+  const reader = res.body.getReader();
+  const chunks = [];
+  let got = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    got += value.length;
+    onProgress(Math.min(1, got / total));
+  }
+  return JSON.parse(await new Blob(chunks).text());
+}
+
+/* ---------- Фон: звёздная пыль ---------- */
+
+function buildDust() {
+  const N = 7000;
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), size = new Float32Array(N), grp = new Float32Array(N), ph = new Float32Array(N);
+  const tint = [new THREE.Color('#aab8ff'), new THREE.Color('#ffffff'), new THREE.Color('#ffd9b0')];
+  const band = new THREE.Vector3(0.3, 1, 0.2).normalize();
+  const v = new THREE.Vector3();
+  for (let i = 0; i < N; i++) {
+    v.randomDirection();
+    if (i < N * 0.55) { // полоса «Млечного пути»
+      v.addScaledVector(band, -v.dot(band) * (0.85 + Math.random() * 0.15)).normalize();
+    }
+    v.multiplyScalar(500 + Math.random() * 600).add(EYE);
+    pos.set([v.x, v.y, v.z], i * 3);
+    const c = tint[i % 3].clone().multiplyScalar(0.25 + Math.random() * 0.5);
+    col.set([c.r, c.g, c.b], i * 3);
+    size[i] = 0.8 + Math.random() * 2.2;
+    grp[i] = -5;
+    ph[i] = Math.random() * 6.28;
+  }
+  return makePoints(pos, col, size, grp, ph);
+}
+
+/* ---------- Уровень 1: галактика книг ---------- */
+
+const galaxy = { group: null, items: [] };
+
+function buildGalaxy() {
+  if (galaxy.group) { scene.remove(galaxy.group); disposeTree(galaxy.group); }
+  const g = new THREE.Group();
+  const R = 64, TURNS = 1.5, EL_A = -0.32, EL_B = 0.64, START = -0.45;
+  const slots = [];
+  let cum = 0;
+  BOOKS.forEach((b, i) => {
+    if (i > 0 && BOOKS[i - 1].g !== b.g) cum += 5;
+    if (i > 0 && NT_GENRES.has(b.g) && !NT_GENRES.has(BOOKS[i - 1].g)) cum += 18;
+    const w = Math.pow(b.n, 0.35) + 4;
+    slots.push({ start: cum, w });
+    cum += w;
+  });
+  const total = cum, totalAng = TURNS * Math.PI * 2;
+  const place = (f, dist = R, dEl = 0) => {
+    const az = START + f * totalAng, el = EL_A + f * (EL_B - EL_A) + dEl;
+    const dir = new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el));
+    return { az, el, dir, pos: dir.clone().multiplyScalar(dist).add(EYE) };
+  };
+
+  galaxy.items = BOOKS.map((b, i) => {
+    const s = slots[i];
+    const f = (s.start + s.w / 2) / total;
+    const { az, el, dir, pos: center } = place(f);
+    const arc = (s.w / total) * totalAng * R * Math.cos(el);
+    const r = arc * 0.44;
+    const right = new THREE.Vector3(Math.cos(az), 0, Math.sin(az));
+    const upFlat = new THREE.Vector3().crossVectors(right, dir).normalize();
+    const tilt = 0.45;
+    const up = upFlat.clone().multiplyScalar(Math.cos(tilt)).addScaledVector(dir, Math.sin(tilt));
+    const N = b.n;
+    const T = Math.max(1.3, Math.sqrt(N / Math.PI) * 0.5);
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), size = new Float32Array(N), grp = new Float32Array(N), ph = new Float32Array(N);
+    const base = bookColor(b), white = new THREE.Color('#ffffff'), tmp = new THREE.Color();
+    const phase0 = Math.random() * Math.PI * 2;
+    for (let k = 0; k < N; k++) {
+      const t = (k + 0.5) / N;
+      const st = Math.sqrt(t);
+      const th = T * Math.PI * 2 * st + phase0;
+      const rho = r * (0.06 + 0.94 * st) + (Math.random() - 0.5) * (r / T) * 0.55;
+      const depth = (Math.random() - 0.5) * r * 0.12;
+      const p = center.clone().addScaledVector(right, rho * Math.cos(th)).addScaledVector(up, rho * Math.sin(th)).addScaledVector(dir, depth);
+      pos.set([p.x, p.y, p.z], k * 3);
+      const isFirst = b.vi[k] === 0;
+      tmp.copy(base).lerp(white, (b.ci[k] % 2 ? 0.0 : 0.3) + (isFirst ? 0.3 : 0)).multiplyScalar(0.75 + Math.random() * 0.35);
+      col.set([tmp.r, tmp.g, tmp.b], k * 3);
+      size[k] = (0.16 + Math.random() * 0.1) * (isFirst ? 1.8 : 1);
+      grp[k] = 0;
+      ph[k] = Math.random() * 6.28;
+    }
+    const pts = makePoints(pos, col, size, grp, ph);
+    g.add(pts);
+
+    const core = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: base, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending }));
+    core.position.copy(center);
+    core.scale.setScalar(r * 1.3);
+    g.add(core);
+
+    const lh = THREE.MathUtils.clamp(arc * 0.15, 1.0, 2.2);
+    const label = makeLabel(b.name, { px: 72, weight: 500, color: '#' + base.clone().lerp(white, 0.35).getHexString(), height: lh });
+    label.position.copy(center).addScaledVector(upFlat, -(r * 0.95 + lh * 0.7));
+    g.add(label);
+
+    return { bi: i, center, r, hitR: Math.max(r * 1.15, arc * 0.5), pts, label, pos, f };
+  });
+
+  // Подписи жанров, туманности и заветов.
+  let runStart = 0;
+  for (let i = 1; i <= BOOKS.length; i++) {
+    if (i < BOOKS.length && BOOKS[i].g === BOOKS[runStart].g) continue;
+    const g0 = BOOKS[runStart].g;
+    const fA = slots[runStart].start / total, fB = (slots[i - 1].start + slots[i - 1].w) / total;
+    const fm = (fA + fB) / 2;
+    const color = new THREE.Color(GENRES[g0].color);
+    const lbl = makeLabel(GENRES[g0].name.toUpperCase(), { px: 64, weight: 600, color: GENRES[g0].color, height: 2.2, letter: 10 });
+    lbl.position.copy(place(fm, R * 1.04, 0.13).pos);
+    g.add(lbl);
+    const span = (fB - fA) * totalAng * R;
+    const neb = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity: 0.1, depthWrite: false, blending: THREE.AdditiveBlending }));
+    neb.position.copy(place(fm, R * 1.35).pos);
+    neb.scale.setScalar(Math.max(18, span * 1.4));
+    g.add(neb);
+    runStart = i;
+  }
+  const ntIndex = BOOKS.findIndex((b) => NT_GENRES.has(b.g));
+  const testaments = [[0, 'ВЕТХИЙ ЗАВЕТ'], [ntIndex, 'НОВЫЙ ЗАВЕТ']];
+  for (const [bi, text] of testaments) {
+    if (bi < 0) continue;
+    const t = makeLabel(text, { font: FONT_TITLE, px: 96, weight: 600, color: '#f6e7c1', height: 4.4, letter: 14 });
+    t.position.copy(place(slots[bi].start / total, R * 1.02, 0.25).pos);
+    g.add(t);
+  }
+  scene.add(g);
+  galaxy.group = g;
+}
+
+/* ---------- Уровни 2 и 3 ---------- */
+
+let modeGroup = null;
+const state = { mode: 'galaxy', bi: -1, ci: -1, page: 0, pages: 1, focus: -1, book: null, chapter: null };
+
+function headInfo() {
+  const pos = new THREE.Vector3(), dir = new THREE.Vector3();
+  camera.getWorldPosition(pos);
+  camera.getWorldDirection(dir);
+  return { pos, yaw: Math.atan2(dir.x, -dir.z) };
+}
+
+function buildBook(bi) {
+  const b = BOOKS[bi];
+  const { pos: eye, yaw } = headInfo();
+  const g = new THREE.Group();
+  const R = 14, C = b.chapters.length;
+  const perRow = Math.min(C, 24);
+  const rows = Math.ceil(C / perRow);
+  const step = perRow >= 24 ? (Math.PI * 2) / 24 : Math.min(0.52, (Math.PI * 2) / perRow);
+  const sp = 0.24;
+  const base = bookColor(b), white = new THREE.Color('#fff'), tmp = new THREE.Color();
+  const pos = new Float32Array(b.n * 3), col = new Float32Array(b.n * 3), size = new Float32Array(b.n), grp = new Float32Array(b.n), ph = new Float32Array(b.n);
+  const items = [];
+  let topEl = 0;
+  for (let c = 0; c < C; c++) {
+    const row = Math.floor(c / perRow), colIdx = c % perRow;
+    const inRow = Math.min(perRow, C - row * perRow);
+    const az = yaw + (colIdx - (perRow >= 24 ? 0 : (inRow - 1) / 2)) * step;
+    const el = ((rows - 1) / 2) * sp - row * sp + 0.06;
+    topEl = Math.max(topEl, el);
+    const dir = new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el));
+    const center = dir.clone().multiplyScalar(R).add(eye);
+    const right = new THREE.Vector3(Math.cos(az), 0, Math.sin(az));
+    const up = new THREE.Vector3().crossVectors(right, dir).normalize();
+    const nv = b.chapters[c].length;
+    const rc = Math.min(0.3 + 0.09 * Math.sqrt(nv), step * R * 0.4, sp * R * 0.36);
+    const k0 = b.chStart[c];
+    for (let v = 0; v < nv; v++) {
+      const k = k0 + v;
+      const rho = rc * Math.sqrt((v + 0.5) / nv);
+      const th = v * 2.39996;
+      const p = center.clone().addScaledVector(right, rho * Math.cos(th)).addScaledVector(up, rho * Math.sin(th));
+      pos.set([p.x, p.y, p.z], k * 3);
+      tmp.copy(base).lerp(white, v === 0 ? 0.6 : 0.15 * Math.random()).multiplyScalar(0.8 + Math.random() * 0.3);
+      col.set([tmp.r, tmp.g, tmp.b], k * 3);
+      size[k] = v === 0 ? 0.16 : 0.09 + Math.random() * 0.04;
+      grp[k] = c;
+      ph[k] = Math.random() * 6.28;
+    }
+    const lbl = makeLabel(String(c + 1), { px: 64, weight: 500, color: '#' + base.clone().lerp(white, 0.4).getHexString(), height: 0.5 });
+    lbl.position.copy(center).addScaledVector(up, -(rc + 0.38));
+    g.add(lbl);
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: base, transparent: true, opacity: 0.12, depthWrite: false, blending: THREE.AdditiveBlending }));
+    halo.position.copy(center);
+    halo.scale.setScalar(rc * 3);
+    g.add(halo);
+    items.push({ ci: c, center, hitR: Math.max(rc * 1.3, Math.min(step, sp) * R * 0.45), k0, nv, label: lbl, halo });
+  }
+  const pts = makePoints(pos, col, size, grp, ph);
+  g.add(pts);
+
+  const titleDir = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
+  const tEl = topEl + sp * 0.75;
+  const title = makeLabel(b.name, { font: FONT_TITLE, px: 110, weight: 600, color: '#f6e7c1', height: 1.6 });
+  title.position.copy(eye).addScaledVector(titleDir, R * Math.cos(tEl)).add(new THREE.Vector3(0, R * Math.sin(tEl), 0));
+  g.add(title);
+  const sub = makeLabel(`${GENRES[b.g].name} · ${chaptersWord(C)} · ${versesWord(b.n)}`, { px: 56, color: GENRES[b.g].color, height: 0.55 });
+  sub.position.copy(title.position).add(new THREE.Vector3(0, -1.15, 0));
+  g.add(sub);
+  return { group: g, items, pts, pos, bi };
+}
+
+const CARD = { R: 3.0, W: 1.15, PX: 640, pad: 22, font: 30, lh: 42, maxLines: 26 };
+CARD.ppm = CARD.PX / CARD.W;
+
+function drawCard(b, ci, vi, focused) {
+  const text = verseText(b.i, ci, vi);
+  const c = document.createElement('canvas');
+  const g = c.getContext('2d');
+  const numW = 58;
+  g.font = `${CARD.font}px ${FONT_TEXT}`;
+  const all = wrap(g, text, CARD.PX - CARD.pad * 2 - numW);
+  const lines = clampLines(all, CARD.maxLines);
+  c.width = CARD.PX;
+  c.height = CARD.pad * 2 + lines.length * CARD.lh;
+  const accent = '#' + bookColor(b).getHexString();
+  g.fillStyle = focused ? 'rgba(60, 48, 18, 0.88)' : 'rgba(9, 12, 26, 0.78)';
+  g.beginPath();
+  g.roundRect(1, 1, c.width - 2, c.height - 2, 16);
+  g.fill();
+  g.lineWidth = 2;
+  g.strokeStyle = focused ? '#f3c35b' : 'rgba(150,165,215,0.25)';
+  g.stroke();
+  g.fillStyle = accent;
+  g.font = `600 ${CARD.font - 4}px ${FONT_UI}`;
+  g.textBaseline = 'top';
+  g.fillText(String(vi + 1), CARD.pad, CARD.pad + 4);
+  g.fillStyle = '#eef1fa';
+  g.font = `${CARD.font}px ${FONT_TEXT}`;
+  lines.forEach((ln, i) => g.fillText(ln, CARD.pad + numW, CARD.pad + i * CARD.lh + 2));
+  return { canvas: c, truncated: all.length > lines.length, h: c.height / CARD.ppm };
+}
+
+function buildChapter(bi, ci, focus, page) {
+  const b = BOOKS[bi];
+  const verses = b.chapters[ci];
+  const { pos: eye, yaw } = headInfo();
+  const top = eye.y + 0.95, maxH = 2.3, gap = 0.06;
+  const cards = verses.map((_, vi) => drawCard(b, ci, vi, vi === focus));
+  // Раскладка по колонкам сверху вниз.
+  const cols = [];
+  let cur = [], used = 0;
+  cards.forEach((card, vi) => {
+    if (cur.length && used + card.h > maxH) { cols.push(cur); cur = []; used = 0; }
+    cur.push(vi);
+    used += card.h + gap;
+  });
+  if (cur.length) cols.push(cur);
+  const PER_PAGE = 13;
+  const pages = Math.ceil(cols.length / PER_PAGE);
+  if (focus >= 0) page = Math.floor(cols.findIndex((c) => c.includes(focus)) / PER_PAGE);
+  page = THREE.MathUtils.clamp(page, 0, pages - 1);
+  const pageCols = cols.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+  const colStep = (CARD.W + 0.14) / CARD.R;
+  let offset = pageCols.length <= 3 ? (pageCols.length - 1) / 2 : 1;
+  if (focus >= 0) offset = pageCols.findIndex((c) => c.includes(focus));
+
+  const g = new THREE.Group();
+  const items = [];
+  const starPos = [], starCol = [];
+  const accent = bookColor(b);
+  const onPage = new Set(pageCols.flat());
+  cards.forEach((card, vi) => { if (!onPage.has(vi)) card.canvas.width = 0; });
+  pageCols.forEach((list, cIdx) => {
+    const az = yaw + (cIdx - offset) * colStep;
+    const dir = new THREE.Vector3(Math.sin(az), 0, -Math.cos(az));
+    const right = new THREE.Vector3(Math.cos(az), 0, Math.sin(az));
+    let y = top;
+    for (const vi of list) {
+      const card = cards[vi];
+      const mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(CARD.W, card.h),
+        new THREE.MeshBasicMaterial({ map: makeTexture(card.canvas), transparent: true, opacity: 0.94, depthWrite: false }),
+      );
+      const p = eye.clone().addScaledVector(dir, CARD.R);
+      p.y = y - card.h / 2;
+      mesh.position.copy(p);
+      mesh.lookAt(eye.x, p.y, eye.z);
+      mesh.userData = { vi, truncated: card.truncated };
+      g.add(mesh);
+      items.push(mesh);
+      const sp = p.clone().addScaledVector(right, -(CARD.W / 2 + 0.07)).add(new THREE.Vector3(0, card.h / 2 - 0.05, 0)).addScaledVector(dir, -0.02);
+      starPos.push(sp.x, sp.y, sp.z);
+      const c = vi === focus ? new THREE.Color('#ffe7a3') : accent;
+      starCol.push(c.r, c.g, c.b);
+      y -= card.h + gap;
+    }
+  });
+  const n = starPos.length / 3;
+  const pts = makePoints(new Float32Array(starPos), new Float32Array(starCol), new Float32Array(n).fill(0.06), new Float32Array(n).map((_, i) => i), new Float32Array(n).map(() => Math.random() * 6.28));
+  g.add(pts);
+  const title = makeLabel(`${b.name} · глава ${ci + 1}`, { font: FONT_TITLE, px: 96, weight: 600, color: '#f6e7c1', height: 0.26 });
+  const fd = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
+  title.position.copy(eye).addScaledVector(fd, CARD.R + 0.2);
+  title.position.y = top + 0.25;
+  g.add(title);
+  if (pages > 1) {
+    const pl = makeLabel(`страница ${page + 1} из ${pages}`, { px: 48, color: '#9aa2bf', height: 0.12 });
+    pl.position.copy(title.position).add(new THREE.Vector3(0, -0.17, 0));
+    g.add(pl);
+  }
+  return { group: g, items, pts, page, pages, bi, ci };
+}
+
+/* ---------- Переходы ---------- */
+
+const fader = new THREE.Mesh(
+  new THREE.SphereGeometry(0.4, 16, 12),
+  new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide, transparent: true, opacity: 0, depthTest: false, depthWrite: false }),
+);
+fader.renderOrder = 999;
+camera.add(fader);
+let fadeTarget = 0;
+let busy = false;
+function waitFade(v) {
+  fadeTarget = v;
+  return new Promise((resolve) => {
+    const check = () => (Math.abs(fader.material.opacity - v) < 0.02 ? resolve() : setTimeout(check, 16));
+    check();
+  });
+}
+
+async function go(mode, opts = {}) {
+  if (busy) return;
+  busy = true;
+  await waitFade(1);
+  if (modeGroup) { scene.remove(modeGroup); disposeTree(modeGroup); modeGroup = null; }
+  state.book = state.chapter = null;
+  state.mode = mode;
+  if (mode === 'galaxy') {
+    galaxy.group.visible = true;
+  } else if (mode === 'book') {
+    galaxy.group.visible = false;
+    state.bi = opts.bi;
+    state.book = buildBook(opts.bi);
+    modeGroup = state.book.group;
+  } else {
+    galaxy.group.visible = false;
+    state.bi = opts.bi;
+    state.ci = opts.ci;
+    state.focus = opts.focus ?? -1;
+    state.chapter = buildChapter(opts.bi, opts.ci, state.focus, opts.page || 0);
+    state.page = state.chapter.page;
+    state.pages = state.chapter.pages;
+    modeGroup = state.chapter.group;
+  }
+  if (modeGroup) scene.add(modeGroup);
+  clearHover();
+  updateChrome();
+  await waitFade(0);
+  busy = false;
+}
+
+function back() {
+  if (state.mode === 'chapter') go('book', { bi: state.bi });
+  else if (state.mode === 'book') go('galaxy');
+}
+function stepChapter(d) {
+  let bi = state.bi, ci = state.ci + d;
+  if (ci < 0) { bi--; if (bi < 0) return; ci = BOOKS[bi].chapters.length - 1; }
+  if (ci >= BOOKS[bi].chapters.length) { bi++; if (bi >= BOOKS.length) return; ci = 0; }
+  go('chapter', { bi, ci });
+}
+function stepPage(d) {
+  const p = state.page + d;
+  if (p < 0 || p >= state.pages) return;
+  go('chapter', { bi: state.bi, ci: state.ci, page: p });
+}
+function randomVerse() {
+  let k = Math.floor(Math.random() * TOTAL);
+  const b = BOOKS.find((x) => k >= x.offset && k < x.offset + x.n);
+  k -= b.offset;
+  go('chapter', { bi: b.i, ci: b.ci[k], focus: b.vi[k] });
+}
+
+/* ---------- Наведение ---------- */
+
+const raycaster = new THREE.Raycaster();
+const tmpV = new THREE.Vector3();
+
+function nearestStar(ray, pos, k0, k1, maxAng) {
+  let best = -1, bestA = maxAng;
+  const o = ray.origin, d = ray.direction;
+  for (let k = k0; k < k1; k++) {
+    const x = pos[k * 3] - o.x, y = pos[k * 3 + 1] - o.y, z = pos[k * 3 + 2] - o.z;
+    const t = x * d.x + y * d.y + z * d.z;
+    if (t <= 0) continue;
+    const perp2 = x * x + y * y + z * z - t * t;
+    const a = Math.sqrt(Math.max(perp2, 0)) / t;
+    if (a < bestA) { bestA = a; best = k; }
+  }
+  return best;
+}
+function sphereHit(ray, items) {
+  let best = null, score = 1;
+  for (const it of items) {
+    tmpV.subVectors(it.center, ray.origin);
+    const t = tmpV.dot(ray.direction);
+    if (t <= 0) continue;
+    const perp = Math.sqrt(Math.max(tmpV.lengthSq() - t * t, 0));
+    const s = perp / it.hitR;
+    if (s < score) { score = s; best = it; }
+  }
+  return best;
+}
+
+function pick(ray) {
+  raycaster.ray.copy(ray);
+  if (xrPanel.group.visible) {
+    const hit = raycaster.intersectObjects(xrPanel.buttons, false)[0];
+    if (hit) return { type: 'ui', obj: hit.object, dist: hit.distance };
+  }
+  if (state.mode === 'galaxy') {
+    const it = sphereHit(ray, galaxy.items);
+    if (!it) return null;
+    const b = BOOKS[it.bi];
+    const k = nearestStar(ray, it.pos, 0, b.n, 0.012);
+    return { type: 'book', bi: it.bi, k, dist: it.center.distanceTo(ray.origin) };
+  }
+  if (state.mode === 'book' && state.book) {
+    const it = sphereHit(ray, state.book.items);
+    if (!it) return null;
+    const k = nearestStar(ray, state.book.pos, it.k0, it.k0 + it.nv, 0.02);
+    return { type: 'chapter', ci: it.ci, k, dist: it.center.distanceTo(ray.origin) };
+  }
+  if (state.mode === 'chapter' && state.chapter) {
+    const hit = raycaster.intersectObjects(state.chapter.items, false)[0];
+    if (hit) return { type: 'card', obj: hit.object, vi: hit.object.userData.vi, dist: hit.distance };
+  }
+  return null;
+}
+
+const hoverKey = (h) => (h ? `${h.type}:${h.bi ?? ''}:${h.ci ?? ''}:${h.k ?? ''}:${h.vi ?? ''}:${h.obj?.id ?? ''}` : '');
+let hover = null, lastHoverKey = '';
+let hoveredLabel = null, hoveredCard = null, hoveredBtn = null;
+
+function clearHover() { hover = null; lastHoverKey = '__'; applyHover(); }
+
+function applyHover() {
+  if (hoveredLabel) { hoveredLabel.scale.copy(hoveredLabel.userData.base); hoveredLabel = null; }
+  if (hoveredCard) { hoveredCard.scale.setScalar(1); hoveredCard.material.opacity = 0.94; hoveredCard = null; }
+  if (hoveredBtn) { hoveredBtn.material.color.set('#c9d0e6'); hoveredBtn.scale.setScalar(1); hoveredBtn = null; }
+  for (const it of galaxy.items) it.pts.material.uniforms.uBoost.value = 1;
+  if (state.book) state.book.pts.material.uniforms.uHover.value = -1;
+  if (state.chapter) state.chapter.pts.material.uniforms.uHover.value = -1;
+  marker.visible = false;
+  const h = hover;
+  renderer.domElement.classList.toggle('pointing', !!h && h.type !== 'card');
+  if (!h) { showInfo(null); return; }
+  if (h.type === 'ui') {
+    hoveredBtn = h.obj;
+    hoveredBtn.material.color.set('#ffffff');
+    hoveredBtn.scale.setScalar(1.06);
+    showInfo(null);
+    return;
+  }
+  if (h.type === 'book') {
+    const it = galaxy.items[h.bi];
+    const b = BOOKS[h.bi];
+    it.pts.material.uniforms.uBoost.value = 1.7;
+    hoveredLabel = it.label;
+    it.label.scale.copy(it.label.userData.base).multiplyScalar(1.25);
+    let ref = GENRES[b.g].name + (b.deutero ? ' · неканоническая' : ''), text = '';
+    if (h.k >= 0) {
+      ref = refOf(h.bi, b.ci[h.k], b.vi[h.k]);
+      text = verseText(h.bi, b.ci[h.k], b.vi[h.k]);
+      showMarker(it.pos, h.k, 1.4);
+    }
+    showInfo({ ref, title: b.name, meta: `${chaptersWord(b.chapters.length)} · ${versesWord(b.n)}`, text, hint: xrHint('открыть книгу') });
+    return;
+  }
+  if (h.type === 'chapter') {
+    const b = BOOKS[state.bi];
+    const it = state.book.items[h.ci];
+    state.book.pts.material.uniforms.uHover.value = h.ci;
+    hoveredLabel = it.label;
+    it.label.scale.copy(it.label.userData.base).multiplyScalar(1.3);
+    const k = h.k >= 0 ? h.k : it.k0;
+    const vi = b.vi[k];
+    if (h.k >= 0) showMarker(state.book.pos, h.k, 0.5);
+    showInfo({ ref: refOf(state.bi, h.ci, vi), title: `Глава ${h.ci + 1}`, meta: versesWord(b.chapters[h.ci].length), text: verseText(state.bi, h.ci, vi), hint: xrHint('открыть главу') });
+    return;
+  }
+  if (h.type === 'card') {
+    hoveredCard = h.obj;
+    hoveredCard.scale.setScalar(1.035);
+    hoveredCard.material.opacity = 1;
+    state.chapter.pts.material.uniforms.uHover.value = state.chapter.items.indexOf(h.obj);
+    if (h.obj.userData.truncated || !renderer.xr.isPresenting) {
+      showInfo({ ref: refOf(state.bi, state.ci, h.vi), title: '', meta: '', text: verseText(state.bi, state.ci, h.vi), hint: '' }, !h.obj.userData.truncated);
+    } else showInfo(null);
+  }
+}
+const xrHint = (what) => (renderer.xr.isPresenting ? `Курок: ${what}` : `Щелчок: ${what}`);
+
+const marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#fff6d8', transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending }));
+marker.visible = false;
+marker.renderOrder = 10;
+scene.add(marker);
+function showMarker(pos, k, s) {
+  marker.position.set(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]);
+  marker.scale.setScalar(s);
+  marker.visible = true;
+}
+
+/* ---------- Подсказка: HTML на экране, панель в VR ---------- */
+
+const tip = (() => {
+  const c = document.createElement('canvas');
+  c.width = 1024; c.height = 520;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.76), new THREE.MeshBasicMaterial({ map: makeTexture(c), transparent: true, depthTest: false, depthWrite: false }));
+  mesh.renderOrder = 20;
+  mesh.visible = false;
+  scene.add(mesh);
+  return { c, g: c.getContext('2d'), mesh };
+})();
+
+function drawTip(d) {
+  const { c, g } = tip;
+  g.clearRect(0, 0, c.width, c.height);
+  g.font = `40px ${FONT_TEXT}`;
+  const lines = clampLines(d.text ? wrap(g, d.text, c.width - 80) : [], 7);
+  const h = 40 + 46 + (d.title ? 56 : 0) + lines.length * 50 + (d.hint ? 52 : 0) + 20;
+  g.fillStyle = 'rgba(8, 11, 24, 0.9)';
+  g.beginPath(); g.roundRect(2, 2, c.width - 4, h, 22); g.fill();
+  g.strokeStyle = 'rgba(243,195,91,0.5)'; g.lineWidth = 3; g.stroke();
+  let y = 40;
+  g.textBaseline = 'top';
+  g.fillStyle = '#f3c35b'; g.font = `600 32px ${FONT_UI}`; g.fillText(d.ref.toUpperCase(), 40, y); y += 46;
+  if (d.title) { g.fillStyle = '#f6e7c1'; g.font = `600 52px ${FONT_TITLE}`; g.fillText(d.title + (d.meta ? '  ·  ' : ''), 40, y); if (d.meta) { const w = g.measureText(d.title + '  ·  ').width; g.font = `32px ${FONT_UI}`; g.fillStyle = '#9aa2bf'; g.fillText(d.meta, 40 + w, y + 14); } y += 56; }
+  g.fillStyle = '#eef1fa'; g.font = `40px ${FONT_TEXT}`;
+  for (const ln of lines) { g.fillText(ln, 40, y); y += 50; }
+  if (d.hint) { g.fillStyle = '#9aa2bf'; g.font = `30px ${FONT_UI}`; g.fillText(d.hint, 40, y + 12); }
+  tip.mesh.material.map.needsUpdate = true;
+}
+
+function showInfo(d, desktopOnly = false) {
+  if (!d) { ui.info.hidden = true; document.body.classList.remove('has-info'); tip.mesh.visible = false; return; }
+  if (renderer.xr.isPresenting) {
+    if (desktopOnly) { tip.mesh.visible = false; return; }
+    drawTip(d);
+    tip.mesh.visible = true;
+    return;
+  }
+  ui.info.hidden = false;
+  document.body.classList.add('has-info');
+  ui.info.querySelector('.ref').textContent = d.ref;
+  ui.info.querySelector('.title').textContent = d.title;
+  ui.info.querySelector('.title').hidden = !d.title;
+  ui.info.querySelector('.meta').textContent = d.meta;
+  ui.info.querySelector('.meta').hidden = !d.meta;
+  ui.info.querySelector('.text').textContent = d.text;
+  ui.info.querySelector('.text').hidden = !d.text;
+  ui.info.querySelector('.hint').textContent = d.hint;
+  ui.info.querySelector('.hint').hidden = !d.hint;
+}
+
+/* ---------- Панель управления в VR ---------- */
+
+const xrPanel = { group: new THREE.Group(), buttons: [], yaw: 0 };
+xrPanel.group.visible = false;
+scene.add(xrPanel.group);
+
+function makeButton(text, action, w = 0.3) {
+  const c = document.createElement('canvas');
+  c.width = Math.round(w * 1400); c.height = 110;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(14, 18, 36, 0.92)';
+  g.beginPath(); g.roundRect(3, 3, c.width - 6, c.height - 6, 22); g.fill();
+  g.strokeStyle = 'rgba(243,195,91,0.6)'; g.lineWidth = 4; g.stroke();
+  g.fillStyle = '#f3f5fb'; g.font = `500 46px ${FONT_UI}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, c.width / 2, c.height / 2 + 2);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, (w * c.height) / c.width), new THREE.MeshBasicMaterial({ map: makeTexture(c), transparent: true, color: '#c9d0e6', depthTest: false }));
+  m.renderOrder = 30;
+  m.userData.action = action;
+  return m;
+}
+
+function rebuildPanel() {
+  const grp = xrPanel.group;
+  for (const ch of [...grp.children]) { grp.remove(ch); disposeTree(ch); }
+  const defs = [];
+  if (state.mode === 'book') defs.push(['← Галактика', back]);
+  if (state.mode === 'chapter') {
+    defs.push(['← Главы', back], ['◀ Глава', () => stepChapter(-1)], ['Глава ▶', () => stepChapter(1)]);
+    if (state.pages > 1) defs.push(['◀ Стр.', () => stepPage(-1)], ['Стр. ▶', () => stepPage(1)]);
+  }
+  defs.push(['✦ Случайный стих', randomVerse]);
+  const widths = defs.map(([t]) => (t.length > 10 ? 0.34 : 0.22));
+  const gap = 0.02;
+  const total = widths.reduce((a, b) => a + b, 0) + gap * (defs.length - 1);
+  let x = -total / 2;
+  xrPanel.buttons = defs.map(([t, fn], i) => {
+    const m = makeButton(t, fn, widths[i]);
+    m.position.set(x + widths[i] / 2, 0, 0);
+    x += widths[i] + gap;
+    grp.add(m);
+    return m;
+  });
+  const crumb = state.mode === 'galaxy' ? 'Галактика книг' : state.mode === 'book' ? BOOKS[state.bi].name : `${BOOKS[state.bi].name}, глава ${state.ci + 1}`;
+  const lbl = makeLabel(crumb, { font: FONT_TITLE, px: 64, weight: 600, color: '#f6e7c1', height: 0.06 });
+  lbl.material.depthTest = false;
+  lbl.renderOrder = 30;
+  lbl.position.set(0, 0.08, 0);
+  grp.add(lbl);
+}
+
+function updatePanel(dt) {
+  if (!xrPanel.group.visible) return;
+  const { pos, yaw } = headInfo();
+  let d = yaw - xrPanel.yaw;
+  d = Math.atan2(Math.sin(d), Math.cos(d));
+  if (Math.abs(d) > 0.5 || xrPanel.snap) { xrPanel.yaw += xrPanel.snap ? d : d * Math.min(1, dt * 3); xrPanel.snap = false; }
+  const p = new THREE.Vector3(Math.sin(xrPanel.yaw) * 0.7, -0.55, -Math.cos(xrPanel.yaw) * 0.7).add(pos);
+  xrPanel.group.position.copy(p);
+  xrPanel.group.lookAt(pos);
+}
+
+/* ---------- Интро в VR ---------- */
+
+let intro = null;
+function showIntro() {
+  if (intro) return;
+  const c = document.createElement('canvas');
+  c.width = 1200; c.height = 520;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(8,11,24,0.88)'; g.beginPath(); g.roundRect(2, 2, 1196, 516, 26); g.fill();
+  g.strokeStyle = 'rgba(243,195,91,0.6)'; g.lineWidth = 3; g.stroke();
+  g.fillStyle = '#f6e7c1'; g.font = `600 72px ${FONT_TITLE}`; g.textBaseline = 'top'; g.fillText('Библейский космос', 50, 40);
+  g.fillStyle = '#eef1fa'; g.font = `38px ${FONT_TEXT}`;
+  ['Каждая звезда — стих. Каждое скопление — книга.', 'Наведите луч на звезду, чтобы прочитать стих.', 'Курок: войти в книгу, затем в главу.', 'Кнопка B или Y: назад. Стик влево-вправо: поворот.', 'Панель кнопок — внизу, посмотрите себе под ноги.']
+    .forEach((t, i) => g.fillText(t, 50, 150 + i * 66));
+  intro = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.69), new THREE.MeshBasicMaterial({ map: makeTexture(c), transparent: true, depthTest: false }));
+  intro.renderOrder = 40;
+  const { pos, yaw } = headInfo();
+  intro.position.set(Math.sin(yaw) * 2.2, 0.15, -Math.cos(yaw) * 2.2).add(pos);
+  intro.lookAt(pos);
+  scene.add(intro);
+  setTimeout(hideIntro, 20000);
+}
+function hideIntro() { if (intro) { scene.remove(intro); disposeTree(intro); intro = null; } }
+
+/* ---------- VR: контроллеры ---------- */
+
+const controllers = [];
+let primary = null;
+for (let i = 0; i < 2; i++) {
+  const ctrl = renderer.xr.getController(i);
+  const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]);
+  const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: '#f3c35b', transparent: true, opacity: 0.7 }));
+  line.scale.z = 30;
+  ctrl.add(line);
+  const entry = { ctrl, line, gamepad: null, hover: null, turnArmed: true, bWas: false };
+  ctrl.addEventListener('connected', (e) => { entry.gamepad = e.data.gamepad || null; entry.hand = !!e.data.hand; line.visible = true; });
+  ctrl.addEventListener('disconnected', () => { entry.gamepad = null; line.visible = false; });
+  ctrl.addEventListener('selectstart', () => { primary = entry; hideIntro(); activate(entry.hover); });
+  rig.add(ctrl);
+  controllers.push(entry);
+}
+
+function activate(h) {
+  if (!h || busy) return;
+  if (h.type === 'ui') h.obj.userData.action();
+  else if (h.type === 'book') go('book', { bi: h.bi });
+  else if (h.type === 'chapter') go('chapter', { bi: state.bi, ci: h.ci });
+}
+
+function snapTurn(angle) {
+  const head = new THREE.Vector3();
+  camera.getWorldPosition(head);
+  const local = rig.worldToLocal(head.clone());
+  rig.rotation.y += angle;
+  rig.updateMatrixWorld(true);
+  const after = rig.localToWorld(local);
+  rig.position.add(head.sub(after));
+  xrPanel.snap = true;
+}
+
+function pollGamepads() {
+  for (const c of controllers) {
+    const gp = c.gamepad;
+    if (!gp) continue;
+    const x = gp.axes.length >= 4 ? gp.axes[2] : gp.axes[0] || 0;
+    if (Math.abs(x) > 0.7 && c.turnArmed) { snapTurn(x > 0 ? -Math.PI / 6 : Math.PI / 6); c.turnArmed = false; }
+    if (Math.abs(x) < 0.3) c.turnArmed = true;
+    const b = gp.buttons[5]?.pressed || false;
+    if (b && !c.bWas) back();
+    c.bWas = b;
+  }
+}
+
+/* ---------- Мышь и сенсор ---------- */
+
+const look = { yaw: 0, pitch: 0.12, down: null, moved: false, ndc: new THREE.Vector2(), has: false };
+function applyLook() { camera.rotation.set(look.pitch, -look.yaw, 0); }
+applyLook();
+const el = renderer.domElement;
+el.addEventListener('pointerdown', (e) => { look.down = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; look.moved = false; el.setPointerCapture(e.pointerId); });
+el.addEventListener('pointermove', (e) => {
+  look.ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  look.has = true;
+  if (!look.down) return;
+  const dx = e.clientX - look.down.x, dy = e.clientY - look.down.y;
+  if (Math.hypot(dx, dy) > 5) look.moved = true;
+  if (!look.moved) return;
+  const k = (camera.fov / 70) * 0.0042;
+  look.yaw = look.down.yaw - dx * k;
+  look.pitch = THREE.MathUtils.clamp(look.down.pitch + dy * k, -1.45, 1.45);
+  applyLook();
+});
+el.addEventListener('pointerup', (e) => {
+  const wasClick = look.down && !look.moved;
+  look.down = null;
+  if (!wasClick) return;
+  look.ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(look.ndc, camera);
+  const h = pick(raycaster.ray.clone());
+  hideToast();
+  activate(h);
+});
+el.addEventListener('pointerleave', () => { look.has = false; });
+el.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  camera.fov = THREE.MathUtils.clamp(camera.fov + e.deltaY * 0.03, 22, 90);
+  camera.updateProjectionMatrix();
+}, { passive: false });
+addEventListener('keydown', (e) => {
+  if (e.target === ui.q) return;
+  if (e.key === 'Escape' || e.key === 'Backspace') back();
+  else if (e.key === 'ArrowLeft') { look.yaw -= 0.15; applyLook(); }
+  else if (e.key === 'ArrowRight') { look.yaw += 0.15; applyLook(); }
+  else if (e.key === 'ArrowUp') { look.pitch = Math.min(1.45, look.pitch + 0.1); applyLook(); }
+  else if (e.key === 'ArrowDown') { look.pitch = Math.max(-1.45, look.pitch - 0.1); applyLook(); }
+  else if (state.mode === 'chapter' && (e.key === ']' || e.key === 'PageDown')) stepChapter(1);
+  else if (state.mode === 'chapter' && (e.key === '[' || e.key === 'PageUp')) stepChapter(-1);
+});
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+/* ---------- HTML-интерфейс ---------- */
+
+function crumbButton(text, fn) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = text;
+  b.addEventListener('click', fn);
+  return b;
+}
+function updateChrome() {
+  const c = ui.crumbs;
+  c.replaceChildren();
+  const sep = () => Object.assign(document.createElement('span'), { className: 'sep', textContent: '›' });
+  const here = (t) => Object.assign(document.createElement('span'), { className: 'here', textContent: t });
+  if (state.mode === 'galaxy') c.append(here('Галактика книг'));
+  else {
+    c.append(crumbButton('Галактика', () => go('galaxy')), sep());
+    if (state.mode === 'book') c.append(here(BOOKS[state.bi].name));
+    else c.append(crumbButton(BOOKS[state.bi].name, () => go('book', { bi: state.bi })), sep(), here(`Глава ${state.ci + 1}`));
+  }
+  ui.nav.hidden = state.mode !== 'chapter';
+  ui.prevPage.hidden = ui.nextPage.hidden = !(state.mode === 'chapter' && state.pages > 1);
+  ui.prevPage.disabled = state.page <= 0;
+  ui.nextPage.disabled = state.page >= state.pages - 1;
+  ui.legend.hidden = state.mode !== 'galaxy';
+  if (state.mode === 'book') toast('Каждое скопление — глава. Наведите на звезду, чтобы прочитать стих. Щелчок открывает главу.', 6000);
+  if (state.mode === 'chapter') toast('Стихи стоят вокруг вас колонками. Читайте слева направо, поворачиваясь вправо.', 5000);
+  rebuildPanel();
+}
+
+function buildLegend() {
+  const L = ui.legend;
+  L.replaceChildren();
+  const head = (t) => Object.assign(document.createElement('div'), { className: 'head', textContent: t });
+  const row = (g) => {
+    const r = document.createElement('div');
+    r.className = 'row';
+    const i = document.createElement('i');
+    i.style.color = GENRES[g].color;
+    r.append(i, document.createTextNode(GENRES[g].name));
+    return r;
+  };
+  const used = [...new Set(BOOKS.map((b) => b.g))];
+  L.append(head('Ветхий Завет'), ...used.filter((g) => !NT_GENRES.has(g)).map(row), head('Новый Завет'), ...used.filter((g) => NT_GENRES.has(g)).map(row));
+  const note = document.createElement('div');
+  note.className = 'note';
+  note.textContent = `${translationName}. ${BOOKS.some((b) => b.deutero) ? 'Неканонические книги светятся приглушённо. ' : ''}Спираль идёт по порядку книг снизу вверх, по часовой стрелке.`;
+  L.append(note);
+}
+
+let toastTimer = 0;
+function toast(text, ms = 7000) {
+  ui.toast.textContent = text;
+  ui.toast.classList.remove('gone');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, ms);
+}
+function hideToast() { ui.toast.classList.add('gone'); }
+
+ui.random.addEventListener('click', randomVerse);
+ui.prevCh.addEventListener('click', () => stepChapter(-1));
+ui.nextCh.addEventListener('click', () => stepChapter(1));
+ui.prevPage.addEventListener('click', () => stepPage(-1));
+ui.nextPage.addEventListener('click', () => stepPage(1));
+ui.legendToggle.addEventListener('click', () => document.body.classList.toggle('legend-open'));
+
+/* ---------- Поиск места: «Ин 3:16», «Бытие 1», «1 Кор 13:4» ---------- */
+
+let searchIndex = [];
+const norm = (s) => s.toLowerCase().replace(/ё/g, 'е').replace(/[\s.]/g, '');
+function buildSearchIndex() {
+  searchIndex = BOOKS.map((b) => {
+    const keys = new Set([norm(b.short), norm(b.name)]);
+    keys.add(norm(b.name.replace(/^(от|к)\s+/i, '')));
+    if (b.short === 'Пс') ['псалом', 'псалмы', 'псалтырь'].forEach((k) => keys.add(k));
+    return { bi: b.i, keys: [...keys] };
+  });
+}
+function findPlace(q) {
+  const m = q.trim().match(/^(\d?\s*[^\d]+?)\s*(\d+)?(?:\s*[:.,\s]\s*(\d+))?\s*$/);
+  if (!m) return null;
+  const key = norm(m[1]);
+  if (!key) return null;
+  const tests = [(k) => k === key, (k) => key.length >= 2 && k.startsWith(key), (k) => key.length >= 3 && k.includes(key)];
+  for (const test of tests) {
+    const hit = searchIndex.find((s) => s.keys.some(test));
+    if (hit) {
+      const b = BOOKS[hit.bi];
+      const ci = m[2] ? THREE.MathUtils.clamp(+m[2] - 1, 0, b.chapters.length - 1) : -1;
+      const vi = ci >= 0 && m[3] ? THREE.MathUtils.clamp(+m[3] - 1, 0, b.chapters[ci].length - 1) : -1;
+      return { bi: hit.bi, ci, vi };
+    }
+  }
+  return null;
+}
+ui.search.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const p = findPlace(ui.q.value);
+  if (!p) { toast(`Не нашли «${ui.q.value}». Попробуйте так: «Ин 3:16», «Бытие 1», «Пс 22».`, 5000); return; }
+  ui.q.blur();
+  if (p.ci < 0) go('book', { bi: p.bi });
+  else go('chapter', { bi: p.bi, ci: p.ci, focus: p.vi });
+});
+
+/* ---------- Свой перевод из файла ---------- */
+
+function parseUserFile(text) {
+  const data = JSON.parse(text);
+  const books = Array.isArray(data) ? data : data.b || data.books;
+  if (!Array.isArray(books) || !books.length) throw new Error('В файле нет списка книг.');
+  const b = books.map((bk, i) => {
+    const name = bk.n || bk.name || bk.title || `Книга ${i + 1}`;
+    const chapters = (bk.c || bk.chapters || []).map((ch) => {
+      if (Array.isArray(ch)) return ch.map((v) => (typeof v === 'string' ? v : v.text || ''));
+      const vs = ch.v || ch.verses || [];
+      return vs.map((v) => (typeof v === 'string' ? v : v.text || ''));
+    });
+    if (!chapters.length) throw new Error(`У книги «${name}» нет глав.`);
+    return { n: name, s: bk.s || bk.short || bk.abbr || name, g: bk.g || bk.genre, d: bk.d ? 1 : 0, c: chapters };
+  });
+  return { t: data.t || data.translation || 'Свой перевод', b };
+}
+if (ui.file) {
+  ui.fileBtn.addEventListener('click', () => ui.file.click());
+  ui.file.addEventListener('change', async () => {
+    const f = ui.file.files[0];
+    if (!f) return;
+    try {
+      const data = parseUserFile(await f.text());
+      prepare(data);
+      buildGalaxy();
+      buildLegend();
+      await go('galaxy');
+      toast(`Загружено: ${data.t}. ${BOOKS.length} книг, ${versesWord(TOTAL)}. Файл остался только в вашем браузере.`, 7000);
+    } catch (err) {
+      toast(`Не получилось прочитать файл: ${err.message} Формат описан в README.`, 8000);
+    }
+    ui.file.value = '';
+  });
+}
+
+/* ---------- Кнопка VR ---------- */
+
+async function setupVR() {
+  const btn = ui.vr;
+  if (!('xr' in navigator)) { btn.textContent = 'VR недоступен'; btn.title = 'Откройте страницу в браузере VR-шлема, например Meta Quest Browser.'; return; }
+  let ok = false;
+  try { ok = await navigator.xr.isSessionSupported('immersive-vr'); } catch { ok = false; }
+  if (!ok) { btn.textContent = 'VR недоступен'; btn.title = 'Этот браузер не поддерживает WebXR. Откройте страницу в браузере VR-шлема.'; return; }
+  btn.disabled = false;
+  btn.textContent = 'Войти в VR';
+  let session = null;
+  btn.addEventListener('click', async () => {
+    if (session) { session.end(); return; }
+    try {
+      session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] });
+      session.addEventListener('end', () => {
+        session = null;
+        btn.textContent = 'Войти в VR';
+        xrPanel.group.visible = false;
+        tip.mesh.visible = false;
+        hideIntro();
+        rig.position.set(0, 0, 0);
+        rig.rotation.set(0, 0, 0);
+        camera.position.set(0, 1.6, 0);
+        applyLook();
+        clearHover();
+      });
+      await renderer.xr.setSession(session);
+      btn.textContent = 'Выйти из VR';
+      xrPanel.group.visible = true;
+      xrPanel.snap = true;
+      showInfo(null);
+      showIntro();
+    } catch (err) {
+      session = null;
+      toast('Браузер не открыл VR. Откройте страницу по прямой ссылке в браузере шлема.', 7000);
+    }
+  });
+}
+
+/* ---------- Цикл ---------- */
+
+const clock = new THREE.Clock();
+function updateScale() {
+  let e5 = camera.projectionMatrix.elements[5], h = renderer.domElement.height;
+  if (renderer.xr.isPresenting) {
+    const xc = renderer.xr.getCamera();
+    if (xc.cameras && xc.cameras[0]) e5 = xc.cameras[0].projectionMatrix.elements[5];
+    const layer = renderer.xr.getBaseLayer && renderer.xr.getBaseLayer();
+    h = (layer && layer.framebufferHeight) || 1832;
+  }
+  shared.uScale.value = (e5 * h) / 2;
+}
+
+function tick() {
+  const dt = Math.min(clock.getDelta(), 0.1);
+  shared.uTime.value += dt;
+  const o = fader.material.opacity;
+  fader.material.opacity = o + (fadeTarget - o) * Math.min(1, dt * 12);
+  if (Math.abs(fader.material.opacity - fadeTarget) < 0.02) fader.material.opacity = fadeTarget;
+  fader.visible = fader.material.opacity > 0.001;
+  updateScale();
+
+  let h = null;
+  if (renderer.xr.isPresenting) {
+    pollGamepads();
+    updatePanel(dt);
+    const ray = new THREE.Ray();
+    for (const c of controllers) {
+      c.ctrl.updateMatrixWorld(true);
+      ray.origin.setFromMatrixPosition(c.ctrl.matrixWorld);
+      ray.direction.set(0, 0, -1).transformDirection(c.ctrl.matrixWorld);
+      c.hover = busy ? null : pick(ray.clone());
+      c.line.scale.z = c.hover ? Math.max(0.05, Math.min(c.hover.dist, 30)) : 30;
+    }
+    const pref = primary && primary.gamepad !== undefined ? primary : controllers[1];
+    h = (pref && pref.hover) || controllers.find((c) => c.hover)?.hover || null;
+    if (h && tip.mesh.visible) {
+      const src = (pref && pref.hover ? pref : controllers.find((c) => c.hover)).ctrl;
+      const { pos } = headInfo();
+      const dir = new THREE.Vector3(0, 0, -1).transformDirection(src.matrixWorld);
+      tip.mesh.position.copy(pos).addScaledVector(dir, 2.6).add(new THREE.Vector3(0, -0.5, 0));
+      tip.mesh.lookAt(pos);
+    }
+  } else if (look.has && !look.down && !busy) {
+    raycaster.setFromCamera(look.ndc, camera);
+    h = pick(raycaster.ray.clone());
+  }
+  const key = hoverKey(h);
+  if (key !== lastHoverKey) { hover = h; lastHoverKey = key; applyHover(); }
+  renderer.render(scene, camera);
+}
+
+/* ---------- Старт ---------- */
+
+async function start() {
+  try {
+    const fontsReady = Promise.all([
+      document.fonts.load(`40px "PT Serif"`, 'Ая'),
+      document.fonts.load(`600 40px "Cormorant Garamond"`, 'Ая'),
+      document.fonts.load(`500 40px "IBM Plex Sans Condensed"`, 'Ая'),
+    ]).catch(() => {});
+    const data = await loadBible((f) => { ui.bar.style.width = `${Math.round(f * 100)}%`; });
+    ui.status.textContent = 'Зажигаем звёзды…';
+    await Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]);
+    prepare(data);
+    scene.add(buildDust());
+    buildGalaxy();
+    buildLegend();
+    updateChrome();
+    renderer.setAnimationLoop(tick);
+    ui.loader.classList.add('done');
+    toast('Перетаскивайте, чтобы осмотреться. Наведите на звезду, чтобы прочитать стих. Щелчок по скоплению открывает книгу.', 9000);
+    setupVR();
+  } catch (err) {
+    ui.status.textContent = `Не удалось загрузить Библию: ${err.message}`;
+  }
+}
+start();
