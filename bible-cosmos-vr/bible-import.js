@@ -217,6 +217,14 @@ export async function parseEpubBible(zip, parseXml, onProgress = () => {}) {
     onProgress((k + 1) / files.length);
   }
   const ordered = [...books.entries()].sort((a, b) => a[0] - b[0]);
+  // Таблица книг из приложения издания (кто написал, где, когда, охваченное время).
+  const tablePath = Object.values(items).find((p) => /(?:^|\/)1001061171\.xhtml$/.test(p));
+  if (tablePath) {
+    try {
+      const rows = readBooksTable(parseXml(await zip.text(tablePath)));
+      if (rows.length === 66) ordered.forEach(([num, bk]) => { bk.info = rows[num - 1]; });
+    } catch { /* таблицы может не быть */ }
+  }
   const sample = ordered.slice(0, 2).map(([, b]) => b.chapters[0]?.[0] || '').join(' ');
   const isRu = /[а-яё]/i.test(sample) || lang.startsWith('ru');
   const shorts = isRu ? SHORT_RU : SHORT_RO;
@@ -226,6 +234,22 @@ export async function parseEpubBible(zip, parseXml, onProgress = () => {}) {
     b: ordered.map(([num, bk]) => ({
       n: bk.name, s: shorts[num - 1] || bk.name, g: GENRES_66[num - 1], d: 0,
       c: bk.chapters.map((c) => c.map((v) => clean(v) || '—')),
+      ...(bk.info ? { info: bk.info } : {}),
     })),
   };
+}
+
+const sentenceCase = (h) => { const l = h.toLowerCase(); return l.charAt(0).toUpperCase() + l.slice(1); };
+// Строки таблицы: [[заголовок, значение], ...] для каждой книги по порядку; первый столбец (название) пропускается.
+function readBooksTable(doc) {
+  const out = [];
+  let head = [];
+  for (const tr of Array.from(doc.getElementsByTagName('tr'))) {
+    const cells = Array.from(tr.childNodes).filter((n) => n.nodeType === 1 && /^t[dh]$/i.test(n.localName));
+    const texts = cells.map((c) => clean(c.textContent));
+    if (cells.some((c) => /^th$/i.test(c.localName))) { head = texts.map(sentenceCase); continue; }
+    if (texts.length < 3 || !head.length) continue;
+    out.push(texts.slice(1).map((v, i) => [head[i + 1] || '', v]).filter(([h, v]) => h && v));
+  }
+  return out;
 }

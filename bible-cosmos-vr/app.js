@@ -67,10 +67,10 @@ const I18N = {
     },
     legendNote: (t, d) => `${t}. ${d ? 'Неканонические книги светятся приглушённо. ' : ''}Спираль идёт по порядку книг снизу вверх, по часовой стрелке.`,
     click: 'Щелчок', trigger: 'Курок', openBook: 'открыть книгу', openChapter: 'открыть главу',
-    verseHint: 'Щелчок по стиху: слушать с этого места',
+    verseHint: 'Щелчок: связи и история книги',
     toastGalaxy: 'Перетаскивайте, чтобы осмотреться. Наведите на звезду, чтобы прочитать стих. Щелчок по скоплению открывает книгу.',
     toastBook: 'Каждое скопление — глава. Наведите на звезду, чтобы прочитать стих. Щелчок открывает главу.',
-    toastChapter: 'Стихи стоят вокруг вас колонками. Щелчок по стиху читает его вслух, кнопка «Слушать главу» читает всю главу.',
+    toastChapter: 'Стихи стоят вокруг вас колонками. Щелчок по стиху показывает связанные стихи и историю книги. «Слушать главу» читает главу вслух.',
     notFound: (q) => `Не нашли «${q}». Попробуйте так: «Ин 3:16», «Бытие 1», «Пс 22».`,
     loaded: (t, nb, nv) => `Загружено: ${t}. Книг: ${nb}, ${nv}.`,
     fileError: (m) => `Не получилось прочитать файл: ${m} Формат описан в README.`,
@@ -88,10 +88,16 @@ const I18N = {
     noVoice: 'На устройстве нет русского голоса. Его можно добавить в настройках системы, раздел «Речь».',
     xrGalaxy: '← Галактика', xrChapters: '← Главы', xrPrev: '◀ Глава', xrNext: 'Глава ▶', xrListen: '▶ Слушать', xrStop: '■ Стоп', xrRandom: '✦ Случайный стих',
     introTitle: 'Библейский космос',
-    intro: ['Каждая звезда — стих. Каждое скопление — книга.', 'Наведите луч на звезду, чтобы прочитать стих.', 'Курок: войти в книгу, затем в главу.', 'В главе курок по стиху читает его вслух.', 'B или Y: назад. Стик: поворот. Кнопки — внизу.'],
+    intro: ['Каждая звезда — стих. Каждое скопление — книга.', 'Наведите луч на звезду, чтобы прочитать стих.', 'Курок: войти в книгу, затем в главу.', 'В главе курок по стиху открывает его связи.', 'B или Y: назад. Стик: поворот. Кнопки — внизу.'],
     loading: 'Загружаем текст Синодального перевода…', lighting: 'Зажигаем звёзды…',
     loadFail: (m) => `Не удалось загрузить Библию: ${m}`, httpFail: (c) => `Файл данных не загрузился (HTTP ${c}).`,
     switching: 'Загружаем русский текст…',
+    related: 'Связанные стихи', noRelated: 'Для этого стиха связей нет.', relatedLoading: 'Связи ещё загружаются…',
+    aboutBook: (n) => `О книге «${n}»`, author: 'Кто написал', place: 'Где написана', written: 'Когда написана', covers: 'Какое время описано',
+    circumstances: 'Обстоятельства', datesNote: 'Даты традиционные и приблизительные, у исследователей есть и другие мнения.',
+    listenFrom: '▶ Слушать отсюда', close: 'Закрыть', linksHint: (n) => `Связей: ${n}, они показаны дугами`,
+    xrefSource: 'Связи между стихами: OpenBible.info (CC BY).', writtenShort: 'написана',
+    xrClose: '✕ Закрыть',
     ownTitle2: 'Открыть свой файл Библии: EPUB, RTF, zip с ними или JSON. Файл не покидает ваше устройство.',
     reading: (p) => `Читаем файл… ${p}%`,
     unsupported: 'Подходят файлы EPUB, RTF, zip-архив с ними или JSON.',
@@ -119,10 +125,10 @@ const I18N = {
     },
     legendNote: (t, d) => `${t}. ${d ? 'Cărțile necanonice au o lumină mai slabă. ' : ''}Spirala urmează ordinea cărților, de jos în sus, în sensul acelor de ceasornic.`,
     click: 'Clic', trigger: 'Trăgaci', openBook: 'deschide cartea', openChapter: 'deschide capitolul',
-    verseHint: 'Clic pe verset: ascultă de aici',
+    verseHint: 'Clic: legături și istoria cărții',
     toastGalaxy: 'Trageți ca să priviți în jur. Duceți cursorul pe o stea ca să citiți versetul. Clic pe un roi de stele deschide cartea.',
     toastBook: 'Fiecare roi este un capitol. Duceți cursorul pe o stea ca să citiți versetul. Clic deschide capitolul.',
-    toastChapter: 'Versetele stau în coloane în jurul vostru. Clic pe un verset îl citește cu voce tare, butonul „Ascultă capitolul” citește tot capitolul.',
+    toastChapter: 'Versetele stau în coloane în jurul vostru. Clic pe un verset arată versetele legate și istoria cărții. „Ascultă capitolul” citește capitolul.',
     notFound: (q) => `Nu am găsit „${q}”. Încercați: „Ioan 3:16”, „Geneza 1”, „Ps 23”.`,
     loaded: (t, nb, nv) => `S-a încărcat: ${t}. Cărți: ${nb}, ${nv}.`,
     fileError: (m) => `Fișierul nu a putut fi citit: ${m} Formatul este descris în README.`,
@@ -140,10 +146,16 @@ const I18N = {
     noVoice: 'Pe dispozitiv nu există o voce românească. O puteți adăuga în setările sistemului, la „Vorbire”.',
     xrGalaxy: '← Galaxia', xrChapters: '← Capitole', xrPrev: '◀ Cap.', xrNext: 'Cap. ▶', xrListen: '▶ Ascultă', xrStop: '■ Stop', xrRandom: '✦ Verset aleatoriu',
     introTitle: 'Cosmosul biblic',
-    intro: ['Fiecare stea este un verset. Fiecare roi este o carte.', 'Îndreptați raza spre o stea ca să citiți versetul.', 'Trăgaciul: intrați în carte, apoi în capitol.', 'În capitol, trăgaciul pe un verset îl citește cu voce tare.', 'B sau Y: înapoi. Stick: rotire. Butoanele sunt jos.'],
+    intro: ['Fiecare stea este un verset. Fiecare roi este o carte.', 'Îndreptați raza spre o stea ca să citiți versetul.', 'Trăgaciul: intrați în carte, apoi în capitol.', 'În capitol, trăgaciul pe un verset arată legăturile.', 'B sau Y: înapoi. Stick: rotire. Butoanele sunt jos.'],
     loading: 'Se încarcă textul Bibliei (Cornilescu)…', lighting: 'Aprindem stelele…',
     loadFail: (m) => `Biblia nu s-a putut încărca: ${m}`, httpFail: (c) => `Fișierul de date nu s-a încărcat (HTTP ${c}).`,
     switching: 'Se încarcă textul românesc…',
+    related: 'Versete legate', noRelated: 'Acest verset nu are legături.', relatedLoading: 'Legăturile se încarcă încă…',
+    aboutBook: (n) => `Despre cartea „${n}”`, author: 'Cine a scris', place: 'Unde a fost scrisă', written: 'Când a fost scrisă', covers: 'Perioada descrisă',
+    circumstances: 'Împrejurări', datesNote: 'Datele sunt tradiționale și aproximative; cercetătorii au și alte păreri.',
+    listenFrom: '▶ Ascultă de aici', close: 'Închide', linksHint: (n) => `Legături: ${n}, arătate prin arcuri`,
+    xrefSource: 'Legăturile dintre versete: OpenBible.info (CC BY).', writtenShort: 'scrisă',
+    xrClose: '✕ Închide',
     ownTitle2: 'Deschideți propriul fișier Biblie: EPUB, RTF, o arhivă zip cu ele sau JSON. Fișierul nu părăsește dispozitivul.',
     reading: (p) => `Se citește fișierul… ${p}%`,
     unsupported: 'Sunt acceptate fișiere EPUB, RTF, o arhivă zip cu ele sau JSON.',
@@ -169,7 +181,7 @@ const ui = {
   stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
   loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
   q: $('q'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
-  legendToggle: $('legendToggle'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
+  legendToggle: $('legendToggle'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
 };
 
 /* ---------- Three.js: сцена ---------- */
@@ -334,11 +346,15 @@ function prepare(data) {
     const ci = new Uint16Array(n), vi = new Uint16Array(n), chStart = [];
     let k = 0;
     chapters.forEach((c, cIdx) => { chStart.push(k); c.forEach((_, vIdx) => { ci[k] = cIdx; vi[k] = vIdx; k++; }); });
-    const book = { i, name: b.n, short: b.s || b.n, g, deutero: !!b.d, chapters, n, ci, vi, chStart, offset: acc };
+    const codes = raw.length === 66 ? CODES66 : raw.length === 78 ? CODES78 : null;
+    const book = { i, name: b.n, short: b.s || b.n, g, deutero: !!b.d, chapters, n, ci, vi, chStart, offset: acc, code: codes ? codes[i] : null, info: b.info || null };
     acc += n;
     return book;
   });
   TOTAL = acc;
+  CODE_TO_BI = {};
+  BOOKS.forEach((b) => { if (b.code) CODE_TO_BI[b.code] = b.i; });
+  SYN = raw.length === 78;
   translationName = data.t || T().ownName;
   customActive = !!data.custom;
   buildSearchIndex();
@@ -598,6 +614,7 @@ function buildBook(bi) {
   const sub = makeLabel(`${gName(b.g)} · ${chaptersWord(C)} · ${versesWord(b.n)}`, { px: 56, color: GENRES[b.g].color, height: 0.55 });
   sub.position.copy(title.position).add(new THREE.Vector3(0, -1.15, 0));
   g.add(sub);
+
   return { group: g, items, pts, pos, bi };
 }
 
@@ -727,6 +744,8 @@ async function go(mode, opts = {}) {
   if (busy) return;
   busy = true;
   if (!opts.keepReading) stopReading();
+  closeDetail();
+  hideArcs();
   await waitFade(1);
   if (modeGroup) { scene.remove(modeGroup); disposeTree(modeGroup); modeGroup = null; }
   state.book = state.chapter = null;
@@ -752,11 +771,13 @@ async function go(mode, opts = {}) {
   clearHover();
   updateChrome();
   if (tts.reading) markReading(tts.reading.vi);
+  if (mode === 'chapter' && opts.select != null && opts.select >= 0) selectVerse(opts.select);
   await waitFade(0);
   busy = false;
 }
 
 function back() {
+  if (detail.open) { closeDetail(); return; }
   if (state.mode === 'chapter') go('book', { bi: state.bi });
   else if (state.mode === 'book') go('galaxy');
 }
@@ -925,6 +946,393 @@ ui.langRu.addEventListener('click', () => setLang('ru'));
 ui.langRo.addEventListener('click', () => setLang('ro'));
 ui.listen.addEventListener('click', toggleListen);
 
+
+/* ---------- Связи между стихами и справка о книгах ---------- */
+
+const CODES66 = ['Gen', 'Exod', 'Lev', 'Num', 'Deut', 'Josh', 'Judg', 'Ruth', '1Sam', '2Sam', '1Kgs', '2Kgs', '1Chr', '2Chr',
+  'Ezra', 'Neh', 'Esth', 'Job', 'Ps', 'Prov', 'Eccl', 'Song', 'Isa', 'Jer', 'Lam', 'Ezek', 'Dan', 'Hos', 'Joel', 'Amos',
+  'Obad', 'Jonah', 'Mic', 'Nah', 'Hab', 'Zeph', 'Hag', 'Zech', 'Mal', 'Matt', 'Mark', 'Luke', 'John', 'Acts', 'Rom',
+  '1Cor', '2Cor', 'Gal', 'Eph', 'Phil', 'Col', '1Thess', '2Thess', '1Tim', '2Tim', 'Titus', 'Phlm', 'Heb', 'Jas', '1Pet',
+  '2Pet', '1John', '2John', '3John', 'Jude', 'Rev'];
+// Порядок книг Синодального перевода (78 книг).
+const CODES78 = [...CODES66.slice(0, 14), 'PrMan', 'Ezra', 'Neh', '1Esd', 'Tob', 'Jdt', 'Esth', 'Job', 'Ps', 'Prov', 'Eccl',
+  'Song', 'Wis', 'Sir', 'Isa', 'Jer', 'Lam', 'EpJer', 'Bar', 'Ezek', 'Dan', ...CODES66.slice(27, 39), '1Macc', '2Macc', '3Macc',
+  '2Esd', 'Matt', 'Mark', 'Luke', 'John', 'Acts', 'Jas', '1Pet', '2Pet', '1John', '2John', '3John', 'Jude', ...CODES66.slice(44, 58), 'Rev'];
+const CODE_NUM = Object.fromEntries(CODES66.map((c, i) => [c, i + 1]));
+let CODE_TO_BI = {};
+let SYN = false;
+let XREF = null;
+let BOOKINFO = null;
+
+async function loadExtras() {
+  try { const r = await fetch('data/books-info.json'); if (r.ok) BOOKINFO = (await r.json()).b; } catch {}
+  if (state.mode === 'book') { renderBookPanel(); if (renderer.xr.isPresenting) rebuildPanel(); }
+  try { const r = await fetch('data/xref.json'); if (r.ok) XREF = (await r.json()).x; } catch {}
+  if (detail.open) selectVerse(detail.vi);
+}
+
+// Псалмы: нумерация Синодального перевода (по Септуагинте) <-> еврейская, в которой записаны связи.
+function synToHeb(c, v) {
+  if (c <= 8 || c >= 148) return [c, v];
+  if (c === 9) return v <= 20 ? [9, v] : [10, v - 20];
+  if (c <= 112) return [c + 1, v];
+  if (c === 113) return v <= 8 ? [114, v] : [115, v - 8];
+  if (c === 114) return [116, v];
+  if (c === 115) return [116, v + 9];
+  if (c <= 145) return [c + 1, v];
+  if (c === 146) return [147, v];
+  if (c === 147) return [147, v + 11];
+  return null;
+}
+function hebToSyn(c, v) {
+  if (c <= 8 || c >= 148) return [c, v];
+  if (c === 9) return [9, v];
+  if (c === 10) return [9, v + 20];
+  if (c <= 113) return [c - 1, v];
+  if (c === 114) return [113, v];
+  if (c === 115) return [113, v + 8];
+  if (c === 116) return v <= 9 ? [114, v] : [115, v - 9];
+  if (c <= 146) return [c - 1, v];
+  return v <= 11 ? [146, v] : [147, v - 11];
+}
+function toId(bi, ci, vi) {
+  const b = BOOKS[bi];
+  const n = b && CODE_NUM[b.code];
+  if (!n) return null;
+  let c = ci + 1, v = vi + 1;
+  if (SYN && b.code === 'Ps') { const m = synToHeb(c, v); if (!m) return null; [c, v] = m; }
+  return n * 1000000 + c * 1000 + v;
+}
+function fromId(id) {
+  const code = CODES66[Math.floor(id / 1000000) - 1];
+  const bi = CODE_TO_BI[code];
+  if (bi == null) return null;
+  let c = Math.floor(id / 1000) % 1000, v = id % 1000;
+  if (SYN && code === 'Ps') [c, v] = hebToSyn(c, v);
+  const b = BOOKS[bi];
+  const ci = THREE.MathUtils.clamp(c, 1, b.chapters.length) - 1;
+  const vi = THREE.MathUtils.clamp(v, 1, b.chapters[ci].length) - 1;
+  return { bi, ci, vi };
+}
+function related(bi, ci, vi) {
+  if (!XREF) return [];
+  const id = toId(bi, ci, vi);
+  const arr = id && XREF[id];
+  if (!arr) return [];
+  const out = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] < 0) continue;
+    const t = fromId(arr[i]);
+    if (!t) continue;
+    let end = null;
+    if (arr[i + 1] < 0) {
+      const e = fromId(-arr[i + 1]);
+      if (e && e.bi === t.bi && e.ci === t.ci && e.vi > t.vi) end = e.vi;
+    }
+    if (!out.some((o) => o.bi === t.bi && o.ci === t.ci && o.vi === t.vi)) out.push({ ...t, end });
+  }
+  return out;
+}
+const relRef = (r) => `${BOOKS[r.bi].short} ${r.ci + 1}:${r.vi + 1}${r.end != null ? '–' + (r.end + 1) : ''}`;
+
+// Справка о книге: из таблицы загруженного издания, иначе из data/books-info.json.
+function bookAbout(bi) {
+  const b = BOOKS[bi];
+  const own = BOOKINFO && b.code && BOOKINFO[b.code];
+  const loc = own && (own[LANG] || null);
+  let rows = [];
+  let fromEdition = false;
+  if (b.info && b.info.length) { rows = b.info; fromEdition = true; }
+  else if (loc) {
+    const L = T();
+    rows = [[L.author, loc.a], [L.place, loc.p], [L.written, loc.w], [L.covers, loc.t]].filter(([, v]) => v && v !== '—');
+  }
+  const circ = loc ? loc.c : '';
+  if (!rows.length && !circ) return null;
+  return { rows, circ, fromEdition };
+}
+function bookWritten(bi) {
+  const b = BOOKS[bi];
+  if (b.info && b.info.length) {
+    const r = b.info.find(([k]) => /завершено|încheierea|completed/i.test(k));
+    if (!r) return '';
+    const era = ((r[0].match(/\(([^)]*)\)/) || [])[1] || '').replace(/^гг?\.\s*/, '');
+    return era ? `${r[1]} ${era}` : r[1];
+  }
+  const loc = BOOKINFO && b.code && BOOKINFO[b.code] && BOOKINFO[b.code][LANG];
+  return loc && loc.w && loc.w !== '—' ? loc.w : '';
+}
+
+function makeAboutPlane(about, width) {
+  const c = document.createElement('canvas');
+  const W = 1400, pad = 46, g = c.getContext('2d');
+  const lines = [];
+  g.font = `40px ${FONT_TEXT}`;
+  for (const [k, v] of about.rows) lines.push({ k, v });
+  const circ = about.circ ? clampLines(wrap(g, about.circ, W - pad * 2), 4) : [];
+  c.width = W;
+  c.height = pad * 2 + lines.length * 56 + (circ.length ? 20 + circ.length * 54 : 0);
+  g.fillStyle = 'rgba(8, 11, 24, 0.82)';
+  g.beginPath(); g.roundRect(2, 2, W - 4, c.height - 4, 26); g.fill();
+  g.strokeStyle = 'rgba(243,195,91,0.35)'; g.lineWidth = 3; g.stroke();
+  g.textBaseline = 'top';
+  let y = pad;
+  for (const { k, v } of lines) {
+    g.font = `500 34px ${FONT_UI}`; g.fillStyle = '#9aa2bf'; g.fillText(k, pad, y + 6);
+    g.font = `40px ${FONT_TEXT}`; g.fillStyle = '#eef1fa'; g.fillText(v, pad + 560, y);
+    y += 56;
+  }
+  if (circ.length) {
+    y += 20;
+    g.font = `italic 38px ${FONT_TEXT}`; g.fillStyle = '#f6e7c1';
+    for (const ln of circ) { g.fillText(ln, pad, y); y += 54; }
+  }
+  const h = (width * c.height) / W;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(width, h), new THREE.MeshBasicMaterial({ map: makeTexture(c), transparent: true, depthWrite: false }));
+  m.userData.h = h;
+  return m;
+}
+
+// Дуги к связанным стихам в галактике.
+const arcs = (() => {
+  const MAXSEG = 12 * 24;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAXSEG * 2 * 3), 3));
+  const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: '#f3c35b', transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false }));
+  lines.frustumCulled = false;
+  lines.visible = false;
+  scene.add(lines);
+  const dots = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ffe7a3', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    d.visible = false;
+    d.scale.setScalar(1.6);
+    scene.add(d);
+    dots.push(d);
+  }
+  return { lines, dots, geo };
+})();
+function hideArcs() {
+  arcs.lines.visible = false;
+  for (const d of arcs.dots) d.visible = false;
+}
+function showArcs(pos, k, rel) {
+  const a = new THREE.Vector3(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]);
+  const arr = arcs.geo.attributes.position.array;
+  const SEG = 24;
+  let n = 0;
+  const p0 = new THREE.Vector3(), p1 = new THREE.Vector3(), ctrl = new THREE.Vector3(), b = new THREE.Vector3();
+  rel.slice(0, 12).forEach((r, i) => {
+    const it = galaxy.items[r.bi];
+    if (!it) return;
+    const kk = BOOKS[r.bi].chStart[r.ci] + r.vi;
+    b.set(it.pos[kk * 3], it.pos[kk * 3 + 1], it.pos[kk * 3 + 2]);
+    ctrl.addVectors(a, b).multiplyScalar(0.5).sub(EYE);
+    const dist = a.distanceTo(b);
+    if (ctrl.lengthSq() < 1e-6) ctrl.set(0, 1, 0);
+    ctrl.normalize().multiplyScalar(64 + dist * 0.35).add(EYE);
+    const at = (t, out) => out.set(0, 0, 0).addScaledVector(a, (1 - t) * (1 - t)).addScaledVector(ctrl, 2 * (1 - t) * t).addScaledVector(b, t * t);
+    for (let s = 0; s < SEG; s++) {
+      at(s / SEG, p0); at((s + 1) / SEG, p1);
+      arr.set([p0.x, p0.y, p0.z, p1.x, p1.y, p1.z], n * 6);
+      n++;
+    }
+    arcs.dots[i].position.copy(b);
+    arcs.dots[i].visible = true;
+  });
+  arcs.geo.setDrawRange(0, n * 2);
+  arcs.geo.attributes.position.needsUpdate = true;
+  arcs.lines.visible = n > 0;
+}
+
+// Выбранный стих: карточка со связями и справкой о книге.
+const detail = { open: false, vi: -1, vrGroup: null, vrButtons: [] };
+const selFrame = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: '#8fc4ff', transparent: true, opacity: 0.6, depthWrite: false }));
+selFrame.visible = false;
+scene.add(selFrame);
+
+function selectVerse(vi) {
+  const ch = state.chapter;
+  if (!ch) return;
+  const mesh = ch.items.find((m) => m.userData.vi === vi);
+  detail.open = true;
+  detail.vi = vi;
+  if (mesh) {
+    const h = mesh.geometry.parameters.height;
+    selFrame.scale.set(CARD.W + 0.05, h + 0.05, 1);
+    selFrame.quaternion.copy(mesh.quaternion);
+    const out = new THREE.Vector3().subVectors(mesh.position, ch.eye).setY(0).normalize();
+    selFrame.position.copy(mesh.position).addScaledVector(out, 0.006);
+    selFrame.visible = true;
+  }
+  const rel = related(state.bi, state.ci, vi);
+  if (renderer.xr.isPresenting) buildVrDetail(vi, rel, mesh);
+  else renderDetail(vi, rel);
+}
+function closeDetail() {
+  detail.open = false;
+  detail.vi = -1;
+  selFrame.visible = false;
+  ui.detail.hidden = true;
+  document.body.classList.remove('has-detail');
+  if (detail.vrGroup) { scene.remove(detail.vrGroup); disposeTree(detail.vrGroup); detail.vrGroup = null; }
+  detail.vrButtons = [];
+}
+function jumpTo(r) {
+  go('chapter', { bi: r.bi, ci: r.ci, focus: r.vi, select: r.vi });
+}
+
+const el2 = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+function renderDetail(vi, rel) {
+  const L = T(), bi = state.bi, ci = state.ci, b = BOOKS[bi];
+  const box = ui.detail;
+  box.replaceChildren();
+  const close = el2('button', 'close', '✕');
+  close.type = 'button';
+  close.setAttribute('aria-label', L.close);
+  close.addEventListener('click', closeDetail);
+  box.append(close, el2('div', 'ref', refOf(bi, ci, vi)), el2('p', 'text', verseText(bi, ci, vi)));
+  const listen = el2('button', 'btn primary', L.listenFrom);
+  listen.type = 'button';
+  listen.addEventListener('click', () => readFrom(vi));
+  box.append(el2('div', 'actions'));
+  box.lastChild.append(listen);
+  box.append(el2('h3', '', L.related));
+  if (!XREF) box.append(el2('p', 'muted', L.relatedLoading));
+  else if (!rel.length) box.append(el2('p', 'muted', L.noRelated));
+  else {
+    const ul = el2('ul', 'links');
+    for (const r of rel) {
+      const li = el2('li');
+      const btn = el2('button');
+      btn.type = 'button';
+      btn.append(el2('span', 'r', relRef(r)), el2('span', 't', verseText(r.bi, r.ci, r.vi)));
+      btn.addEventListener('click', () => jumpTo(r));
+      li.append(btn);
+      ul.append(li);
+    }
+    box.append(ul);
+  }
+  const about = bookAbout(bi);
+  if (about) {
+    box.append(el2('h3', '', L.aboutBook(b.name)));
+    const dl = el2('dl');
+    for (const [k, v] of about.rows) dl.append(el2('dt', '', k), el2('dd', '', v));
+    box.append(dl);
+    if (about.circ) box.append(el2('p', 'circ', about.circ));
+    if (!about.fromEdition) box.append(el2('p', 'muted small', L.datesNote));
+  }
+  box.append(el2('p', 'muted small', L.xrefSource));
+  box.hidden = false;
+  box.scrollTop = 0;
+  document.body.classList.add('has-detail');
+  placeDetail();
+}
+function placeDetail() {
+  ui.detail.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
+}
+addEventListener('resize', placeDetail);
+
+function renderBookPanel() {
+  const box = ui.bookInfo;
+  const about = state.mode === 'book' && !renderer.xr.isPresenting ? bookAbout(state.bi) : null;
+  if (!about) { box.hidden = true; return; }
+  const L = T();
+  box.replaceChildren(el2('h3', '', L.aboutBook(BOOKS[state.bi].name)));
+  const dl = el2('dl');
+  for (const [k, v] of about.rows) dl.append(el2('dt', '', k), el2('dd', '', v));
+  box.append(dl);
+  if (about.circ) box.append(el2('p', 'circ', about.circ));
+  if (!about.fromEdition) box.append(el2('p', 'muted small', L.datesNote));
+  box.hidden = false;
+  box.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
+}
+
+function makeRowButton(text, sub, action, w) {
+  const c = document.createElement('canvas');
+  c.width = Math.round(w * 1000); c.height = 92;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(14, 18, 36, 0.94)';
+  g.beginPath(); g.roundRect(3, 3, c.width - 6, c.height - 6, 18); g.fill();
+  g.strokeStyle = 'rgba(143,196,255,0.5)'; g.lineWidth = 3; g.stroke();
+  g.textBaseline = 'middle';
+  g.font = `600 36px ${FONT_UI}`; g.fillStyle = '#f3c35b';
+  g.fillText(text, 24, c.height / 2);
+  const tw = g.measureText(text).width;
+  if (sub) {
+    g.font = `34px ${FONT_TEXT}`; g.fillStyle = '#e8ecf7';
+    let s2 = sub;
+    const maxW = c.width - tw - 70;
+    while (s2.length > 4 && g.measureText(s2 + '…').width > maxW) s2 = s2.slice(0, -4);
+    g.fillText(s2 === sub ? sub : s2 + '…', 24 + tw + 22, c.height / 2 + 2);
+  }
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, (w * c.height) / c.width), new THREE.MeshBasicMaterial({ map: makeTexture(c), transparent: true, color: '#c9d0e6', depthTest: false }));
+  m.renderOrder = 35;
+  m.userData.action = action;
+  return m;
+}
+
+function buildVrDetail(vi, rel) {
+  if (detail.vrGroup) { scene.remove(detail.vrGroup); disposeTree(detail.vrGroup); }
+  const L = T(), bi = state.bi, ci = state.ci;
+  const grp = new THREE.Group();
+  const W = 1.05;
+  // Текст стиха и справка
+  const c = document.createElement('canvas');
+  const PX = 1100, pad = 40, g = c.getContext('2d');
+  g.font = `38px ${FONT_TEXT}`;
+  const text = clampLines(wrap(g, verseText(bi, ci, vi), PX - pad * 2), 7);
+  const about = bookAbout(bi);
+  const info = about ? about.rows.slice(0, 4).map(([k, v]) => `${k}: ${v}`) : [];
+  g.font = `italic 32px ${FONT_TEXT}`;
+  const circ = about && about.circ ? clampLines(wrap(g, about.circ, PX - pad * 2), 3) : [];
+  c.width = PX;
+  c.height = pad * 2 + 50 + text.length * 50 + 24 + info.length * 42 + (circ.length ? 12 + circ.length * 42 : 0) + 56;
+  g.fillStyle = 'rgba(8, 11, 24, 0.93)';
+  g.beginPath(); g.roundRect(2, 2, PX - 4, c.height - 4, 24); g.fill();
+  g.strokeStyle = 'rgba(143,196,255,0.55)'; g.lineWidth = 3; g.stroke();
+  g.textBaseline = 'top';
+  let y = pad;
+  g.font = `600 34px ${FONT_UI}`; g.fillStyle = '#f3c35b'; g.fillText(refOf(bi, ci, vi).toUpperCase(), pad, y); y += 50;
+  g.font = `38px ${FONT_TEXT}`; g.fillStyle = '#eef1fa';
+  for (const ln of text) { g.fillText(ln, pad, y); y += 50; }
+  y += 24;
+  g.font = `30px ${FONT_UI}`; g.fillStyle = '#9aa2bf';
+  for (const ln of info) { g.fillText(ln, pad, y); y += 42; }
+  if (circ.length) { y += 12; g.font = `italic 32px ${FONT_TEXT}`; g.fillStyle = '#f6e7c1'; for (const ln of circ) { g.fillText(ln, pad, y); y += 42; } }
+  y += 14;
+  g.font = `600 32px ${FONT_UI}`; g.fillStyle = '#8fc4ff';
+  g.fillText(XREF ? (rel.length ? L.related : L.noRelated) : L.relatedLoading, pad, y);
+  const ph = (W * c.height) / PX;
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(W, ph), new THREE.MeshBasicMaterial({ map: makeTexture(c), transparent: true, depthTest: false }));
+  panel.renderOrder = 34;
+  panel.position.set(0, ph / 2, 0);
+  grp.add(panel);
+  // Связанные стихи и действия
+  const buttons = [];
+  let by = -0.02;
+  for (const r of rel.slice(0, 6)) {
+    const btn = makeRowButton(relRef(r), verseText(r.bi, r.ci, r.vi), () => jumpTo(r), W);
+    const bh = btn.geometry.parameters.height;
+    btn.position.set(0, by - bh / 2, 0);
+    by -= bh + 0.012;
+    grp.add(btn); buttons.push(btn);
+  }
+  const listen = makeButton(L.xrListen, () => readFrom(vi), 0.3);
+  const close = makeButton(L.xrClose, closeDetail, 0.3);
+  const bh = listen.geometry.parameters.height;
+  listen.position.set(-0.17, by - bh / 2 - 0.01, 0);
+  close.position.set(0.17, by - bh / 2 - 0.01, 0);
+  grp.add(listen, close); buttons.push(listen, close);
+  const { pos, yaw } = headInfo();
+  const a = yaw + 0.62;
+  grp.position.set(Math.sin(a) * 1.35, -0.05, -Math.cos(a) * 1.35).add(pos);
+  grp.lookAt(pos.x, grp.position.y, pos.z);
+  scene.add(grp);
+  detail.vrGroup = grp;
+  detail.vrButtons = buttons;
+}
+
 /* ---------- Наведение ---------- */
 
 const raycaster = new THREE.Raycaster();
@@ -958,8 +1366,8 @@ function sphereHit(ray, items) {
 
 function pick(ray) {
   raycaster.ray.copy(ray);
-  if (xrPanel.group.visible) {
-    const hit = raycaster.intersectObjects(xrPanel.buttons, false)[0];
+  if (xrPanel.group.visible || detail.vrButtons.length) {
+    const hit = raycaster.intersectObjects([...(xrPanel.group.visible ? xrPanel.buttons : []), ...detail.vrButtons], false)[0];
     if (hit) return { type: 'ui', obj: hit.object, dist: hit.distance };
   }
   if (state.mode === 'galaxy') {
@@ -996,6 +1404,7 @@ function applyHover() {
   if (state.book) state.book.pts.material.uniforms.uHover.value = -1;
   if (state.chapter) state.chapter.pts.material.uniforms.uHover.value = -1;
   marker.visible = false;
+  hideArcs();
   const h = hover;
   renderer.domElement.classList.toggle('pointing', !!h && h.type !== 'card');
   if (!h) { showInfo(null); return; }
@@ -1013,12 +1422,16 @@ function applyHover() {
     hoveredLabel = it.label;
     it.label.scale.copy(it.label.userData.base).multiplyScalar(1.25);
     let ref = gName(b.g) + (b.deutero ? ' · ' + T().deutero : ''), text = '';
+    let hint = xrHint(T().openBook);
     if (h.k >= 0) {
       ref = refOf(h.bi, b.ci[h.k], b.vi[h.k]);
       text = verseText(h.bi, b.ci[h.k], b.vi[h.k]);
       showMarker(it.pos, h.k, 1.4);
+      const rel = related(h.bi, b.ci[h.k], b.vi[h.k]);
+      if (rel.length) { showArcs(it.pos, h.k, rel); hint = `${T().linksHint(rel.length)} · ${hint}`; }
     }
-    showInfo({ ref, title: b.name, meta: `${chaptersWord(b.chapters.length)} · ${versesWord(b.n)}`, text, hint: xrHint(T().openBook) });
+    const when = bookWritten(h.bi);
+    showInfo({ ref, title: b.name, meta: `${chaptersWord(b.chapters.length)} · ${versesWord(b.n)}${when ? ` · ${T().writtenShort} ${when}` : ''}`, text, hint });
     return;
   }
   if (h.type === 'chapter') {
@@ -1157,6 +1570,16 @@ function rebuildPanel() {
   lbl.renderOrder = 30;
   lbl.position.set(0, 0.08, 0);
   grp.add(lbl);
+  // В VR справка о книге висит слева от панели кнопок.
+  const about = state.mode === 'book' ? bookAbout(state.bi) : null;
+  if (about) {
+    const plane = makeAboutPlane(about, 0.62);
+    plane.material.depthTest = false;
+    plane.renderOrder = 30;
+    plane.position.set(-total / 2 - 0.36, 0.06, 0.12);
+    plane.rotation.y = 0.55;
+    grp.add(plane);
+  }
 }
 
 function updatePanel(dt) {
@@ -1218,8 +1641,8 @@ function activate(h) {
   else if (h.type === 'book') go('book', { bi: h.bi });
   else if (h.type === 'chapter') go('chapter', { bi: state.bi, ci: h.ci });
   else if (h.type === 'card') {
-    if (tts.reading && tts.reading.vi === h.vi) stopReading();
-    else readFrom(h.vi);
+    if (detail.open && detail.vi === h.vi) closeDetail();
+    else selectVerse(h.vi);
   }
 }
 
@@ -1285,7 +1708,8 @@ el.addEventListener('wheel', (e) => {
 }, { passive: false });
 addEventListener('keydown', (e) => {
   if (e.target === ui.q) return;
-  if (e.key === 'Escape' && tts.reading) stopReading();
+  if (e.key === 'Escape' && detail.open) closeDetail();
+  else if (e.key === 'Escape' && tts.reading) stopReading();
   else if (e.key === 'Escape' || e.key === 'Backspace') back();
   else if (e.key === ' ' && state.mode === 'chapter') { e.preventDefault(); toggleListen(); }
   else if (e.key === 'ArrowLeft') { look.yaw -= 0.15; applyLook(); }
@@ -1326,6 +1750,7 @@ function updateChrome() {
   ui.prevPage.disabled = state.page <= 0;
   ui.nextPage.disabled = state.page >= state.pages - 1;
   ui.legend.hidden = state.mode !== 'galaxy';
+  renderBookPanel();
   if (state.mode === 'book') toast(T().toastBook, 6000);
   if (state.mode === 'chapter' && !tts.reading) toast(T().toastChapter, 6000);
   updateListenButton();
@@ -1650,8 +2075,12 @@ async function start() {
     window.__started = true;
     toast(T().toastGalaxy, 9000);
     setupVR();
+    loadExtras();
   } catch (err) {
     ui.status.textContent = T().loadFail(err.message);
   }
 }
 start();
+
+// Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
+window.__bibleCosmos = { buildVrDetail, rebuildPanel, related, bookAbout, state };
