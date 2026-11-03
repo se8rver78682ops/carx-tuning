@@ -55,7 +55,7 @@ const I18N = {
     title: 'Библейский космос',
     quote: '«Он знает число звёзд и всех их называет по имени» (Псалом 147:4)',
     galaxy: 'Галактика книг', galaxyShort: 'Галактика',
-    chapter: (n) => `Глава ${n}`,
+    chapter: (n) => `Глава ${n}`, psalm: (n) => `Псалом ${n}`,
     chapterOf: (b, n) => `${b} · глава ${n}`,
     chapterComma: (b, n) => `${b}, глава ${n}`,
     chapters: (n) => `${n} ${plural(n, ['глава', 'главы', 'глав'])}`,
@@ -128,6 +128,7 @@ const I18N = {
     welcomeTitle: 'Откройте вашу Библию',
     welcomeText: 'Выберите файлы EPUB (можно сразу русский и румынский). Текст разбирается и хранится только на этом устройстве, открывать файлы нужно один раз.',
     welcomeBtn: 'Открыть файлы EPUB',
+    paraHint: 'Чтобы стихи шли абзацами и строками, как в книге, откройте EPUB заново: «Ещё → Открыть EPUB…».',
     needLang: 'Румынская Библия ещё не открыта. Выберите её файл EPUB.',
     needLangRu: 'Русская Библия ещё не открыта. Выберите её файл EPUB.',
     loadedMany: (list) => `Загружено: ${list}. Файлы остались только на этом устройстве.`,
@@ -138,7 +139,7 @@ const I18N = {
     title: 'Cosmosul biblic',
     quote: '„El socotește numărul stelelor și le dă nume la toate.” (Psalmul 147:4)',
     galaxy: 'Galaxia cărților', galaxyShort: 'Galaxia',
-    chapter: (n) => `Capitolul ${n}`,
+    chapter: (n) => `Capitolul ${n}`, psalm: (n) => `Psalmul ${n}`,
     chapterOf: (b, n) => `${b} · capitolul ${n}`,
     chapterComma: (b, n) => `${b}, capitolul ${n}`,
     chapters: (n) => `${n} ${roDe(n)}${n === 1 ? 'capitol' : 'capitole'}`,
@@ -211,6 +212,7 @@ const I18N = {
     welcomeTitle: 'Deschideți Biblia voastră',
     welcomeText: 'Alegeți fișierele EPUB (puteți alege deodată rusă și română). Textul este citit și păstrat doar pe acest dispozitiv; fișierele se deschid o singură dată.',
     welcomeBtn: 'Deschide fișierele EPUB',
+    paraHint: 'Ca versetele să apară pe paragrafe și versuri, ca în carte, deschideți din nou EPUB: „Mai mult → Deschide EPUB…”.',
     needLang: 'Biblia în română nu este încă deschisă. Alegeți fișierul ei EPUB.',
     needLangRu: 'Biblia în rusă nu este încă deschisă. Alegeți fișierul ei EPUB.',
     loadedMany: (list) => `S-a încărcat: ${list}. Fișierele rămân doar pe acest dispozitiv.`,
@@ -342,7 +344,7 @@ function makePoints(pos, col, size, group, phase) {
 /* ---------- Текст на холсте ---------- */
 
 function wrap(ctx, text, maxW) {
-  const words = text.split(' ');
+  const words = text.replace(/\n/g, ' ').split(' ');
   const lines = [];
   let line = '';
   for (const w of words) {
@@ -387,6 +389,7 @@ let BOOKS = [];
 let TOTAL = 0;
 let translationName = '';
 let customActive = false;
+let paraHintShown = false;
 
 function prepare(data) {
   const raw = data.b;
@@ -400,7 +403,7 @@ function prepare(data) {
     let k = 0;
     chapters.forEach((c, cIdx) => { chStart.push(k); c.forEach((_, vIdx) => { ci[k] = cIdx; vi[k] = vIdx; k++; }); });
     const codes = raw.length === 66 ? CODES66 : raw.length === 78 ? CODES78 : null;
-    const book = { i, name: b.n, short: b.s || b.n, g, deutero: !!b.d, chapters, n, ci, vi, chStart, offset: acc, code: codes ? codes[i] : null, info: b.info || null };
+    const book = { i, name: b.n, short: b.s || b.n, g, deutero: !!b.d, chapters, n, ci, vi, chStart, offset: acc, code: codes ? codes[i] : null, info: b.info || null, paras: Array.isArray(b.p) ? b.p.map((a) => new Set(a)) : null };
     acc += n;
     return book;
   });
@@ -410,6 +413,7 @@ function prepare(data) {
   SYN = raw.length === 78;
   translationName = data.t || T().ownName;
   customActive = !!data.custom;
+  if (data.custom && !raw.some((b) => Array.isArray(b.p)) && !paraHintShown) { paraHintShown = true; setTimeout(() => toast(T().paraHint, 10000), 2500); }
   buildSearchIndex();
 }
 const verseText = (bi, ci, vi) => BOOKS[bi].chapters[ci][vi];
@@ -681,76 +685,201 @@ const CARD = { R: 3.2, W: 1.3, PX: 720, pad: 26, font: 36, lh: 52, maxLines: 22,
 function applyCardScale(k) { CARD.font = Math.round(36 * k); CARD.lh = Math.round(52 * k); CARD.numW = Math.round(76 * Math.sqrt(k)); }
 CARD.ppm = CARD.PX / CARD.W;
 
-function drawCard(b, ci, vi, focused) {
+// Абзацы главы: из EPUB (разметка издания) или, если её нет, подобранные по длине текста.
+function paragraphStarts(b, ci) {
+  if (b.paras && b.paras[ci]) return b.paras[ci];
+  const vs = b.chapters[ci];
+  const set = new Set([0]);
+  let acc = 0;
+  vs.forEach((v, vi) => {
+    if (vi > 0 && acc > 380 && /[.!?»"”)]$/.test(vs[vi - 1].trim())) { set.add(vi); acc = 0; }
+    acc += v.length;
+  });
+  return set;
+}
+
+// Перенос строк с учётом стихотворных строк ('\n') и отступа первых строк под крупный номер главы.
+const POETRY_INDENT = 34;
+function layoutLines(g, text, fullW, indentW, indentLines) {
+  const out = [];
+  const parts = text.split('\n');
+  const poetry = parts.length > 1;
+  parts.forEach((part, pi) => {
+    const words = part.split(' ').filter(Boolean);
+    let line = '';
+    let seg = 0;
+    const shift = () => (out.length < indentLines ? indentW : 0) + (poetry && pi > 0 ? POETRY_INDENT : 0) + (poetry && seg > 0 ? POETRY_INDENT : 0);
+    const push = () => { out.push({ t: line, x: shift() }); seg++; };
+    for (const w of words) {
+      const t = line ? line + ' ' + w : w;
+      if (!line || g.measureText(t).width <= fullW - shift()) line = t;
+      else { push(); line = w; }
+    }
+    if (line) push();
+  });
+  return out;
+}
+
+// Карточка стиха — кусок «страницы»: стихи одного абзаца стыкуются без зазора.
+// pos: 'single' | 'first' | 'mid' | 'last' — место в абзаце (и в колонке).
+function drawCard(b, ci, vi, focused, pos = 'single') {
   const text = verseText(b.i, ci, vi);
+  const lead = vi === 0;
   const c = document.createElement('canvas');
   const g = c.getContext('2d');
+  const numW = CARD.numW;
+  const bigPx = Math.round(CARD.lh * 1.9);
+  g.font = `600 ${bigPx}px ${FONT_TITLE}`;
+  const bigW = lead ? g.measureText(String(ci + 1)).width + 18 : 0;
   g.font = `${CARD.font}px ${FONT_CARD}`;
-  const all = wrap(g, text, CARD.PX - CARD.pad * 2 - CARD.numW);
-  const lines = clampLines(all, CARD.maxLines);
+  const fullW = CARD.PX - CARD.pad * 2 - numW;
+  const indentW = lead ? Math.max(0, bigW - numW + 6) : 0;
+  let lines = layoutLines(g, text, fullW, indentW, lead ? 2 : 0);
+  const truncated = lines.length > CARD.maxLines;
+  if (truncated) { lines = lines.slice(0, CARD.maxLines); lines[lines.length - 1].t += ' …'; }
+  const topPad = pos === 'first' || pos === 'single' ? 26 : 6;
+  const botPad = pos === 'last' || pos === 'single' ? 24 : 6;
   c.width = CARD.PX;
-  c.height = Math.max(CARD.pad * 2 + lines.length * CARD.lh + 6, 112);
-  const accent = '#' + bookColor(b).clone().lerp(new THREE.Color('#ffffff'), 0.25).getHexString();
-  const bg = g.createLinearGradient(0, 0, 0, c.height);
-  bg.addColorStop(0, focused ? 'rgba(74, 56, 18, 0.93)' : 'rgba(18, 22, 44, 0.88)');
-  bg.addColorStop(1, focused ? 'rgba(38, 28, 8, 0.93)' : 'rgba(6, 8, 20, 0.88)');
-  g.fillStyle = bg;
+  c.height = Math.max(topPad + Math.max(lines.length, lead ? 2 : 1) * CARD.lh + botPad, 56);
+  const W = c.width, H = c.height, r = 22;
+  const roundTop = pos === 'first' || pos === 'single';
+  const roundBot = pos === 'last' || pos === 'single';
+  g.fillStyle = focused ? 'rgba(72, 55, 18, 0.93)' : 'rgba(12, 15, 33, 0.9)';
   g.beginPath();
-  g.roundRect(1, 1, c.width - 2, c.height - 2, 22);
+  g.roundRect(1, 0, W - 2, H, [roundTop ? r : 0, roundTop ? r : 0, roundBot ? r : 0, roundBot ? r : 0]);
   g.fill();
+  // Рамка только по внешнему контуру абзаца: внутренние стыки остаются невидимыми.
   g.lineWidth = 2;
-  g.strokeStyle = focused ? '#f3c35b' : 'rgba(243, 195, 91, 0.3)';
+  g.strokeStyle = focused ? '#f3c35b' : 'rgba(243, 195, 91, 0.26)';
+  g.beginPath();
+  g.roundRect(1, roundTop ? 1 : -30, W - 2, H - 2 + (roundTop ? 0 : 30) + (roundBot ? 0 : 30), [roundTop ? r : 0, roundTop ? r : 0, roundBot ? r : 0, roundBot ? r : 0]);
   g.stroke();
-  // Номер стиха — крупная золотая цифра, как в старинных изданиях.
+  const accent = '#' + bookColor(b).clone().lerp(new THREE.Color('#ffffff'), 0.3).getHexString();
   g.textBaseline = 'top';
-  g.textAlign = 'center';
-  g.fillStyle = accent;
-  g.shadowColor = accent;
-  g.shadowBlur = 14;
-  g.font = `600 ${CARD.font + 22}px ${FONT_TITLE}`;
-  g.fillText(String(vi + 1), CARD.pad + CARD.numW / 2 - 8, CARD.pad - 10);
-  g.shadowBlur = 0;
-  g.textAlign = 'left';
-  g.fillStyle = '#f2f4fb';
-  g.font = `${CARD.font}px ${FONT_CARD}`;
-  lines.forEach((ln, k) => g.fillText(ln, CARD.pad + CARD.numW, CARD.pad + k * CARD.lh + 4));
-  if (isBookmarked(b.i, ci, vi)) {
+  if (lead) {
+    // Крупный номер главы в начале, как в печатных Библиях.
     g.fillStyle = '#f3c35b';
-    g.font = `40px ${FONT_UI}`;
+    g.shadowColor = 'rgba(243, 195, 91, 0.55)';
+    g.shadowBlur = 18;
+    g.font = `600 ${bigPx}px ${FONT_TITLE}`;
+    g.fillText(String(ci + 1), CARD.pad, topPad - Math.round(bigPx * 0.12));
+    g.shadowBlur = 0;
+  } else {
     g.textAlign = 'right';
-    g.fillText('★', c.width - 14, 8);
+    g.fillStyle = accent;
+    g.font = `600 ${Math.round(CARD.font * 0.82)}px ${FONT_TITLE}`;
+    g.fillText(String(vi + 1), CARD.pad + numW - 14, topPad + 6);
     g.textAlign = 'left';
   }
-  return { canvas: c, truncated: all.length > lines.length, h: c.height / CARD.ppm };
+  g.fillStyle = '#eef1fa';
+  g.font = `${CARD.font}px ${FONT_CARD}`;
+  lines.forEach((ln, k) => g.fillText(ln.t, CARD.pad + numW + ln.x, topPad + k * CARD.lh + 4));
+  if (isBookmarked(b.i, ci, vi)) {
+    g.fillStyle = '#f3c35b';
+    g.font = `36px ${FONT_UI}`;
+    g.textAlign = 'right';
+    g.fillText('★', W - 14, Math.max(4, topPad - 20));
+    g.textAlign = 'left';
+  }
+  return { canvas: c, truncated, h: H / CARD.ppm };
+}
+
+// Заголовок главы: книга, «Глава N» крупно, орнамент и число стихов.
+function makeChapterHeader(b, ci, page, pages) {
+  const c = document.createElement('canvas');
+  const W = 1600, H = 420;
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const glow = g.createRadialGradient(W / 2, H / 2, 20, W / 2, H / 2, W * 0.45);
+  glow.addColorStop(0, 'rgba(4, 5, 14, 0.75)');
+  glow.addColorStop(1, 'rgba(4, 5, 14, 0)');
+  g.fillStyle = glow;
+  g.fillRect(0, 0, W, H);
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = '#' + bookColor(b).clone().lerp(new THREE.Color('#ffffff'), 0.45).getHexString();
+  g.font = `600 44px ${FONT_UI}`;
+  g.letterSpacing = '10px';
+  g.fillText(b.name.toUpperCase(), W / 2, 58);
+  g.letterSpacing = '0px';
+  g.fillStyle = '#f6e7c1';
+  g.shadowColor = 'rgba(243, 195, 91, 0.45)';
+  g.shadowBlur = 26;
+  g.font = `600 150px ${FONT_TITLE}`;
+  g.fillText(b.code === 'Ps' ? T().psalm(ci + 1) : T().chapter(ci + 1), W / 2, 178);
+  g.shadowBlur = 0;
+  // Орнамент: тонкие золотые линии и звезда.
+  g.strokeStyle = 'rgba(243, 195, 91, 0.75)';
+  g.lineWidth = 3;
+  g.beginPath();
+  g.moveTo(W / 2 - 330, 292); g.lineTo(W / 2 - 40, 292);
+  g.moveTo(W / 2 + 40, 292); g.lineTo(W / 2 + 330, 292);
+  g.stroke();
+  g.fillStyle = '#f3c35b';
+  g.font = `48px ${FONT_UI}`;
+  g.fillText('✦', W / 2, 292);
+  g.fillStyle = '#aeb6d2';
+  g.font = `40px ${FONT_UI}`;
+  g.fillText(versesWord(b.chapters[ci].length) + (pages > 1 ? ` · ${T().page(page + 1, pages)}` : ''), W / 2, 370);
+  const w = 1.7, h = (w * H) / W;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: makeTexture(c), transparent: true, depthWrite: false }));
+  m.userData.h = h;
+  return m;
 }
 
 function buildChapter(bi, ci, focus, page) {
   const b = BOOKS[bi];
   const verses = b.chapters[ci];
+  const n = verses.length;
   const { pos: eye, yaw } = headInfo();
-  const top = eye.y + 0.95, maxH = 2.3, gap = 0.06;
-  const cards = verses.map((_, vi) => drawCard(b, ci, vi, vi === focus));
-  // Раскладка по колонкам сверху вниз.
+  const top = eye.y + 0.95, maxH = 2.3, PG = 0.075;
+  const starts = paragraphStarts(b, ci);
+  const paraPos = (vi) => {
+    const first = starts.has(vi), last = vi === n - 1 || starts.has(vi + 1);
+    return first && last ? 'single' : first ? 'first' : last ? 'last' : 'mid';
+  };
+  // 1) Карточки с местом в абзаце.
+  const pos = verses.map((_, vi) => paraPos(vi));
+  let cards = verses.map((_, vi) => drawCard(b, ci, vi, vi === focus, pos[vi]));
+  // 2) Колонки одинаковой высоты; новый абзац внутри колонки отделяется зазором.
+  const gapBefore = (vi, inCol) => (inCol && starts.has(vi) ? PG : 0);
+  let total = 0;
+  cards.forEach((card, vi) => { total += card.h + gapBefore(vi, vi > 0); });
+  const ncols = Math.max(1, Math.ceil(total / maxH));
+  const target = total / ncols;
   const cols = [];
   let cur = [], used = 0;
   cards.forEach((card, vi) => {
-    if (cur.length && used + card.h > maxH) { cols.push(cur); cur = []; used = 0; }
+    const add = card.h + gapBefore(vi, cur.length > 0);
+    const over = used + add > maxH;
+    const balanced = cols.length < ncols - 1 && used + add / 2 > target;
+    if (cur.length && (over || balanced)) { cols.push(cur); cur = []; used = 0; }
     cur.push(vi);
-    used += card.h + gap;
+    used += card.h + gapBefore(vi, cur.length > 1);
   });
   if (cur.length) cols.push(cur);
+  // 3) На стыке колонок абзац получает скругления сверху/снизу.
+  const colStartSet = new Set(cols.map((c) => c[0])), colEndSet = new Set(cols.map((c) => c[c.length - 1]));
+  verses.forEach((_, vi) => {
+    let p = pos[vi];
+    if (colStartSet.has(vi)) p = p === 'mid' ? 'first' : p === 'last' ? 'single' : p;
+    if (colEndSet.has(vi)) p = p === 'mid' ? 'last' : p === 'first' ? 'single' : p;
+    if (p !== pos[vi]) { pos[vi] = p; cards[vi] = drawCard(b, ci, vi, vi === focus, p); }
+  });
+
   const colStep = (CARD.W + 0.16) / CARD.R;
   const PER_PAGE = Math.max(3, Math.floor((Math.PI * 2 * 0.86) / colStep));
   const pages = Math.ceil(cols.length / PER_PAGE);
   if (focus >= 0) page = Math.floor(cols.findIndex((c) => c.includes(focus)) / PER_PAGE);
   page = THREE.MathUtils.clamp(page, 0, pages - 1);
   const pageCols = cols.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
-  let offset = pageCols.length <= 3 ? (pageCols.length - 1) / 2 : 1;
+  let offset = (pageCols.length - 1) / 2;
+  if (pageCols.length > 5) offset = 2;
   if (focus >= 0) offset = pageCols.findIndex((c) => c.includes(focus));
 
   const g = new THREE.Group();
   const items = [];
-  const starPos = [], starCol = [];
+  const starPos = [], starCol = [], thread = [];
   const accent = bookColor(b);
   const onPage = new Set(pageCols.flat());
   cards.forEach((card, vi) => { if (!onPage.has(vi)) card.canvas.width = 0; });
@@ -759,39 +888,46 @@ function buildChapter(bi, ci, focus, page) {
     const dir = new THREE.Vector3(Math.sin(az), 0, -Math.cos(az));
     const right = new THREE.Vector3(Math.cos(az), 0, Math.sin(az));
     let y = top;
-    for (const vi of list) {
+    let prevStar = null;
+    list.forEach((vi, k) => {
       const card = cards[vi];
+      if (k > 0) y -= gapBefore(vi, true);
       const mesh = new THREE.Mesh(
         new THREE.PlaneGeometry(CARD.W, card.h),
-        new THREE.MeshBasicMaterial({ map: makeTexture(card.canvas), transparent: true, opacity: 0.94, depthWrite: false }),
+        new THREE.MeshBasicMaterial({ map: makeTexture(card.canvas), transparent: true, opacity: 0.95, depthWrite: false }),
       );
       const p = eye.clone().addScaledVector(dir, CARD.R);
       p.y = y - card.h / 2;
       mesh.position.copy(p);
       mesh.lookAt(eye.x, p.y, eye.z);
-      mesh.userData = { vi, truncated: card.truncated, home: mesh.position.clone(), order: items.length };
+      mesh.userData = { vi, truncated: card.truncated, home: mesh.position.clone(), order: items.length, pos: pos[vi] };
       g.add(mesh);
       items.push(mesh);
-      const sp = p.clone().addScaledVector(right, -(CARD.W / 2 + 0.07)).add(new THREE.Vector3(0, card.h / 2 - 0.05, 0)).addScaledVector(dir, -0.02);
+      // Звезда стиха на полях, звёзды колонки соединены тонкой нитью.
+      const topOff = (pos[vi] === 'first' || pos[vi] === 'single' ? 26 : 6) / CARD.ppm + CARD.lh / CARD.ppm / 2;
+      const sp = p.clone().addScaledVector(right, -(CARD.W / 2 + 0.06)).add(new THREE.Vector3(0, card.h / 2 - topOff, 0)).addScaledVector(dir, -0.02);
       starPos.push(sp.x, sp.y, sp.z);
-      const c = vi === focus ? new THREE.Color('#ffe7a3') : accent;
+      const c = vi === focus ? new THREE.Color('#ffe7a3') : vi === 0 ? new THREE.Color('#f3c35b') : accent;
       starCol.push(c.r, c.g, c.b);
-      y -= card.h + gap;
-    }
+      if (prevStar) thread.push(prevStar.x, prevStar.y, prevStar.z, sp.x, sp.y, sp.z);
+      prevStar = sp;
+      y -= card.h;
+    });
   });
-  const n = starPos.length / 3;
-  const pts = makePoints(new Float32Array(starPos), new Float32Array(starCol), new Float32Array(n).fill(0.07), new Float32Array(n).map((_, i) => i), new Float32Array(n).map(() => Math.random() * 6.28));
+  const ns = starPos.length / 3;
+  const pts = makePoints(new Float32Array(starPos), new Float32Array(starCol), new Float32Array(ns).map((_, i) => (i === 0 && page === 0 ? 0.1 : 0.06)), new Float32Array(ns).map((_, i) => i), new Float32Array(ns).map(() => Math.random() * 6.28));
   g.add(pts);
-  const title = makeLabel(`✦  ${T().chapterOf(b.name, ci + 1)}  ✦`, { font: FONT_TITLE, px: 120, weight: 600, color: '#f6e7c1', height: 0.36 });
-  const fd = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
-  title.position.copy(eye).addScaledVector(fd, CARD.R + 0.25);
-  title.position.y = top + 0.33;
-  g.add(title);
-  if (pages > 1) {
-    const pl = makeLabel(T().page(page + 1, pages), { px: 52, color: '#b6bdd6', height: 0.13 });
-    pl.position.copy(title.position).add(new THREE.Vector3(0, -0.22, 0));
-    g.add(pl);
+  if (thread.length) {
+    const tg = new THREE.BufferGeometry();
+    tg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(thread), 3));
+    g.add(new THREE.LineSegments(tg, new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false })));
   }
+  const title = makeChapterHeader(b, ci, page, pages);
+  const fd = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
+  title.position.copy(eye).addScaledVector(fd, CARD.R + 0.12);
+  title.position.y = top + 0.06 + title.userData.h / 2;
+  title.lookAt(eye.x, title.position.y, eye.z);
+  g.add(title);
   const pageOf = [];
   cols.forEach((list, cIdx) => list.forEach((vi) => { pageOf[vi] = Math.floor(cIdx / PER_PAGE); }));
   return { group: g, items, pts, page, pages, bi, ci, pageOf, eye, title };
@@ -859,7 +995,7 @@ const fx = (() => {
           anims.push({ t: -delay, dur: 0.85, f: (k) => {
             m.position.lerpVectors(from, home, k);
             m.scale.setScalar(0.25 + 0.75 * k);
-            m.material.opacity = 0.94 * k;
+            m.material.opacity = 0.95 * k;
           } });
         });
         const u = ch.pts.material.uniforms.uBoost;
@@ -1080,7 +1216,7 @@ function markReading(vi) {
   const mesh = ch.items.find((m) => m.userData.vi === vi);
   if (!mesh) return;
   const h = mesh.geometry.parameters.height;
-  readFrame.scale.set(CARD.W + 0.035, h + 0.035, 1);
+  readFrame.scale.set(CARD.W + 0.035, h + 0.01, 1);
   readFrame.quaternion.copy(mesh.quaternion);
   const home = mesh.userData.home || mesh.position;
   const out = new THREE.Vector3().subVectors(home, ch.eye).setY(0).normalize();
@@ -1403,7 +1539,7 @@ function selectVerse(vi) {
   detail.vi = vi;
   if (mesh) {
     const h = mesh.geometry.parameters.height;
-    selFrame.scale.set(CARD.W + 0.05, h + 0.05, 1);
+    selFrame.scale.set(CARD.W + 0.05, h + 0.012, 1);
     selFrame.quaternion.copy(mesh.quaternion);
     const home = mesh.userData.home || mesh.position;
     const out = new THREE.Vector3().subVectors(home, ch.eye).setY(0).normalize();
@@ -1886,7 +2022,7 @@ function refreshCard(bi, ci, vi) {
   if (!ch || ch.bi !== bi || ch.ci !== ci) return;
   const mesh = ch.items.find((m) => m.userData.vi === vi);
   if (!mesh) return;
-  const card = drawCard(BOOKS[bi], ci, vi, vi === state.focus);
+  const card = drawCard(BOOKS[bi], ci, vi, vi === state.focus, mesh.userData.pos);
   mesh.material.map.dispose();
   mesh.material.map = makeTexture(card.canvas);
   mesh.material.needsUpdate = true;
@@ -1962,7 +2098,7 @@ function showBookmarks() {
 
 /* Поиск по словам во всём тексте; найденные стихи подсвечиваются в галактике. */
 let searchIndex2 = null;
-const normText = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ё/g, 'е');
+const normText = (s) => s.replace(/\s+/g, ' ').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ё/g, 'е');
 function textSearch(q) {
   const nq = normText(q.trim());
   if (nq.replace(/\s/g, '').length < 3) { toast(T().searchShort, 4000); return; }
@@ -2293,7 +2429,7 @@ function clearHover() { hover = null; lastHoverKey = '__'; applyHover(); }
 
 function applyHover() {
   if (hoveredLabel) { hoveredLabel.scale.copy(hoveredLabel.userData.base); hoveredLabel = null; }
-  if (hoveredCard) { hoveredCard.scale.setScalar(1); hoveredCard.material.opacity = 0.94; hoveredCard = null; }
+  if (hoveredCard) { hoveredCard.material.color.set('#ffffff'); hoveredCard.material.opacity = 0.95; hoveredCard = null; }
   if (hoveredBtn) { hoveredBtn.material.color.set('#c9d0e6'); hoveredBtn.scale.setScalar(1); hoveredBtn = null; }
   for (const it of galaxy.items) it.pts.material.uniforms.uBoost.value = 1;
   if (state.book) state.book.pts.material.uniforms.uHover.value = -1;
@@ -2343,7 +2479,7 @@ function applyHover() {
   }
   if (h.type === 'card') {
     hoveredCard = h.obj;
-    hoveredCard.scale.setScalar(1.035);
+    hoveredCard.material.color.set('#fff0cc');
     hoveredCard.material.opacity = 1;
     state.chapter.pts.material.uniforms.uHover.value = state.chapter.items.indexOf(h.obj);
     if (h.obj.userData.truncated || !renderer.xr.isPresenting) {

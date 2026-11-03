@@ -179,16 +179,27 @@ export async function parseEpubBible(zip, parseXml, onProgress = () => {}) {
     if (!book) {
       const nav = Array.from(body.getElementsByTagName('p')).find((p) => /\bw_biblebookname\b/.test(p.getAttribute('class') || ''));
       const a = nav && nav.getElementsByTagName('a')[0];
-      book = { name: a ? clean(a.textContent) : `#${num}`, chapters: [], cur: null, superscription: '' };
+      book = { name: a ? clean(a.textContent) : `#${num}`, chapters: [], paras: [], cur: null, superscription: '' };
       books.set(num, book);
     }
     for (const p of Array.from(body.getElementsByTagName('p'))) {
       const cls = ' ' + (p.getAttribute('class') || '') + ' ';
       if (/ sw /.test(cls)) { book.superscription += ' ' + p.textContent; continue; }
       if (!/ s[blz] /.test(cls)) continue; // заголовки, буквы еврейского алфавита, сноски и т. п.
+      const prose = / sb /.test(cls);
+      // Абзац начинается, если стих стоит в самом начале абзаца прозы или стихотворной строфы.
+      let atStart = true;
+      // Стихотворная строка (sl/sz) с новой строки внутри стиха.
+      let lineBreak = !prose;
       const walk = (node) => {
         for (const ch of Array.from(node.childNodes)) {
           if (ch.nodeType === 3) {
+            if (book.cur && ch.nodeValue.trim()) {
+              const cur = book.cur.ch;
+              if (lineBreak && cur[book.cur.v].trim()) cur[book.cur.v] += '\n';
+              lineBreak = false;
+              atStart = false;
+            }
             if (book.cur) book.cur.ch[book.cur.v] += ch.nodeValue;
             continue;
           }
@@ -204,6 +215,9 @@ export async function parseEpubBible(zip, parseXml, onProgress = () => {}) {
             while (arr.length <= vi) arr.push('');
             if (vi === 0 && book.superscription.trim()) { arr[0] = `(${clean(book.superscription)}) `; book.superscription = ''; }
             book.cur = { ch: arr, v: vi };
+            if (!book.paras[ci]) book.paras[ci] = new Set([0]);
+            if (atStart) book.paras[ci].add(vi);
+            lineBreak = false;
             continue;
           }
           if (name === 'sup' || /\b(w_ch|pageNum)\b/.test(c)) continue;
@@ -212,7 +226,7 @@ export async function parseEpubBible(zip, parseXml, onProgress = () => {}) {
         }
       };
       walk(p);
-      if (book.cur) book.cur.ch[book.cur.v] += ' ';
+      if (book.cur && prose) book.cur.ch[book.cur.v] += ' ';
     }
     onProgress((k + 1) / files.length);
   }
@@ -233,7 +247,8 @@ export async function parseEpubBible(zip, parseXml, onProgress = () => {}) {
     lang: isRu ? 'ru' : 'ro',
     b: ordered.map(([num, bk]) => ({
       n: bk.name, s: shorts[num - 1] || bk.name, g: GENRES_66[num - 1], d: 0,
-      c: bk.chapters.map((c) => c.map((v) => clean(v) || '—')),
+      c: bk.chapters.map((c) => c.map((v) => v.split('\n').map(clean).filter(Boolean).join('\n') || '—')),
+      p: bk.chapters.map((c, ci) => [...(bk.paras[ci] || new Set([0]))].filter((v) => v < c.length).sort((x, y) => x - y)),
       ...(bk.info ? { info: bk.info } : {}),
     })),
   };
