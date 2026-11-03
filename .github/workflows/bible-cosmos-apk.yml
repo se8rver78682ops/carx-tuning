@@ -23,11 +23,13 @@ jobs:
         with:
           node-version: '20'
 
-      - uses: android-actions/setup-android@v3
-
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      # Android SDK уже установлен на ubuntu-latest (ANDROID_HOME); Gradle сам докачает нужную платформу.
+      - name: Check Android SDK
+        run: echo "ANDROID_HOME=$ANDROID_HOME" && ls "$ANDROID_HOME"
 
       - name: Prepare web assets
         run: bash bible-cosmos-vr/android/prepare-assets.sh
