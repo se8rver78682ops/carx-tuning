@@ -35,6 +35,7 @@ const GENRES_66 = [
 const FONT_UI = '"IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
 const FONT_TEXT = '"PT Serif", Georgia, serif';
 const FONT_TITLE = '"Cormorant Garamond", "PT Serif", Georgia, serif';
+const FONT_CARD = '"Lora", "PT Serif", Georgia, serif';
 
 const plural = (n, f) => {
   const a = n % 100, b = n % 10;
@@ -99,6 +100,9 @@ const I18N = {
     listenFrom: '▶ Слушать отсюда', close: 'Закрыть', linksHint: (n) => `Связей: ${n}, они показаны дугами`,
     xrefSource: 'Связи между стихами: OpenBible.info (CC BY).', writtenShort: 'написана',
     xrClose: '✕ Закрыть',
+    home: '⌂ В начало', homeTitle: 'Вернуться к галактике книг', xrHome: '⌂ Начало',
+    hintsOn: 'Подсказки: вкл', hintsOff: 'Подсказки: выкл', hintsTitle: 'Показывать или скрывать подсказки',
+    hideHint: 'Скрыть подсказку',
     ownTitle2: 'Открыть свой файл Библии: EPUB, RTF, zip с ними или JSON. Файл не покидает ваше устройство.',
     reading: (p) => `Читаем файл… ${p}%`,
     unsupported: 'Подходят файлы EPUB, RTF, zip-архив с ними или JSON.',
@@ -157,6 +161,9 @@ const I18N = {
     listenFrom: '▶ Ascultă de aici', close: 'Închide', linksHint: (n) => `Legături: ${n}, arătate prin arcuri`,
     xrefSource: 'Legăturile dintre versete: OpenBible.info (CC BY).', writtenShort: 'scrisă',
     xrClose: '✕ Închide',
+    home: '⌂ Început', homeTitle: 'Înapoi la galaxia cărților', xrHome: '⌂ Început',
+    hintsOn: 'Indicii: pornite', hintsOff: 'Indicii: oprite', hintsTitle: 'Arată sau ascunde indiciile',
+    hideHint: 'Ascunde indiciul',
     ownTitle2: 'Deschideți propriul fișier Biblie: EPUB, RTF, o arhivă zip cu ele sau JSON. Fișierul nu părăsește dispozitivul.',
     reading: (p) => `Se citește fișierul… ${p}%`,
     unsupported: 'Sunt acceptate fișiere EPUB, RTF, o arhivă zip cu ele sau JSON.',
@@ -182,7 +189,7 @@ const ui = {
   stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
   loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
   q: $('q'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
-  legendToggle: $('legendToggle'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
+  legendToggle: $('legendToggle'), home: $('home'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
 };
 
 /* ---------- Three.js: сцена ---------- */
@@ -597,8 +604,8 @@ function buildBook(bi) {
       grp[k] = c;
       ph[k] = Math.random() * 6.28;
     }
-    const lbl = makeLabel(String(c + 1), { px: 64, weight: 500, color: '#' + base.clone().lerp(white, 0.4).getHexString(), height: 0.5 });
-    lbl.position.copy(center).addScaledVector(up, -(rc + 0.38));
+    const lbl = makeLabel(String(c + 1), { font: FONT_TITLE, px: 96, weight: 600, color: '#' + base.clone().lerp(white, 0.5).getHexString(), height: 0.78 });
+    lbl.position.copy(center).addScaledVector(up, -(rc + 0.52));
     g.add(lbl);
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: base, transparent: true, opacity: 0.12, depthWrite: false, blending: THREE.AdditiveBlending }));
     halo.position.copy(center);
@@ -621,34 +628,42 @@ function buildBook(bi) {
   return { group: g, items, pts, pos, bi };
 }
 
-const CARD = { R: 3.0, W: 1.15, PX: 640, pad: 22, font: 30, lh: 42, maxLines: 26 };
+const CARD = { R: 3.2, W: 1.3, PX: 720, pad: 26, font: 36, lh: 52, maxLines: 22, numW: 76 };
 CARD.ppm = CARD.PX / CARD.W;
 
 function drawCard(b, ci, vi, focused) {
   const text = verseText(b.i, ci, vi);
   const c = document.createElement('canvas');
   const g = c.getContext('2d');
-  const numW = 58;
-  g.font = `${CARD.font}px ${FONT_TEXT}`;
-  const all = wrap(g, text, CARD.PX - CARD.pad * 2 - numW);
+  g.font = `${CARD.font}px ${FONT_CARD}`;
+  const all = wrap(g, text, CARD.PX - CARD.pad * 2 - CARD.numW);
   const lines = clampLines(all, CARD.maxLines);
   c.width = CARD.PX;
-  c.height = CARD.pad * 2 + lines.length * CARD.lh;
-  const accent = '#' + bookColor(b).getHexString();
-  g.fillStyle = focused ? 'rgba(60, 48, 18, 0.88)' : 'rgba(9, 12, 26, 0.78)';
+  c.height = Math.max(CARD.pad * 2 + lines.length * CARD.lh + 6, 112);
+  const accent = '#' + bookColor(b).clone().lerp(new THREE.Color('#ffffff'), 0.25).getHexString();
+  const bg = g.createLinearGradient(0, 0, 0, c.height);
+  bg.addColorStop(0, focused ? 'rgba(74, 56, 18, 0.93)' : 'rgba(18, 22, 44, 0.88)');
+  bg.addColorStop(1, focused ? 'rgba(38, 28, 8, 0.93)' : 'rgba(6, 8, 20, 0.88)');
+  g.fillStyle = bg;
   g.beginPath();
-  g.roundRect(1, 1, c.width - 2, c.height - 2, 16);
+  g.roundRect(1, 1, c.width - 2, c.height - 2, 22);
   g.fill();
   g.lineWidth = 2;
-  g.strokeStyle = focused ? '#f3c35b' : 'rgba(150,165,215,0.25)';
+  g.strokeStyle = focused ? '#f3c35b' : 'rgba(243, 195, 91, 0.3)';
   g.stroke();
-  g.fillStyle = accent;
-  g.font = `600 ${CARD.font - 4}px ${FONT_UI}`;
+  // Номер стиха — крупная золотая цифра, как в старинных изданиях.
   g.textBaseline = 'top';
-  g.fillText(String(vi + 1), CARD.pad, CARD.pad + 4);
-  g.fillStyle = '#eef1fa';
-  g.font = `${CARD.font}px ${FONT_TEXT}`;
-  lines.forEach((ln, i) => g.fillText(ln, CARD.pad + numW, CARD.pad + i * CARD.lh + 2));
+  g.textAlign = 'center';
+  g.fillStyle = accent;
+  g.shadowColor = accent;
+  g.shadowBlur = 14;
+  g.font = `600 ${CARD.font + 22}px ${FONT_TITLE}`;
+  g.fillText(String(vi + 1), CARD.pad + CARD.numW / 2 - 8, CARD.pad - 10);
+  g.shadowBlur = 0;
+  g.textAlign = 'left';
+  g.fillStyle = '#f2f4fb';
+  g.font = `${CARD.font}px ${FONT_CARD}`;
+  lines.forEach((ln, k) => g.fillText(ln, CARD.pad + CARD.numW, CARD.pad + k * CARD.lh + 4));
   return { canvas: c, truncated: all.length > lines.length, h: c.height / CARD.ppm };
 }
 
@@ -667,12 +682,12 @@ function buildChapter(bi, ci, focus, page) {
     used += card.h + gap;
   });
   if (cur.length) cols.push(cur);
-  const PER_PAGE = 13;
+  const colStep = (CARD.W + 0.16) / CARD.R;
+  const PER_PAGE = Math.max(3, Math.floor((Math.PI * 2 * 0.86) / colStep));
   const pages = Math.ceil(cols.length / PER_PAGE);
   if (focus >= 0) page = Math.floor(cols.findIndex((c) => c.includes(focus)) / PER_PAGE);
   page = THREE.MathUtils.clamp(page, 0, pages - 1);
   const pageCols = cols.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
-  const colStep = (CARD.W + 0.14) / CARD.R;
   let offset = pageCols.length <= 3 ? (pageCols.length - 1) / 2 : 1;
   if (focus >= 0) offset = pageCols.findIndex((c) => c.includes(focus));
 
@@ -697,7 +712,7 @@ function buildChapter(bi, ci, focus, page) {
       p.y = y - card.h / 2;
       mesh.position.copy(p);
       mesh.lookAt(eye.x, p.y, eye.z);
-      mesh.userData = { vi, truncated: card.truncated };
+      mesh.userData = { vi, truncated: card.truncated, home: mesh.position.clone(), order: items.length };
       g.add(mesh);
       items.push(mesh);
       const sp = p.clone().addScaledVector(right, -(CARD.W / 2 + 0.07)).add(new THREE.Vector3(0, card.h / 2 - 0.05, 0)).addScaledVector(dir, -0.02);
@@ -708,24 +723,25 @@ function buildChapter(bi, ci, focus, page) {
     }
   });
   const n = starPos.length / 3;
-  const pts = makePoints(new Float32Array(starPos), new Float32Array(starCol), new Float32Array(n).fill(0.06), new Float32Array(n).map((_, i) => i), new Float32Array(n).map(() => Math.random() * 6.28));
+  const pts = makePoints(new Float32Array(starPos), new Float32Array(starCol), new Float32Array(n).fill(0.07), new Float32Array(n).map((_, i) => i), new Float32Array(n).map(() => Math.random() * 6.28));
   g.add(pts);
-  const title = makeLabel(T().chapterOf(b.name, ci + 1), { font: FONT_TITLE, px: 96, weight: 600, color: '#f6e7c1', height: 0.26 });
+  const title = makeLabel(`✦  ${T().chapterOf(b.name, ci + 1)}  ✦`, { font: FONT_TITLE, px: 120, weight: 600, color: '#f6e7c1', height: 0.36 });
   const fd = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
-  title.position.copy(eye).addScaledVector(fd, CARD.R + 0.2);
-  title.position.y = top + 0.25;
+  title.position.copy(eye).addScaledVector(fd, CARD.R + 0.25);
+  title.position.y = top + 0.33;
   g.add(title);
   if (pages > 1) {
-    const pl = makeLabel(T().page(page + 1, pages), { px: 48, color: '#9aa2bf', height: 0.12 });
-    pl.position.copy(title.position).add(new THREE.Vector3(0, -0.17, 0));
+    const pl = makeLabel(T().page(page + 1, pages), { px: 52, color: '#b6bdd6', height: 0.13 });
+    pl.position.copy(title.position).add(new THREE.Vector3(0, -0.22, 0));
     g.add(pl);
   }
   const pageOf = [];
   cols.forEach((list, cIdx) => list.forEach((vi) => { pageOf[vi] = Math.floor(cIdx / PER_PAGE); }));
-  return { group: g, items, pts, page, pages, bi, ci, pageOf, eye };
+  return { group: g, items, pts, page, pages, bi, ci, pageOf, eye, title };
 }
 
 /* ---------- Переходы ---------- */
+
 
 const fader = new THREE.Mesh(
   new THREE.SphereGeometry(0.4, 16, 12),
@@ -735,6 +751,116 @@ fader.renderOrder = 999;
 camera.add(fader);
 let fadeTarget = 0;
 let busy = false;
+
+/* ---------- Видеоэффекты переходов ---------- */
+
+const fx = (() => {
+  // Прыжок: светящиеся следы звёзд летят навстречу (или от вас при возврате).
+  const N = 320;
+  const pos = new Float32Array(N * 2 * 3), col = new Float32Array(N * 2 * 3);
+  const st = Array.from({ length: N }, () => ({ x: 0, y: 0, z: 0, sp: 0 }));
+  const reset = (p, anywhere) => {
+    const a = Math.random() * Math.PI * 2, r = 0.4 + Math.random() * 6;
+    p.x = Math.cos(a) * r; p.y = Math.sin(a) * r;
+    p.z = anywhere ? -2 - Math.random() * 60 : -60 - Math.random() * 10;
+    p.sp = 40 + Math.random() * 70;
+  };
+  st.forEach((p) => reset(p, true));
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending }));
+  lines.renderOrder = 1000;
+  lines.frustumCulled = false;
+  lines.visible = false;
+  camera.add(lines);
+  const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ffe7b0', transparent: true, opacity: 0, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending }));
+  flash.position.set(0, 0, -2);
+  flash.scale.setScalar(3.5);
+  flash.renderOrder = 1001;
+  camera.add(flash);
+  const state = { power: 0, target: 0, dir: 1, timer: 0 };
+  const anims = [];
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+  return {
+    warp(dir) { state.dir = dir; state.target = 1; state.timer = 0.75; lines.visible = true; st.forEach((p) => reset(p, true)); },
+    // Появление нового уровня: стихи слетаются на свои места, скопления разлетаются из центра.
+    enter(mode) {
+      flash.material.opacity = 0.55;
+      if (mode === 'chapter' && state && modeGroupRef()) {
+        const ch = chapterRef();
+        const eye = ch.eye;
+        ch.items.forEach((m) => {
+          const home = m.userData.home;
+          const from = new THREE.Vector3().subVectors(home, eye).multiplyScalar(4.5).add(eye);
+          from.y += (Math.random() - 0.5) * 3;
+          const delay = Math.min(1.1, m.userData.order * 0.03);
+          m.position.copy(from);
+          m.scale.setScalar(0.25);
+          m.material.opacity = 0;
+          anims.push({ t: -delay, dur: 0.85, f: (k) => {
+            m.position.lerpVectors(from, home, k);
+            m.scale.setScalar(0.25 + 0.75 * k);
+            m.material.opacity = 0.94 * k;
+          } });
+        });
+        const u = ch.pts.material.uniforms.uBoost;
+        u.value = 0;
+        anims.push({ t: -0.4, dur: 1.2, f: (k) => { u.value = k; } });
+        const tl = ch.title, base = tl.scale.clone();
+        anims.push({ t: 0, dur: 0.9, f: (k) => { tl.scale.copy(base).multiplyScalar(0.6 + 0.4 * k); tl.material.opacity = k; } });
+      } else if (mode === 'book' || mode === 'galaxy') {
+        const g = mode === 'book' ? modeGroupRef() : galaxy.group;
+        if (!g) return;
+        const eye = new THREE.Vector3();
+        camera.getWorldPosition(eye);
+        const s0 = mode === 'book' ? 0.35 : 1.6;
+        anims.push({ t: 0, dur: 1.0, f: (k) => {
+          const sc = s0 + (1 - s0) * k;
+          g.scale.setScalar(sc);
+          g.position.copy(eye).multiplyScalar(1 - sc);
+        } });
+      }
+    },
+    update(dt) {
+      // анимации появления
+      for (let i = anims.length - 1; i >= 0; i--) {
+        const a = anims[i];
+        a.t += dt;
+        const k = Math.min(1, Math.max(0, a.t / a.dur));
+        a.f(ease(k));
+        if (a.t >= a.dur) anims.splice(i, 1);
+      }
+      flash.material.opacity = Math.max(0, flash.material.opacity - dt * 0.9);
+      flash.visible = flash.material.opacity > 0.01;
+      // прыжок
+      state.timer -= dt;
+      if (state.timer <= 0) state.target = 0;
+      state.power += (state.target - state.power) * Math.min(1, dt * 5);
+      if (state.power < 0.01 && state.target === 0) { lines.visible = false; return; }
+      const sp = state.power * state.dir;
+      for (let i = 0; i < N; i++) {
+        const p = st[i];
+        p.z += p.sp * sp * dt;
+        if (p.z > -1.2) reset(p, false);
+        if (p.z < -75) { reset(p, true); p.z = -2 - Math.random() * 8; }
+        const len = 0.5 + p.sp * 0.06 * state.power;
+        const k = i * 6;
+        pos[k] = p.x; pos[k + 1] = p.y; pos[k + 2] = p.z;
+        pos[k + 3] = p.x * 1.02; pos[k + 4] = p.y * 1.02; pos[k + 5] = p.z - len;
+        const b = state.power * Math.min(1, (75 + p.z) / 30);
+        col[k] = b; col[k + 1] = b * 0.95; col[k + 2] = b * 0.85;
+        col[k + 3] = 0; col[k + 4] = 0; col[k + 5] = b * 0.25;
+      }
+      geo.attributes.position.needsUpdate = true;
+      geo.attributes.color.needsUpdate = true;
+    },
+  };
+})();
+function modeGroupRef() { return modeGroup; }
+function chapterRef() { return state.chapter; }
+
 function waitFade(v) {
   fadeTarget = v;
   return new Promise((resolve) => {
@@ -749,6 +875,8 @@ async function go(mode, opts = {}) {
   if (!opts.keepReading) stopReading();
   closeDetail();
   hideArcs();
+  const flashy = !reducedMotion && !opts.keepReading;
+  if (flashy) fx.warp(mode === 'galaxy' ? -1 : 1);
   await waitFade(1);
   if (modeGroup) { scene.remove(modeGroup); disposeTree(modeGroup); modeGroup = null; }
   state.book = state.chapter = null;
@@ -776,10 +904,19 @@ async function go(mode, opts = {}) {
   updateChrome();
   if (tts.reading) markReading(tts.reading.vi);
   if (mode === 'chapter' && opts.select != null && opts.select >= 0) selectVerse(opts.select);
+  if (flashy) fx.enter(mode);
   await waitFade(0);
   busy = false;
 }
 
+function goHome() {
+  closeDetail();
+  look.yaw = 0; look.pitch = 0.12; look.target = null;
+  camera.fov = 70; camera.updateProjectionMatrix();
+  applyLook();
+  ui.bookInfo.dataset.closed = '';
+  if (state.mode !== 'galaxy') go('galaxy');
+}
 function back() {
   if (detail.open) { closeDetail(); return; }
   if (state.mode === 'chapter') go('book', { bi: state.bi });
@@ -862,12 +999,13 @@ function markReading(vi) {
   const h = mesh.geometry.parameters.height;
   readFrame.scale.set(CARD.W + 0.035, h + 0.035, 1);
   readFrame.quaternion.copy(mesh.quaternion);
-  const out = new THREE.Vector3().subVectors(mesh.position, ch.eye).setY(0).normalize();
-  readFrame.position.copy(mesh.position).addScaledVector(out, 0.004);
+  const home = mesh.userData.home || mesh.position;
+  const out = new THREE.Vector3().subVectors(home, ch.eye).setY(0).normalize();
+  readFrame.position.copy(home).addScaledVector(out, 0.004);
   readFrame.visible = true;
   ch.pts.material.uniforms.uHover.value = ch.items.indexOf(mesh);
   if (!renderer.xr.isPresenting) {
-    const d = new THREE.Vector3().subVectors(mesh.position, ch.eye);
+    const d = new THREE.Vector3().subVectors(home, ch.eye);
     look.target = Math.atan2(d.x, -d.z);
   }
 }
@@ -923,6 +1061,8 @@ function applyLangDom() {
   ui.langRo.setAttribute('aria-pressed', LANG === 'ro' ? 'true' : 'false');
   updateVrButton();
   updateListenButton();
+  ui.hintsBtn.textContent = hintsOn ? L.hintsOn : L.hintsOff;
+  ui.hintsBtn.setAttribute('aria-pressed', hintsOn ? 'true' : 'false');
 }
 async function setLang(lang) {
   if (lang === LANG || busy) return;
@@ -941,7 +1081,7 @@ async function reloadLang(message) {
     buildGalaxy();
     buildLegend();
     await go('galaxy');
-    toast(message || T().toastGalaxy, 8000);
+    if (message) toast(message, 8000); else toast(T().toastGalaxy, 8000, true);
   } catch (err) {
     toast(T().loadFail(err.message), 8000);
   }
@@ -1165,8 +1305,9 @@ function selectVerse(vi) {
     const h = mesh.geometry.parameters.height;
     selFrame.scale.set(CARD.W + 0.05, h + 0.05, 1);
     selFrame.quaternion.copy(mesh.quaternion);
-    const out = new THREE.Vector3().subVectors(mesh.position, ch.eye).setY(0).normalize();
-    selFrame.position.copy(mesh.position).addScaledVector(out, 0.006);
+    const home = mesh.userData.home || mesh.position;
+    const out = new THREE.Vector3().subVectors(home, ch.eye).setY(0).normalize();
+    selFrame.position.copy(home).addScaledVector(out, 0.006);
     selFrame.visible = true;
   }
   const rel = related(state.bi, state.ci, vi);
@@ -1239,10 +1380,14 @@ addEventListener('resize', placeDetail);
 
 function renderBookPanel() {
   const box = ui.bookInfo;
-  const about = state.mode === 'book' && !renderer.xr.isPresenting ? bookAbout(state.bi) : null;
+  const about = state.mode === 'book' && !renderer.xr.isPresenting && box.dataset.closed !== String(state.bi) ? bookAbout(state.bi) : null;
   if (!about) { box.hidden = true; return; }
   const L = T();
-  box.replaceChildren(el2('h3', '', L.aboutBook(BOOKS[state.bi].name)));
+  const close = el2('button', 'close', '✕');
+  close.type = 'button';
+  close.setAttribute('aria-label', L.close);
+  close.addEventListener('click', () => { box.dataset.closed = String(state.bi); box.hidden = true; });
+  box.replaceChildren(close, el2('h3', '', L.aboutBook(BOOKS[state.bi].name)));
   const dl = el2('dl');
   for (const [k, v] of about.rows) dl.append(el2('dt', '', k), el2('dd', '', v));
   box.append(dl);
@@ -1521,7 +1666,7 @@ function showInfo(d, desktopOnly = false) {
   ui.info.querySelector('.text').textContent = d.text;
   ui.info.querySelector('.text').hidden = !d.text;
   ui.info.querySelector('.hint').textContent = d.hint;
-  ui.info.querySelector('.hint').hidden = !d.hint;
+  ui.info.querySelector('.hint').hidden = !d.hint || !hintsOn;
 }
 
 /* ---------- Панель управления в VR ---------- */
@@ -1550,6 +1695,7 @@ function rebuildPanel() {
   for (const ch of [...grp.children]) { grp.remove(ch); disposeTree(ch); }
   const defs = [];
   const L = T();
+  if (state.mode !== 'galaxy') defs.push([L.xrHome, goHome]);
   if (state.mode === 'book') defs.push([L.xrGalaxy, back]);
   if (state.mode === 'chapter') {
     defs.push([L.xrChapters, back], [L.xrPrev, () => stepChapter(-1)], [L.xrNext, () => stepChapter(1)]);
@@ -1557,7 +1703,7 @@ function rebuildPanel() {
     if (state.pages > 1) defs.push([L.prevPage, () => stepPage(-1)], [L.nextPage, () => stepPage(1)]);
   }
   defs.push([L.xrRandom, randomVerse]);
-  const widths = defs.map(([t]) => (t.length > 10 ? 0.34 : 0.22));
+  const widths = defs.map(([t]) => (t.length > 10 ? 0.34 : t.length > 7 ? 0.26 : 0.22));
   const gap = 0.02;
   const total = widths.reduce((a, b) => a + b, 0) + gap * (defs.length - 1);
   let x = -total / 2;
@@ -1755,15 +1901,15 @@ function updateChrome() {
   ui.nextPage.disabled = state.page >= state.pages - 1;
   ui.legend.hidden = state.mode !== 'galaxy';
   renderBookPanel();
-  if (state.mode === 'book') toast(T().toastBook, 6000);
-  if (state.mode === 'chapter' && !tts.reading) toast(T().toastChapter, 6000);
+  if (state.mode === 'book') toast(T().toastBook, 6000, true);
+  if (state.mode === 'chapter' && !tts.reading) toast(T().toastChapter, 6000, true);
   updateListenButton();
   rebuildPanel();
 }
 
 function buildLegend() {
   const L = ui.legend;
-  L.replaceChildren();
+  L.replaceChildren(ui.legendClose);
   const head = (t) => Object.assign(document.createElement('div'), { className: 'head', textContent: t });
   const row = (g) => {
     const r = document.createElement('div');
@@ -1797,12 +1943,22 @@ function buildLegend() {
 }
 
 let toastTimer = 0;
-function toast(text, ms = 7000) {
-  ui.toast.textContent = text;
-  ui.toast.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
+let hintsOn = (() => { try { return localStorage.getItem('hints') !== '0'; } catch { return true; } })();
+// hint: true — обучающая подсказка, её можно отключить; остальные сообщения (ошибки, загрузка) видны всегда.
+function toast(text, ms = 7000, hint = false) {
+  if (hint && !hintsOn) return;
+  ui.toastText.textContent = text;
   ui.toast.classList.remove('gone');
+  ui.toast.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(hideToast, ms);
+}
+function setHints(on) {
+  hintsOn = on;
+  try { localStorage.setItem('hints', on ? '1' : '0'); } catch {}
+  ui.hintsBtn.textContent = on ? T().hintsOn : T().hintsOff;
+  ui.hintsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  if (!on) { hideToast(); hideIntro(); }
 }
 function hideToast() { ui.toast.classList.add('gone'); }
 
@@ -1811,7 +1967,12 @@ ui.prevCh.addEventListener('click', () => stepChapter(-1));
 ui.nextCh.addEventListener('click', () => stepChapter(1));
 ui.prevPage.addEventListener('click', () => stepPage(-1));
 ui.nextPage.addEventListener('click', () => stepPage(1));
-ui.legendToggle.addEventListener('click', () => document.body.classList.toggle('legend-open'));
+ui.legendToggle.addEventListener('click', () => { document.body.classList.toggle('legend-open'); document.body.classList.remove('legend-closed'); });
+ui.legendClose.addEventListener('click', () => { document.body.classList.add('legend-closed'); document.body.classList.remove('legend-open'); });
+ui.home.addEventListener('click', goHome);
+ui.brand.addEventListener('click', goHome);
+ui.hintsBtn.addEventListener('click', () => setHints(!hintsOn));
+ui.toastClose.addEventListener('click', hideToast);
 
 /* ---------- Поиск места: «Ин 3:16», «Бытие 1», «1 Кор 13:4» ---------- */
 
@@ -1983,7 +2144,7 @@ async function setupVR() {
       xrPanel.group.visible = true;
       xrPanel.snap = true;
       showInfo(null);
-      showIntro();
+      if (hintsOn) showIntro();
     } catch (err) {
       session = null;
       toast(T().vrFail, 7000);
@@ -2012,6 +2173,7 @@ function tick() {
   fader.material.opacity = o + (fadeTarget - o) * Math.min(1, dt * 12);
   if (Math.abs(fader.material.opacity - fadeTarget) < 0.02) fader.material.opacity = fadeTarget;
   fader.visible = fader.material.opacity > 0.001;
+  fx.update(dt);
   updateScale();
   if (sky) sky.update(shared.uTime.value, dt, shared.uScale.value);
   // На экране камера чуть покачивается: близкая пыль и далёкие звёзды смещаются по-разному, и появляется глубина.
@@ -2068,6 +2230,8 @@ async function start() {
       document.fonts.load(`40px "PT Serif"`, sample),
       document.fonts.load(`600 40px "Cormorant Garamond"`, sample),
       document.fonts.load(`500 40px "IBM Plex Sans Condensed"`, sample),
+      document.fonts.load(`40px "Lora"`, sample),
+      document.fonts.load(`600 80px "Cormorant Garamond"`, '0123456789'),
     ]).catch(() => {});
     const data = await loadBible(LANG, (f) => {
       ui.bar.style.width = `${Math.round(f * 100)}%`;
@@ -2085,7 +2249,7 @@ async function start() {
     renderer.setAnimationLoop(tick);
     ui.loader.classList.add('done');
     window.__started = true;
-    toast(T().toastGalaxy, 9000);
+    toast(T().toastGalaxy, 9000, true);
     setupVR();
     loadExtras();
   } catch (err) {

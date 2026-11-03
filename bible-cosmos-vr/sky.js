@@ -213,6 +213,8 @@ export function buildSky(THREE, { scene, renderer, eye, glowTex, quality = 1 }) 
         m.position.copy(center).add(new THREE.Vector3((r() - 0.5) * 60, (r() - 0.5) * 40, (r() - 0.5) * 60));
         m.scale.setScalar(170 + r() * 160 - k * 30);
         root.add(m);
+        const spin = (r() - 0.5) * 0.01;
+        animated.push((t, dt) => { m.material.rotation += spin * dt; });
       }
     });
   }
@@ -385,6 +387,105 @@ export function buildSky(THREE, { scene, renderer, eye, glowTex, quality = 1 }) 
     const pts = new THREE.Points(geo, mat);
     pts.frustumCulled = false;
     root.add(pts);
+  }
+
+
+  // 9. Далёкое солнце, газовый гигант с кольцами и кольцевая туманность.
+  const sunPos = dirFrom(0.95, 0.32).multiplyScalar(900).add(eye);
+  {
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial(additive({ map: glowTex, color: '#ffe2b0', opacity: 0.55 })));
+    glow.scale.setScalar(150);
+    glow.position.copy(sunPos);
+    const core = new THREE.Sprite(new THREE.SpriteMaterial(additive({ map: glowTex, color: '#ffffff' })));
+    core.scale.setScalar(22);
+    core.position.copy(sunPos);
+    root.add(glow, core);
+  }
+  {
+    const R = 46;
+    const center = dirFrom(-0.8, -0.62).multiplyScalar(240).add(eye);
+    const L = new THREE.Vector3().subVectors(sunPos, center).normalize();
+    const planet = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.ShaderMaterial({
+      uniforms: { uL: { value: L }, uTime: { value: 0 } },
+      vertexShader: `varying vec3 vN; varying vec3 vP; varying vec3 vW;
+        void main() { vN = normalize(mat3(modelMatrix) * normal); vP = position; vW = (modelMatrix * vec4(position, 1.0)).xyz;
+          gl_Position = projectionMatrix * viewMatrix * vec4(vW, 1.0); }`,
+      fragmentShader: `varying vec3 vN; varying vec3 vP; varying vec3 vW; uniform vec3 uL; uniform float uTime;
+        ${NOISE}
+        void main() {
+          vec3 p = normalize(vP);
+          float lat = p.y;
+          float turb = fbm(vec3(p.x * 3.0 + uTime * 0.01, lat * 14.0, p.z * 3.0)) - 0.5;
+          float bands = sin((lat + turb * 0.08) * 34.0) * 0.5 + 0.5;
+          vec3 c1 = vec3(0.86, 0.72, 0.52), c2 = vec3(0.62, 0.42, 0.30), c3 = vec3(0.95, 0.88, 0.74);
+          vec3 col = mix(c2, c1, bands);
+          col = mix(col, c3, smoothstep(0.55, 0.9, fbm(vec3(p * 6.0) + 3.0)) * 0.35);
+          float storm = exp(-pow(length(vec2(atan(p.z, p.x) - 0.8, (lat + 0.22) * 3.0)) * 4.0, 2.0));
+          col = mix(col, vec3(0.78, 0.36, 0.22), storm * 0.8);
+          vec3 n = normalize(vN);
+          float diff = smoothstep(-0.15, 0.6, dot(n, uL));
+          vec3 v = normalize(cameraPosition - vW);
+          float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+          vec3 lit = col * diff * 1.05 + vec3(0.35, 0.55, 0.95) * rim * (0.25 + 0.6 * diff);
+          gl_FragColor = vec4(lit, 1.0);
+        }`,
+    }));
+    planet.position.copy(center);
+    planet.rotation.z = 0.35;
+    root.add(planet);
+    const rings = new THREE.Mesh(new THREE.RingGeometry(R * 1.35, R * 2.35, 160, 1), new THREE.ShaderMaterial({
+      uniforms: { uL: { value: L }, uR: { value: R }, uC: { value: center } },
+      vertexShader: `varying vec3 vP; varying vec3 vW; void main() { vP = position; vW = (modelMatrix * vec4(position, 1.0)).xyz;
+        gl_Position = projectionMatrix * viewMatrix * vec4(vW, 1.0); }`,
+      fragmentShader: `varying vec3 vP; varying vec3 vW; uniform vec3 uL; uniform float uR; uniform vec3 uC;
+        ${NOISE}
+        void main() {
+          float r = length(vP.xy) / uR;
+          float bands = 0.55 + 0.45 * sin(r * 70.0) * sin(r * 23.0 + 1.3);
+          float gap = smoothstep(0.0, 0.02, abs(r - 1.92)) ;
+          float a = bands * gap * smoothstep(1.35, 1.42, r) * (1.0 - smoothstep(2.25, 2.35, r));
+          // тень планеты на кольцах
+          vec3 toC = uC - vW; float t = dot(toC, uL); float d = length(toC - uL * t);
+          float shadow = (t > 0.0 && d < uR) ? 0.15 : 1.0;
+          vec3 col = mix(vec3(0.75, 0.66, 0.52), vec3(0.95, 0.9, 0.8), noise(vec3(r * 40.0, 0.0, 0.0)));
+          gl_FragColor = vec4(col * shadow * 0.9, a * 0.85);
+        }`,
+      transparent: true, side: THREE.DoubleSide, depthWrite: false,
+    }));
+    rings.position.copy(center);
+    rings.lookAt(eye);
+    rings.rotateX(1.18);
+    rings.rotateY(0.25);
+    root.add(rings);
+    const atmo = new THREE.Sprite(new THREE.SpriteMaterial(additive({ map: glowTex, color: '#6f9cff', opacity: 0.18 })));
+    atmo.position.copy(center);
+    atmo.scale.setScalar(R * 3.2);
+    root.add(atmo);
+    animated.push((t) => { planet.material.uniforms.uTime.value = t; planet.rotation.y = t * 0.004; });
+  }
+  {
+    const tex = canvasTexture(THREE, 256, (g, S) => {
+      const c = S / 2;
+      const rr = rng(77);
+      for (let i = 0; i < 2600; i++) {
+        const a = rr() * Math.PI * 2;
+        const rad = S * (0.27 + (rr() + rr() + rr()) / 3 * 0.18);
+        const x = c + Math.cos(a) * rad, y = c + Math.sin(a) * rad * 0.82;
+        const inner = rad < S * 0.36;
+        g.fillStyle = inner ? `rgba(110, 230, 220, ${0.05 + rr() * 0.08})` : `rgba(255, 90, 90, ${0.04 + rr() * 0.07})`;
+        g.beginPath(); g.arc(x, y, 3 + rr() * 6, 0, Math.PI * 2); g.fill();
+      }
+      const grd = g.createRadialGradient(c, c, 0, c, c, S * 0.25);
+      grd.addColorStop(0, 'rgba(150, 200, 255, 0.35)');
+      grd.addColorStop(1, 'rgba(150, 200, 255, 0)');
+      g.fillStyle = grd; g.fillRect(0, 0, S, S);
+      g.fillStyle = 'rgba(255,255,255,0.95)'; g.beginPath(); g.arc(c, c, 2.2, 0, Math.PI * 2); g.fill();
+    });
+    const ringNeb = new THREE.Sprite(new THREE.SpriteMaterial(additive({ map: tex, opacity: 0.9 })));
+    ringNeb.position.copy(dirFrom(2.9, 0.42).multiplyScalar(520).add(eye));
+    ringNeb.scale.setScalar(95);
+    root.add(ringNeb);
+    animated.push((t, dt) => { ringNeb.material.rotation += dt * 0.004; });
   }
 
   let fadeTarget = 1;
