@@ -1,0 +1,36 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'app.bible.cosmos'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'app.bible.cosmos'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // Веб-часть (index.html, app.js, data/...) кладётся в app/src/main/assets скриптом prepare-assets.sh.
+    androidResources {
+        noCompress 'json'
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+}

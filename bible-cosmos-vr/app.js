@@ -1,5 +1,6 @@
 // three.js грузится с запасного адреса, если основной недоступен.
 const THREE_URLS = [
+  ...(location.hostname === 'appassets.androidplatform.net' ? ['./vendor/three.module.js'] : []),
   'https://unpkg.com/three@0.160.0/build/three.module.js',
   'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
 ];
@@ -103,6 +104,10 @@ const I18N = {
     home: '⌂ В начало', homeTitle: 'Вернуться к галактике книг', xrHome: '⌂ Начало',
     hintsOn: 'Подсказки: вкл', hintsOff: 'Подсказки: выкл', hintsTitle: 'Показывать или скрывать подсказки',
     hideHint: 'Скрыть подсказку',
+    whoWas: (n) => `Кто это был: ${n}`, narrate: '▶ Рассказать', narrateStop: '■ Остановить рассказ',
+    quiz: 'Викторина', quizTitle: 'Угадай книгу', quizScore: (c, t) => `Верно: ${c} из ${t}`, quizQ: 'Из какой книги этот стих?',
+    quizRight: 'Верно!', quizWrong: (b) => `Нет, это книга «${b}»`, quizRead: '▶ Прочитать', quizShow: 'Показать в космосе',
+    quizNext: 'Следующий вопрос', menu: '☰ Ещё', xrQuiz: '? Викторина', xrNarrate: '▶ Рассказ', xrStopNarr: '■ Стоп',
     ownTitle2: 'Открыть свой файл Библии: EPUB, RTF, zip с ними или JSON. Файл не покидает ваше устройство.',
     reading: (p) => `Читаем файл… ${p}%`,
     unsupported: 'Подходят файлы EPUB, RTF, zip-архив с ними или JSON.',
@@ -164,6 +169,10 @@ const I18N = {
     home: '⌂ Început', homeTitle: 'Înapoi la galaxia cărților', xrHome: '⌂ Început',
     hintsOn: 'Indicii: pornite', hintsOff: 'Indicii: oprite', hintsTitle: 'Arată sau ascunde indiciile',
     hideHint: 'Ascunde indiciul',
+    whoWas: (n) => `Cine a fost: ${n}`, narrate: '▶ Povestește', narrateStop: '■ Oprește povestirea',
+    quiz: 'Test', quizTitle: 'Ghicește cartea', quizScore: (c, t) => `Corect: ${c} din ${t}`, quizQ: 'Din ce carte este acest verset?',
+    quizRight: 'Corect!', quizWrong: (b) => `Nu, este cartea „${b}”`, quizRead: '▶ Citește', quizShow: 'Arată în cosmos',
+    quizNext: 'Întrebarea următoare', menu: '☰ Mai mult', xrQuiz: '? Test', xrNarrate: '▶ Poveste', xrStopNarr: '■ Stop',
     ownTitle2: 'Deschideți propriul fișier Biblie: EPUB, RTF, o arhivă zip cu ele sau JSON. Fișierul nu părăsește dispozitivul.',
     reading: (p) => `Se citește fișierul… ${p}%`,
     unsupported: 'Sunt acceptate fișiere EPUB, RTF, o arhivă zip cu ele sau JSON.',
@@ -189,7 +198,7 @@ const ui = {
   stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
   loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
   q: $('q'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
-  legendToggle: $('legendToggle'), home: $('home'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
+  legendToggle: $('legendToggle'), home: $('home'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
 };
 
 /* ---------- Three.js: сцена ---------- */
@@ -598,16 +607,16 @@ function buildBook(bi) {
       const th = v * 2.39996;
       const p = center.clone().addScaledVector(right, rho * Math.cos(th)).addScaledVector(up, rho * Math.sin(th));
       pos.set([p.x, p.y, p.z], k * 3);
-      tmp.copy(base).lerp(white, v === 0 ? 0.6 : 0.15 * Math.random()).multiplyScalar(0.8 + Math.random() * 0.3);
+      tmp.copy(base).lerp(white, v === 0 ? 0.7 : 0.3 + 0.2 * Math.random()).multiplyScalar(1.1 + Math.random() * 0.3);
       col.set([tmp.r, tmp.g, tmp.b], k * 3);
-      size[k] = v === 0 ? 0.16 : 0.09 + Math.random() * 0.04;
+      size[k] = v === 0 ? 0.3 : 0.15 + Math.random() * 0.06;
       grp[k] = c;
       ph[k] = Math.random() * 6.28;
     }
     const lbl = makeLabel(String(c + 1), { font: FONT_TITLE, px: 96, weight: 600, color: '#' + base.clone().lerp(white, 0.5).getHexString(), height: 0.78 });
     lbl.position.copy(center).addScaledVector(up, -(rc + 0.52));
     g.add(lbl);
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: base, transparent: true, opacity: 0.12, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: base, transparent: true, opacity: 0.26, depthWrite: false, blending: THREE.AdditiveBlending }));
     halo.position.copy(center);
     halo.scale.setScalar(rc * 3);
     g.add(halo);
@@ -873,6 +882,7 @@ async function go(mode, opts = {}) {
   if (busy) return;
   busy = true;
   if (!opts.keepReading) stopReading();
+  if (mode !== 'book') stopNarration();
   closeDetail();
   hideArcs();
   const flashy = !reducedMotion && !opts.keepReading;
@@ -911,6 +921,8 @@ async function go(mode, opts = {}) {
 
 function goHome() {
   closeDetail();
+  closeQuiz();
+  stopNarration();
   look.yaw = 0; look.pitch = 0.12; look.target = null;
   camera.fov = 70; camera.updateProjectionMatrix();
   applyLook();
@@ -965,7 +977,17 @@ function pickVoice() {
   };
   return list.sort((a, b) => score(b) - score(a))[0] || null;
 }
+// В APK (Android WebView) нет speechSynthesis, там читает встроенный синтезатор Android через мост AndroidTTS.
+const androidDone = {};
+window.__ttsDone = (id) => { const f = androidDone[id]; delete androidDone[id]; if (f) f(); };
 function speak(text, onDone) {
+  if (window.AndroidTTS) {
+    const token = ++tts.token;
+    const id = 'u' + token;
+    androidDone[id] = () => { if (token === tts.token) onDone(); };
+    window.AndroidTTS.speak(text.replace(/\u0301/g, ''), T().speech, id);
+    return true;
+  }
   if (!hasTts) { toast(T().noTts, 5000); return false; }
   speechSynthesis.cancel();
   const token = ++tts.token;
@@ -1034,6 +1056,7 @@ function stopReading() {
   tts.reading = null;
   tts.token++;
   if (hasTts) speechSynthesis.cancel();
+  if (window.AndroidTTS) window.AndroidTTS.stop();
   readFrame.visible = false;
   if (was) updateListenButton();
 }
@@ -1075,6 +1098,7 @@ async function setLang(lang) {
 }
 async function reloadLang(message) {
   stopReading();
+  closeQuiz();
   try {
     const data = await loadBible(LANG, () => {});
     prepare(data);
@@ -1107,9 +1131,16 @@ let CODE_TO_BI = {};
 let SYN = false;
 let XREF = null;
 let BOOKINFO = null;
+let PEOPLE = null;
+function personFor(bi) {
+  const code = BOOKS[bi] && BOOKS[bi].code;
+  const id = PEOPLE && code && PEOPLE.book[code];
+  return id ? PEOPLE.p[id][LANG] || PEOPLE.p[id].ru : null;
+}
 
 async function loadExtras() {
   try { const r = await fetch('data/books-info.json'); if (r.ok) BOOKINFO = (await r.json()).b; } catch {}
+  try { const r = await fetch('data/people.json'); if (r.ok) PEOPLE = await r.json(); } catch {}
   if (state.mode === 'book') { renderBookPanel(); if (renderer.xr.isPresenting) rebuildPanel(); }
   try { const r = await fetch('data/xref.json'); if (r.ok) XREF = (await r.json()).x; } catch {}
   if (detail.open) selectVerse(detail.vi);
@@ -1213,7 +1244,8 @@ function makeAboutPlane(about, width) {
   const lines = [];
   g.font = `40px ${FONT_TEXT}`;
   for (const [k, v] of about.rows) lines.push({ k, v });
-  const circ = about.circ ? clampLines(wrap(g, about.circ, W - pad * 2), 4) : [];
+  const bioText = about.person ? `${about.person.n} (${about.person.y}). ${about.person.b}` : '';
+  const circ = (about.circ ? clampLines(wrap(g, about.circ, W - pad * 2), 4) : []).concat(bioText ? [''].concat(clampLines(wrap(g, bioText, W - pad * 2), 7)) : []);
   c.width = W;
   c.height = pad * 2 + lines.length * 56 + (circ.length ? 20 + circ.length * 54 : 0);
   g.fillStyle = 'rgba(8, 11, 24, 0.82)';
@@ -1367,6 +1399,15 @@ function renderDetail(vi, rel) {
     if (about.circ) box.append(el2('p', 'circ', about.circ));
     if (!about.fromEdition) box.append(el2('p', 'muted small', L.datesNote));
   }
+  const person = personFor(bi);
+  if (person) {
+    box.append(el2('h3', '', L.whoWas(person.n)), el2('p', 'bio', person.b));
+    const nar = el2('button', 'btn', narration.on ? L.narrateStop : L.narrate);
+    nar.type = 'button';
+    nar.addEventListener('click', () => toggleNarration(bi));
+    box.append(el2('div', 'actions'));
+    box.lastChild.append(nar);
+  }
   box.append(el2('p', 'muted small', L.xrefSource));
   box.hidden = false;
   box.scrollTop = 0;
@@ -1380,7 +1421,7 @@ addEventListener('resize', placeDetail);
 
 function renderBookPanel() {
   const box = ui.bookInfo;
-  const about = state.mode === 'book' && !renderer.xr.isPresenting && box.dataset.closed !== String(state.bi) ? bookAbout(state.bi) : null;
+  const about = state.mode === 'book' && !renderer.xr.isPresenting && box.dataset.closed !== String(state.bi) ? (bookAbout(state.bi) || { rows: [], circ: '', fromEdition: true }) : null;
   if (!about) { box.hidden = true; return; }
   const L = T();
   const close = el2('button', 'close', '✕');
@@ -1392,6 +1433,15 @@ function renderBookPanel() {
   for (const [k, v] of about.rows) dl.append(el2('dt', '', k), el2('dd', '', v));
   box.append(dl);
   if (about.circ) box.append(el2('p', 'circ', about.circ));
+  const person = personFor(state.bi);
+  if (person) {
+    box.append(el2('h3', 'who', L.whoWas(person.n)), el2('p', 'muted small', person.y), el2('p', 'bio', person.b));
+  }
+  const nar = el2('button', 'btn primary narrate', narration.on ? L.narrateStop : L.narrate);
+  nar.type = 'button';
+  nar.addEventListener('click', () => toggleNarration(state.bi));
+  box.append(el2('div', 'actions'));
+  box.lastChild.append(nar);
   if (!about.fromEdition) box.append(el2('p', 'muted small', L.datesNote));
   box.hidden = false;
   box.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
@@ -1482,6 +1532,183 @@ function buildVrDetail(vi, rel) {
   detail.vrButtons = buttons;
 }
 
+
+/* ---------- Рассказчик: кто написал книгу ---------- */
+
+const narration = { on: false };
+function toggleNarration(bi) {
+  if (narration.on) { stopNarration(); return; }
+  const L = T(), b = BOOKS[bi];
+  const about = bookAbout(bi);
+  const person = personFor(bi);
+  const parts = [L.aboutBook(b.name) + '.'];
+  if (person) parts.push(`${L.whoWas(person.n)}. ${person.b}`);
+  if (about && about.circ) parts.push(about.circ);
+  const w = bookWritten(bi);
+  if (w) parts.push(`${L.written}: ${w}.`);
+  stopReading();
+  narration.on = true;
+  const ok = speak(parts.join(' '), () => { narration.on = false; if (state.mode === 'book') renderBookPanel(); if (renderer.xr.isPresenting) rebuildPanel(); });
+  if (!ok) narration.on = false;
+  if (state.mode === 'book') renderBookPanel();
+  if (detail.open && !renderer.xr.isPresenting) selectVerse(detail.vi);
+  if (renderer.xr.isPresenting) rebuildPanel();
+}
+
+/* ---------- Викторина «Угадай книгу» ---------- */
+
+const quiz = { open: false, q: null, answer: -1, right: 0, total: 0, vrGroup: null, vrButtons: [], boosted: -1 };
+function quizQuestion() {
+  let bi = 0, ci = 0, vi = 0, text = '';
+  for (let tries = 0; tries < 60; tries++) {
+    let k = Math.floor(Math.random() * TOTAL);
+    const b = BOOKS.find((x) => k >= x.offset && k < x.offset + x.n);
+    k -= b.offset;
+    bi = b.i; ci = b.ci[k]; vi = b.vi[k];
+    text = verseText(bi, ci, vi);
+    if (text.length >= 40 && text.length <= 240 && text !== '—' && !b.deutero) break;
+  }
+  const pool = BOOKS.filter((b) => b.i !== bi && !b.deutero).map((b) => b.i);
+  const opts = [bi];
+  while (opts.length < 4 && pool.length) opts.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  opts.sort(() => Math.random() - 0.5);
+  return { bi, ci, vi, text, opts };
+}
+function openQuiz() {
+  stopReading();
+  closeDetail();
+  quiz.open = true;
+  nextQuestion();
+}
+function closeQuiz() {
+  quiz.open = false;
+  ui.quiz.hidden = true;
+  unboostQuiz();
+  if (quiz.vrGroup) { scene.remove(quiz.vrGroup); disposeTree(quiz.vrGroup); quiz.vrGroup = null; }
+  quiz.vrButtons = [];
+}
+function unboostQuiz() {
+  if (quiz.boosted >= 0 && galaxy.items[quiz.boosted]) galaxy.items[quiz.boosted].pts.material.uniforms.uBoost.value = 1;
+  quiz.boosted = -1;
+}
+function nextQuestion() {
+  unboostQuiz();
+  quiz.q = quizQuestion();
+  quiz.answer = -1;
+  renderQuiz();
+}
+function answerQuiz(bi) {
+  if (quiz.answer >= 0) return;
+  quiz.answer = bi;
+  quiz.total++;
+  if (bi === quiz.q.bi) quiz.right++;
+  // Правильная книга вспыхивает в галактике.
+  if (state.mode === 'galaxy' && galaxy.items[quiz.q.bi]) {
+    quiz.boosted = quiz.q.bi;
+    galaxy.items[quiz.q.bi].pts.material.uniforms.uBoost.value = 2.6;
+  }
+  renderQuiz();
+}
+function quizShow() {
+  const { bi, ci, vi } = quiz.q;
+  closeQuiz();
+  go('chapter', { bi, ci, focus: vi, select: vi });
+}
+function quizRead() { stopReading(); speak(quiz.q.text, () => {}); }
+
+function renderQuiz() {
+  if (!quiz.open) return;
+  if (renderer.xr.isPresenting) { buildVrQuiz(); return; }
+  const L = T(), q = quiz.q, box = ui.quiz;
+  box.replaceChildren();
+  const close = el2('button', 'close', '✕');
+  close.type = 'button';
+  close.setAttribute('aria-label', L.close);
+  close.addEventListener('click', closeQuiz);
+  box.append(close, el2('div', 'ref', `${L.quizTitle} · ${L.quizScore(quiz.right, quiz.total)}`), el2('p', 'muted', L.quizQ), el2('p', 'text', q.text));
+  const grid = el2('div', 'opts');
+  for (const bi of q.opts) {
+    const btn = el2('button', 'btn opt', BOOKS[bi].name);
+    btn.type = 'button';
+    if (quiz.answer >= 0) {
+      btn.disabled = true;
+      if (bi === q.bi) btn.classList.add('right');
+      else if (bi === quiz.answer) btn.classList.add('wrong');
+    }
+    btn.addEventListener('click', () => answerQuiz(bi));
+    grid.append(btn);
+  }
+  box.append(grid);
+  if (quiz.answer >= 0) {
+    const ok = quiz.answer === q.bi;
+    box.append(el2('p', ok ? 'fb right' : 'fb wrong', `${ok ? L.quizRight : L.quizWrong(BOOKS[q.bi].name)} ${refOf(q.bi, q.ci, q.vi)}`));
+  }
+  const act = el2('div', 'actions');
+  const read = el2('button', 'btn', L.quizRead); read.type = 'button'; read.addEventListener('click', quizRead);
+  act.append(read);
+  if (quiz.answer >= 0) {
+    const show = el2('button', 'btn', L.quizShow); show.type = 'button'; show.addEventListener('click', quizShow);
+    const next = el2('button', 'btn primary', L.quizNext); next.type = 'button'; next.addEventListener('click', nextQuestion);
+    act.append(show, next);
+  }
+  box.append(act);
+  box.hidden = false;
+  box.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
+}
+
+function buildVrQuiz() {
+  if (quiz.vrGroup) { scene.remove(quiz.vrGroup); disposeTree(quiz.vrGroup); }
+  const L = T(), q = quiz.q;
+  const grp = new THREE.Group();
+  const W = 1.0, PX = 1100, pad = 40;
+  const c = document.createElement('canvas');
+  const g = c.getContext('2d');
+  g.font = `40px ${FONT_CARD}`;
+  const lines = clampLines(wrap(g, q.text, PX - pad * 2), 6);
+  const fb = quiz.answer >= 0 ? `${quiz.answer === q.bi ? L.quizRight : L.quizWrong(BOOKS[q.bi].name)} ${refOf(q.bi, q.ci, q.vi)}` : L.quizQ;
+  c.width = PX;
+  c.height = pad * 2 + 52 + lines.length * 54 + 70;
+  g.fillStyle = 'rgba(8, 11, 24, 0.94)';
+  g.beginPath(); g.roundRect(2, 2, PX - 4, c.height - 4, 24); g.fill();
+  g.strokeStyle = 'rgba(243,195,91,0.6)'; g.lineWidth = 3; g.stroke();
+  g.textBaseline = 'top';
+  let y = pad;
+  g.font = `600 34px ${FONT_UI}`; g.fillStyle = '#f3c35b'; g.fillText(`${L.quizTitle.toUpperCase()} · ${L.quizScore(quiz.right, quiz.total)}`, pad, y); y += 52;
+  g.font = `40px ${FONT_CARD}`; g.fillStyle = '#eef1fa';
+  for (const ln of lines) { g.fillText(ln, pad, y); y += 54; }
+  g.font = `600 34px ${FONT_UI}`; g.fillStyle = quiz.answer < 0 ? '#9aa2bf' : quiz.answer === q.bi ? '#7fe0a0' : '#ff8a80';
+  g.fillText(fb, pad, y + 14);
+  const ph = (W * c.height) / PX;
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(W, ph), new THREE.MeshBasicMaterial({ map: makeTexture(c), transparent: true, depthTest: false }));
+  panel.renderOrder = 34;
+  panel.position.set(0, ph / 2, 0);
+  grp.add(panel);
+  const buttons = [];
+  let by = -0.02;
+  for (const bi of q.opts) {
+    const mark = quiz.answer >= 0 ? (bi === q.bi ? '✓ ' : bi === quiz.answer ? '✗ ' : '') : '';
+    const btn = makeRowButton(mark + BOOKS[bi].name, '', () => answerQuiz(bi), W);
+    const bh = btn.geometry.parameters.height;
+    btn.position.set(0, by - bh / 2, 0);
+    by -= bh + 0.012;
+    grp.add(btn); buttons.push(btn);
+  }
+  const acts = quiz.answer >= 0 ? [[L.quizRead, quizRead], [L.quizShow, quizShow], [L.quizNext, nextQuestion], [L.xrClose, closeQuiz]] : [[L.quizRead, quizRead], [L.xrClose, closeQuiz]];
+  const bw = 0.24, gap = 0.012, total = acts.length * bw + (acts.length - 1) * gap;
+  acts.forEach(([t, fn], i) => {
+    const b = makeButton(t, fn, bw);
+    b.position.set(-total / 2 + bw / 2 + i * (bw + gap), by - 0.05, 0);
+    grp.add(b); buttons.push(b);
+  });
+  const { pos, yaw } = headInfo();
+  const a = yaw - 0.55;
+  grp.position.set(Math.sin(a) * 1.35, -0.05, -Math.cos(a) * 1.35).add(pos);
+  grp.lookAt(pos.x, grp.position.y, pos.z);
+  scene.add(grp);
+  quiz.vrGroup = grp;
+  quiz.vrButtons = buttons;
+}
+
 /* ---------- Наведение ---------- */
 
 const raycaster = new THREE.Raycaster();
@@ -1515,8 +1742,8 @@ function sphereHit(ray, items) {
 
 function pick(ray) {
   raycaster.ray.copy(ray);
-  if (xrPanel.group.visible || detail.vrButtons.length) {
-    const hit = raycaster.intersectObjects([...(xrPanel.group.visible ? xrPanel.buttons : []), ...detail.vrButtons], false)[0];
+  if (xrPanel.group.visible || detail.vrButtons.length || quiz.vrButtons.length) {
+    const hit = raycaster.intersectObjects([...(xrPanel.group.visible ? xrPanel.buttons : []), ...detail.vrButtons, ...quiz.vrButtons], false)[0];
     if (hit) return { type: 'ui', obj: hit.object, dist: hit.distance };
   }
   if (state.mode === 'galaxy') {
@@ -1697,12 +1924,14 @@ function rebuildPanel() {
   const L = T();
   if (state.mode !== 'galaxy') defs.push([L.xrHome, goHome]);
   if (state.mode === 'book') defs.push([L.xrGalaxy, back]);
+  if (state.mode === 'book') defs.push([narration.on ? L.xrStopNarr : L.xrNarrate, () => toggleNarration(state.bi)]);
   if (state.mode === 'chapter') {
     defs.push([L.xrChapters, back], [L.xrPrev, () => stepChapter(-1)], [L.xrNext, () => stepChapter(1)]);
     defs.push([tts.reading ? L.xrStop : L.xrListen, toggleListen]);
     if (state.pages > 1) defs.push([L.prevPage, () => stepPage(-1)], [L.nextPage, () => stepPage(1)]);
   }
   defs.push([L.xrRandom, randomVerse]);
+  if (state.mode === 'galaxy') defs.push([L.xrQuiz, openQuiz]);
   const widths = defs.map(([t]) => (t.length > 10 ? 0.34 : t.length > 7 ? 0.26 : 0.22));
   const gap = 0.02;
   const total = widths.reduce((a, b) => a + b, 0) + gap * (defs.length - 1);
@@ -1723,6 +1952,7 @@ function rebuildPanel() {
   // В VR справка о книге висит слева от панели кнопок.
   const about = state.mode === 'book' ? bookAbout(state.bi) : null;
   if (about) {
+    about.person = personFor(state.bi);
     const plane = makeAboutPlane(about, 0.62);
     plane.material.depthTest = false;
     plane.renderOrder = 30;
@@ -1858,7 +2088,8 @@ el.addEventListener('wheel', (e) => {
 }, { passive: false });
 addEventListener('keydown', (e) => {
   if (e.target === ui.q) return;
-  if (e.key === 'Escape' && detail.open) closeDetail();
+  if (e.key === 'Escape' && quiz.open) closeQuiz();
+  else if (e.key === 'Escape' && detail.open) closeDetail();
   else if (e.key === 'Escape' && tts.reading) stopReading();
   else if (e.key === 'Escape' || e.key === 'Backspace') back();
   else if (e.key === ' ' && state.mode === 'chapter') { e.preventDefault(); toggleListen(); }
@@ -1953,6 +2184,16 @@ function toast(text, ms = 7000, hint = false) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(hideToast, ms);
 }
+function stopNarration() {
+  if (!narration.on) return;
+  narration.on = false;
+  tts.token++;
+  if (hasTts) speechSynthesis.cancel();
+  if (window.AndroidTTS) window.AndroidTTS.stop();
+  if (state.mode === 'book') renderBookPanel();
+  if (detail.open && !renderer.xr.isPresenting) selectVerse(detail.vi);
+  if (renderer.xr.isPresenting) rebuildPanel();
+}
 function setHints(on) {
   hintsOn = on;
   try { localStorage.setItem('hints', on ? '1' : '0'); } catch {}
@@ -1970,6 +2211,17 @@ ui.nextPage.addEventListener('click', () => stepPage(1));
 ui.legendToggle.addEventListener('click', () => { document.body.classList.toggle('legend-open'); document.body.classList.remove('legend-closed'); });
 ui.legendClose.addEventListener('click', () => { document.body.classList.add('legend-closed'); document.body.classList.remove('legend-open'); });
 ui.home.addEventListener('click', goHome);
+ui.quizBtn.addEventListener('click', () => (quiz.open ? closeQuiz() : openQuiz()));
+ui.menuBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const open = ui.menuList.hidden;
+  ui.menuList.hidden = !open;
+  ui.menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+ui.menuList.addEventListener('click', () => { ui.menuList.hidden = true; ui.menuBtn.setAttribute('aria-expanded', 'false'); });
+document.addEventListener('click', (e) => {
+  if (!ui.menuList.hidden && !e.target.closest('.menu')) { ui.menuList.hidden = true; ui.menuBtn.setAttribute('aria-expanded', 'false'); }
+});
 ui.brand.addEventListener('click', goHome);
 ui.hintsBtn.addEventListener('click', () => setHints(!hintsOn));
 ui.toastClose.addEventListener('click', hideToast);
@@ -2258,5 +2510,12 @@ async function start() {
 }
 start();
 
+// Кнопка «Назад» телефона в APK: сначала закрываем окна и поднимаемся на уровень выше.
+window.__androidBack = () => {
+  if (quiz.open) { closeQuiz(); return true; }
+  if (detail.open || state.mode !== 'galaxy') { back(); return true; }
+  return false;
+};
+
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
-window.__bibleCosmos = { buildVrDetail, rebuildPanel, related, bookAbout, state };
+window.__bibleCosmos = { buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, get sky() { return sky; } };

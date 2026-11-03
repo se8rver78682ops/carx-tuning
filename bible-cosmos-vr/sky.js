@@ -488,15 +488,25 @@ export function buildSky(THREE, { scene, renderer, eye, glowTex, quality = 1 }) 
     animated.push((t, dt) => { ringNeb.material.rotation += dt * 0.004; });
   }
 
+  // Затемнение фона внутри книги и главы, чтобы звёзды-стихи и текст не терялись.
+  const dimmer = new THREE.Mesh(new THREE.SphereGeometry(1500, 32, 16), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide, transparent: true, opacity: 0, depthWrite: false }));
+  dimmer.position.copy(eye);
+  dimmer.renderOrder = -10;
+  scene.add(dimmer);
+  let dimTarget = 0;
+
   let fadeTarget = 1;
   return {
     root,
     // mode: 'galaxy' | 'book' | 'chapter' — в главе пыль почти исчезает, чтобы не мешать чтению.
-    setMode(mode) { fadeTarget = mode === 'chapter' ? 0.25 : 1; },
+    setMode(mode) { fadeTarget = mode === 'chapter' ? 0.25 : 1; dimTarget = mode === 'galaxy' ? 0 : mode === 'book' ? 0.5 : 0.45; },
     update(t, dt, pxScale) {
       dustU.uTime.value = t;
       dustU.uScale.value = pxScale;
       dustU.uFade.value += (fadeTarget - dustU.uFade.value) * Math.min(1, dt * 2);
+      const dm = dimmer.material;
+      dm.opacity += (dimTarget - dm.opacity) * Math.min(1, dt * 2.5);
+      dimmer.visible = dm.opacity > 0.01;
       for (const f of animated) f(t, dt);
     },
   };

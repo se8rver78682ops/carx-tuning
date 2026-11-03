@@ -1,5 +1,6 @@
 <title>Библейский космос</title>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Lora:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap">
@@ -159,6 +160,33 @@
     body.has-info #nav { left: 50%; right: auto; transform: translateX(-50%); bottom: auto; top: calc(120px + env(safe-area-inset-top, 0px)); }
   }
   @media (min-width: 721px) { body:not(.legend-closed) #legendToggle { display: none; } }
+  .menu { position: relative; }
+  #menuList {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 8; display: grid; gap: 6px; padding: 8px;
+    min-width: 200px; border-radius: 10px;
+  }
+  #menuList .btn { text-align: left; }
+  #quiz {
+    left: 50%; transform: translateX(-50%); width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 160px);
+    overflow-y: auto; padding: 16px 18px 14px; z-index: 6;
+  }
+  #quiz .close { position: absolute; top: 8px; right: 8px; }
+  #quiz .ref { font: 600 12px var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); padding-right: 40px; }
+  #quiz .muted { color: var(--dim); margin: 8px 0 0; font-size: 14px; }
+  #quiz .text { font: 19px/1.5 "Lora", var(--font-text); margin: 6px 0 12px; }
+  #quiz .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #quiz .opt { white-space: normal; text-align: left; min-height: 44px; }
+  #quiz .opt.right { border-color: #5fd08a; background: rgba(95, 208, 138, 0.18); }
+  #quiz .opt.wrong { border-color: #ff7a6e; background: rgba(255, 122, 110, 0.16); }
+  #quiz .opt:disabled { cursor: default; opacity: 1; }
+  #quiz .fb { font: 600 15px var(--font-ui); margin: 12px 0 0; }
+  #quiz .fb.right { color: #7fe0a0; }
+  #quiz .fb.wrong { color: #ff9a8f; }
+  #quiz .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  #bookInfo .bio, #detail .bio { font: 15px/1.5 var(--font-text); margin: 4px 0 0; }
+  #bookInfo .actions { margin-top: 10px; }
+  #bookInfo { max-height: 55vh; }
+  @media (max-width: 520px) { #quiz .opts { grid-template-columns: 1fr; } }
   body.legend-closed #legend { display: none !important; }
   .brand-btn { all: unset; cursor: pointer; font: inherit; }
   .brand-btn:hover, .brand-btn:focus-visible { color: var(--gold); }
@@ -194,10 +222,16 @@
       <button id="langRo" class="btn" type="button" aria-pressed="false">RO</button>
     </div>
     <button id="random" class="btn" type="button" data-i18n="random">✦ Случайный стих</button>
-    <button id="fileBtn" class="btn" type="button" title="Открыть свой файл Библии в формате JSON. Файл не покидает ваш браузер." data-i18n="own" data-i18n-title="ownTitle2">Свой перевод…</button>
+    <button id="quizBtn" class="btn" type="button" data-i18n="quiz">Викторина</button>
+    <div class="menu">
+      <button id="menuBtn" class="btn" type="button" aria-haspopup="true" aria-expanded="false" data-i18n="menu">☰ Ещё</button>
+      <div id="menuList" class="glass" hidden>
+        <button id="fileBtn" class="btn" type="button" title="Открыть свой файл Библии. Файл не покидает ваше устройство." data-i18n="own" data-i18n-title="ownTitle2">Свой перевод…</button>
+        <button id="legendToggle" class="btn" type="button" data-i18n="genresBtn">Жанры</button>
+        <button id="hintsBtn" class="btn" type="button" aria-pressed="true" data-i18n-title="hintsTitle">Подсказки: вкл</button>
+      </div>
+    </div>
     <input id="file" type="file" accept=".epub,.rtf,.zip,.json,application/epub+zip,application/zip,application/json" multiple hidden>
-    <button id="legendToggle" class="btn" type="button" data-i18n="genresBtn">Жанры</button>
-    <button id="hintsBtn" class="btn" type="button" aria-pressed="true" data-i18n-title="hintsTitle">Подсказки: вкл</button>
     <button id="vr" class="btn primary" type="button" disabled>Проверяем VR…</button>
   </div>
 </header>
@@ -220,6 +254,7 @@
   <button id="nextCh" class="btn" type="button" data-i18n="nextCh">Следующая глава ▶</button>
 </div>
 
+<aside id="quiz" class="hud glass" hidden aria-live="polite"></aside>
 <aside id="detail" class="hud glass" hidden aria-live="polite"></aside>
 <aside id="bookInfo" class="hud glass" hidden></aside>
 

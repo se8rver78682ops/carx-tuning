@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Копирует веб-часть «Библейского космоса» в assets Android-приложения
+# и кладёт рядом three.js, чтобы 3D работало без интернета.
+set -euo pipefail
+here="$(cd "$(dirname "$0")" && pwd)"
+web="$here/.."
+assets="$here/app/src/main/assets"
+rm -rf "$assets"
+mkdir -p "$assets/vendor"
+cp "$web/index.html" "$web/app.js" "$web/sky.js" "$web/bible-import.js" "$assets/"
+cp -r "$web/data" "$assets/data"
+tmp="$(mktemp -d)"
+(cd "$tmp" && npm pack three@0.160.0 --silent >/dev/null && tar -xzf three-0.160.0.tgz)
+cp "$tmp/package/build/three.module.js" "$assets/vendor/three.module.js"
+rm -rf "$tmp"
+echo "assets ready: $(du -sh "$assets" | cut -f1)"
