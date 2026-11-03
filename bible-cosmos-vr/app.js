@@ -10,6 +10,7 @@ for (const url of THREE_URLS) {
 if (!THREE) throw new Error('three.js');
 window.__appRan = true;
 import { parseRtfBible, parseEpubBible } from './bible-import.js';
+import { buildSky } from './sky.js';
 
 /* ---------- Справочники ---------- */
 
@@ -547,6 +548,8 @@ function buildGalaxy() {
 /* ---------- Уровни 2 и 3 ---------- */
 
 let modeGroup = null;
+let sky = null;
+const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const state = { mode: 'galaxy', bi: -1, ci: -1, page: 0, pages: 1, focus: -1, book: null, chapter: null };
 
 function headInfo() {
@@ -750,6 +753,7 @@ async function go(mode, opts = {}) {
   if (modeGroup) { scene.remove(modeGroup); disposeTree(modeGroup); modeGroup = null; }
   state.book = state.chapter = null;
   state.mode = mode;
+  if (sky) sky.setMode(mode);
   if (mode === 'galaxy') {
     galaxy.group.visible = true;
   } else if (mode === 'book') {
@@ -2009,6 +2013,12 @@ function tick() {
   if (Math.abs(fader.material.opacity - fadeTarget) < 0.02) fader.material.opacity = fadeTarget;
   fader.visible = fader.material.opacity > 0.001;
   updateScale();
+  if (sky) sky.update(shared.uTime.value, dt, shared.uScale.value);
+  // На экране камера чуть покачивается: близкая пыль и далёкие звёзды смещаются по-разному, и появляется глубина.
+  if (!renderer.xr.isPresenting && !reducedMotion) {
+    const t = shared.uTime.value;
+    camera.position.set(0.09 * Math.sin(t * 0.11), 1.6 + 0.05 * Math.sin(t * 0.17), 0.07 * Math.sin(t * 0.13));
+  }
 
   let h = null;
   if (renderer.xr.isPresenting) {
@@ -2066,7 +2076,9 @@ async function start() {
     ui.status.textContent = T().lighting;
     await Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]);
     prepare(data);
-    scene.add(buildDust());
+    const lowPower = /OculusBrowser|Quest|Pico|Android|iPhone|iPad/i.test(navigator.userAgent);
+    try { sky = buildSky(THREE, { scene, renderer, eye: EYE, glowTex, quality: lowPower ? 0.6 : 1 }); }
+    catch (err) { console.warn('sky', err); scene.add(buildDust()); }
     buildGalaxy();
     buildLegend();
     updateChrome();
