@@ -179,9 +179,10 @@ export async function parseEpubBible(zip, parseXml, onProgress = () => {}) {
     if (!book) {
       const nav = Array.from(body.getElementsByTagName('p')).find((p) => /\bw_biblebookname\b/.test(p.getAttribute('class') || ''));
       const a = nav && nav.getElementsByTagName('a')[0];
-      book = { name: a ? clean(a.textContent) : `#${num}`, chapters: [], paras: [], cur: null, superscription: '' };
+      book = { name: a ? clean(a.textContent) : `#${num}`, chapters: [], paras: [], notes: {}, cur: null, superscription: '' };
       books.set(num, book);
     }
+    const fnRef = {}; // id сноски -> { ci, vi, word }
     for (const p of Array.from(body.getElementsByTagName('p'))) {
       const cls = ' ' + (p.getAttribute('class') || '') + ' ';
       if (/ sw /.test(cls)) { book.superscription += ' ' + p.textContent; continue; }
@@ -221,12 +222,32 @@ export async function parseEpubBible(zip, parseXml, onProgress = () => {}) {
             continue;
           }
           if (name === 'sup' || /\b(w_ch|pageNum)\b/.test(c)) continue;
-          if (name === 'a' && /^#footnote/.test(ch.getAttribute('href') || '')) continue;
+          if (name === 'a' && /^#footnote/.test(ch.getAttribute('href') || '')) {
+            if (book.cur) {
+              const ci = book.chapters.indexOf(book.cur.ch);
+              const word = (book.cur.ch[book.cur.v].match(/([\p{L}\u0301-]+)[^\p{L}]*$/u) || [])[1] || '';
+              fnRef[ch.getAttribute('href').slice(1)] = { ci, vi: book.cur.v, word: word.replace(/\u0301/g, '') };
+            }
+            continue;
+          }
           walk(ch);
         }
       };
       walk(p);
       if (book.cur && prose) book.cur.ch[book.cur.v] += ' ';
+    }
+    // Сноски издания: «Или „сила“», «Букв. …» — прикрепляем к стихам.
+    for (const div of Array.from(body.getElementsByTagName('div'))) {
+      const id = div.getAttribute('id') || '';
+      const ref = fnRef[id];
+      if (!ref || ref.ci < 0) continue;
+      const link = div.getElementsByTagName('a')[0];
+      let text = div.textContent;
+      if (link) text = text.replace(link.textContent, '');
+      text = clean(text);
+      if (!text) continue;
+      const byCh = (book.notes[ref.ci] = book.notes[ref.ci] || {});
+      (byCh[ref.vi] = byCh[ref.vi] || []).push(ref.word ? `«${ref.word}» — ${text}` : text);
     }
     onProgress((k + 1) / files.length);
   }
@@ -249,6 +270,7 @@ export async function parseEpubBible(zip, parseXml, onProgress = () => {}) {
       n: bk.name, s: shorts[num - 1] || bk.name, g: GENRES_66[num - 1], d: 0,
       c: bk.chapters.map((c) => c.map((v) => v.split('\n').map(clean).filter(Boolean).join('\n') || '—')),
       p: bk.chapters.map((c, ci) => [...(bk.paras[ci] || new Set([0]))].filter((v) => v < c.length).sort((x, y) => x - y)),
+      ...(Object.keys(bk.notes).length ? { f: bk.notes } : {}),
       ...(bk.info ? { info: bk.info } : {}),
     })),
   };

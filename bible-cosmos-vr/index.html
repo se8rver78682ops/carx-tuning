@@ -275,6 +275,44 @@
   #quietExit:hover, #quietExit:focus-visible { opacity: 1; }
   body.quiet .hud, body.quiet #continueBtn { display: none !important; }
   body.quiet #quietExit { display: inline-block; }
+  #chapterInfo {
+    left: max(16px, env(safe-area-inset-left, 0px)); width: min(360px, calc(100vw - 32px)); max-height: 46vh; overflow-y: auto;
+    padding: 14px 16px; zoom: var(--ts, 1);
+  }
+  #chapterInfo h3, #detail h3 { text-wrap: balance; }
+  #chapterInfo h3 { font: 600 11px var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin: 12px 0 6px; padding-right: 36px; }
+  #chapterInfo h3:first-of-type { color: var(--gold); margin-top: 0; }
+  #chapterInfo .close { position: absolute; top: 8px; right: 8px; }
+  #chapterInfo .circ { font: italic 15px/1.5 var(--font-text); color: #f6e7c1; margin: 0; }
+  #chapterInfo .fact { font: 14px/1.5 var(--font-text); color: var(--ink); margin: 0; }
+  #chapterInfo .btn { margin-top: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font: 500 13px var(--font-ui); color: var(--ink); background: rgba(143, 196, 255, 0.08); border: 1px solid var(--line);
+    border-radius: 999px; padding: 4px 10px; cursor: pointer;
+  }
+  .chip:hover, .chip:focus-visible { border-color: var(--gold); outline: none; }
+  .linkbar { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1.2fr; align-items: center; gap: 8px; width: 100%; padding: 3px 4px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .linkbar:hover, .linkbar:focus-visible { background: rgba(243, 195, 91, 0.08); }
+  .linkbar .bar { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #f3c35b, #ffe7a3); }
+  #detail .fn { font: 14px/1.45 var(--font-text); color: var(--ink); margin: 4px 0 0; padding-left: 10px; border-left: 2px solid rgba(243, 195, 91, 0.4); }
+  #detail .def { font: 14px/1.45 var(--font-text); color: #f6e7c1; margin: 8px 0 0; }
+  #detail .par-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+  #detail .par-row .muted { margin: 0; }
+  #detail ul.links .r.q { color: #7fe7ff; }
+  #parallelPanel {
+    left: 50%; transform: translateX(-50%); width: min(1100px, calc(100vw - 32px)); max-height: calc(100vh - 110px);
+    overflow-y: auto; padding: 14px 16px; z-index: 8; zoom: var(--ts, 1);
+  }
+  #parallelPanel h3 { font: 600 12px var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin: 0 0 10px; padding-right: 36px; }
+  #parallelPanel .close { position: absolute; top: 8px; right: 8px; }
+  #parallelPanel .par-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  #parallelPanel .par-col { min-width: 0; }
+  #parallelPanel .par-head { all: unset; cursor: pointer; display: block; font: 600 17px var(--font-title); color: #f6e7c1; margin-bottom: 6px; }
+  #parallelPanel .par-head:hover, #parallelPanel .par-head:focus-visible { color: var(--gold); }
+  #parallelPanel p { font: 14px/1.5 var(--font-text); margin: 0 0 6px; }
+  #parallelPanel sup { color: var(--gold); font: 600 11px var(--font-ui); }
+  @media (max-width: 720px) { #chapterInfo { max-height: 30vh; } }
   #continueBtn { left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 5; }
   @media (max-width: 720px) {
     #listPanel { left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: auto; max-height: 55vh; }
@@ -324,6 +362,7 @@
         <button id="bmBtn" class="btn" type="button" data-i18n="bookmarks">Закладки</button>
         <button id="notesBtn" class="btn" type="button" data-i18n="notes">Заметки</button>
         <button id="mapBtn" class="btn" type="button" data-i18n="map">Карта</button>
+        <button id="trailBtn" class="btn" type="button" data-i18n="trail">Мой путь по связям</button>
         <button id="eventsBtn" class="btn" type="button" data-i18n="events">События</button>
         <button id="topicsBtn" class="btn" type="button" data-i18n="topics">Созвездия тем</button>
         <button id="votdBtn" class="btn" type="button" data-i18n="votd">Стих дня</button>
@@ -358,6 +397,8 @@
   <button id="nextCh" class="btn" type="button" data-i18n="nextCh">Следующая глава ▶</button>
 </div>
 
+<aside id="chapterInfo" class="hud glass" hidden></aside>
+<aside id="parallelPanel" class="hud glass" hidden></aside>
 <aside id="mapPanel" class="hud glass" hidden></aside>
 <button id="quietExit" class="btn" type="button" data-i18n="quietExit">✕ Выйти из тишины</button>
 <aside id="listPanel" class="hud glass" hidden aria-live="polite"></aside>

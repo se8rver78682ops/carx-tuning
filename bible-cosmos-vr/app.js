@@ -127,7 +127,16 @@ const I18N = {
     savedHere: 'Перевод сохранён на этом устройстве, открывать файл снова не нужно.',
     welcomeTitle: 'Откройте вашу Библию',
     welcomeText: 'Выберите файлы EPUB (можно сразу русский и румынский). Текст разбирается и хранится только на этом устройстве, открывать файлы нужно один раз.',
+    noVoiceAndroid: 'Для этого языка на телефоне нет голоса. Откройте «Настройки → Голос → Установить голоса».', stopReading: 'Остановить',
+    autoNext: 'Читать главы подряд', pitch: 'Высота голоса', voiceTest: '▶ Проба голоса', installVoices: 'Установить голоса', voiceNet: 'нужен интернет', voiceBest: 'лучшее качество',
+    bgNote: 'Чтение продолжается, если свернуть программу или выключить экран.',
     welcomeBtn: 'Открыть файлы EPUB',
+    mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
+    showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
+    trail: 'Мой путь по связям', trailNote: 'Стихи, по которым вы шли, — последние сверху. На небе путь светится розовым.',
+    trailEmpty: 'Путь пока пуст. В карточке стиха нажмите «→ Дальше по связи».', trailClear: 'Очистить путь', nextLink: '→ Дальше по связи',
+    footnotes: 'Сноски издания', peopleInVerse: 'Люди в стихе', terms: 'Понятия', measures: 'Меры и деньги', parallels: 'Параллельные места',
+    compare: 'Сравнить', quoteFrom: 'Цитата из', quoteTo: 'Цитируется в', fulfillment: 'исполнение пророчества', bloom: 'Свечение звёзд',
     notes: 'Заметки', noNotes: 'Заметок пока нет. Откройте стих и напишите мысль в поле «Моя заметка».', notePh: 'Моя заметка к этому стиху…', noteTitle: 'Моя заметка',
     places: 'Места в этом стихе', map: 'Карта', mapViews: { region: 'Весь регион', israel: 'Земля Израиля' }, mapNoRoute: 'Маршрут не выбран',
     mapReadRoute: 'Читать:', mapHint: 'Нажмите на место, чтобы увидеть стихи о нём, или выберите маршрут.', mapVerses: (n) => `стихов: ${n}`,
@@ -225,7 +234,16 @@ const I18N = {
     savedHere: 'Traducerea este salvată pe acest dispozitiv, nu trebuie deschisă din nou.',
     welcomeTitle: 'Deschideți Biblia voastră',
     welcomeText: 'Alegeți fișierele EPUB (puteți alege deodată rusă și română). Textul este citit și păstrat doar pe acest dispozitiv; fișierele se deschid o singură dată.',
+    noVoiceAndroid: 'Pe telefon nu există o voce pentru această limbă. Deschideți „Setări → Vocea → Instalează voci”.', stopReading: 'Oprește',
+    autoNext: 'Citește capitolele la rând', pitch: 'Tonul vocii', voiceTest: '▶ Ascultă vocea', installVoices: 'Instalează voci', voiceNet: 'necesită internet', voiceBest: 'cea mai bună calitate',
+    bgNote: 'Citirea continuă dacă minimizați aplicația sau stingeți ecranul.',
     welcomeBtn: 'Deschide fișierele EPUB',
+    mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
+    showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
+    trail: 'Drumul meu prin legături', trailNote: 'Versetele prin care ați trecut, cele recente sus. Pe cer drumul strălucește roz.',
+    trailEmpty: 'Drumul este încă gol. În cardul versetului apăsați „→ Mai departe pe legătură”.', trailClear: 'Șterge drumul', nextLink: '→ Mai departe pe legătură',
+    footnotes: 'Notele ediției', peopleInVerse: 'Persoane în verset', terms: 'Noțiuni', measures: 'Măsuri și bani', parallels: 'Pasaje paralele',
+    compare: 'Compară', quoteFrom: 'Citat din', quoteTo: 'Citat în', fulfillment: 'împlinirea unei profeții', bloom: 'Strălucirea stelelor',
     notes: 'Note', noNotes: 'Încă nu aveți note. Deschideți un verset și scrieți un gând în câmpul „Nota mea”.', notePh: 'Nota mea la acest verset…', noteTitle: 'Nota mea',
     places: 'Locuri în acest verset', map: 'Hartă', mapViews: { region: 'Toată regiunea', israel: 'Țara lui Israel' }, mapNoRoute: 'Fără traseu',
     mapReadRoute: 'Citește:', mapHint: 'Atingeți un loc pentru a vedea versetele despre el sau alegeți un traseu.', mapVerses: (n) => `versete: ${n}`,
@@ -264,7 +282,7 @@ const ui = {
   stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
   loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
   q: $('q'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
-  legendToggle: $('legendToggle'), home: $('home'), notesBtn: $('notesBtn'), mapBtn: $('mapBtn'), eventsBtn: $('eventsBtn'), planBtn: $('planBtn'), musicBtn: $('musicBtn'), mapPanel: $('mapPanel'), quiet: $('quietBtn'), quietExit: $('quietExit'), welcome: $('welcome'), welcomeBtn: $('welcomeBtn'), listPanel: $('listPanel'), votd: $('votd'), continueBtn: $('continueBtn'), settingsPanel: $('settingsPanel'), bmBtn: $('bmBtn'), topicsBtn: $('topicsBtn'), votdBtn: $('votdBtn'), settingsBtn: $('settingsBtn'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
+  legendToggle: $('legendToggle'), home: $('home'), chapterInfo: $('chapterInfo'), parallelPanel: $('parallelPanel'), trailBtn: $('trailBtn'), notesBtn: $('notesBtn'), mapBtn: $('mapBtn'), eventsBtn: $('eventsBtn'), planBtn: $('planBtn'), musicBtn: $('musicBtn'), mapPanel: $('mapPanel'), quiet: $('quietBtn'), quietExit: $('quietExit'), welcome: $('welcome'), welcomeBtn: $('welcomeBtn'), listPanel: $('listPanel'), votd: $('votd'), continueBtn: $('continueBtn'), settingsPanel: $('settingsPanel'), bmBtn: $('bmBtn'), topicsBtn: $('topicsBtn'), votdBtn: $('votdBtn'), settingsBtn: $('settingsBtn'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
 };
 
 /* ---------- Three.js: сцена ---------- */
@@ -431,7 +449,7 @@ function prepare(data) {
     let k = 0;
     chapters.forEach((c, cIdx) => { chStart.push(k); c.forEach((_, vIdx) => { ci[k] = cIdx; vi[k] = vIdx; k++; }); });
     const codes = raw.length === 66 ? CODES66 : raw.length === 78 ? CODES78 : null;
-    const book = { i, name: b.n, short: b.s || b.n, g, deutero: !!b.d, chapters, n, ci, vi, chStart, offset: acc, code: codes ? codes[i] : null, info: b.info || null, paras: Array.isArray(b.p) ? b.p.map((a) => new Set(a)) : null };
+    const book = { i, name: b.n, short: b.s || b.n, g, deutero: !!b.d, chapters, n, ci, vi, chStart, offset: acc, code: codes ? codes[i] : null, info: b.info || null, paras: Array.isArray(b.p) ? b.p.map((a) => new Set(a)) : null, fn: b.f || null };
     acc += n;
     return book;
   });
@@ -565,12 +583,8 @@ function buildGalaxy() {
     const base = bookColor(b), white = new THREE.Color('#ffffff'), tmp = new THREE.Color();
     const phase0 = Math.random() * Math.PI * 2;
     for (let k = 0; k < N; k++) {
-      const t = (k + 0.5) / N;
-      const st = Math.sqrt(t);
-      const th = T * Math.PI * 2 * st + phase0;
-      const rho = r * (0.06 + 0.94 * st) + (Math.random() - 0.5) * (r / T) * 0.55;
-      const depth = (Math.random() - 0.5) * r * 0.12;
-      const p = center.clone().addScaledVector(right, rho * Math.cos(th)).addScaledVector(up, rho * Math.sin(th)).addScaledVector(dir, depth);
+      const [cx, cy, depth] = clusterPoint(b.g, k, N, r, T, phase0);
+      const p = center.clone().addScaledVector(right, cx).addScaledVector(up, cy).addScaledVector(dir, depth);
       pos.set([p.x, p.y, p.z], k * 3);
       const isFirst = b.vi[k] === 0;
       tmp.copy(base).lerp(white, (b.ci[k] % 2 ? 0.0 : 0.3) + (isFirst ? 0.3 : 0)).multiplyScalar(0.75 + Math.random() * 0.35);
@@ -606,6 +620,10 @@ function buildGalaxy() {
     const lbl = makeLabel(gName(g0).toUpperCase(), { px: 64, weight: 600, color: GENRES[g0].color, height: 2.2, letter: 10 });
     lbl.position.copy(place(fm, R * 1.04, 0.13).pos);
     g.add(lbl);
+    const sym = new THREE.Sprite(new THREE.SpriteMaterial({ map: genreSymbol(g0), color, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
+    sym.position.copy(place(fm, R * 1.04, 0.2).pos);
+    sym.scale.setScalar(5);
+    g.add(sym);
     const span = (fB - fA) * totalAng * R;
     const neb = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity: 0.1, depthWrite: false, blending: THREE.AdditiveBlending }));
     neb.position.copy(place(fm, R * 1.35).pos);
@@ -626,7 +644,7 @@ function buildGalaxy() {
   scene.add(g);
   galaxy.group = g;
   g.visible = state.mode === 'galaxy';
-  galaxy.bmPts = galaxy.searchPts = galaxy.topic = galaxy.notePts = null;
+  galaxy.bmPts = galaxy.searchPts = galaxy.topic = galaxy.notePts = galaxy.chapterLinks = galaxy.trail = null;
   votdStar = null;
   BOOKS.forEach((b) => updateBookColors(b.i));
   refreshBmStars();
@@ -1088,7 +1106,10 @@ function chapterRef() { return state.chapter; }
 function waitFade(v) {
   fadeTarget = v;
   return new Promise((resolve) => {
-    const check = () => (Math.abs(fader.material.opacity - v) < 0.02 ? resolve() : setTimeout(check, 16));
+    const check = () => {
+      if (isBg()) { fader.material.opacity = v; resolve(); return; }
+      if (Math.abs(fader.material.opacity - v) < 0.02) resolve(); else setTimeout(check, 16);
+    };
     check();
   });
 }
@@ -1155,6 +1176,7 @@ function goHome() {
 }
 function back() {
   if (quiet.on) { exitQuiet(); return; }
+  if (!ui.parallelPanel.hidden) { ui.parallelPanel.hidden = true; return; }
   if (!ui.mapPanel.hidden || mapVr.group) { closeMap(); return; }
   if (detail.open) { closeDetail(); return; }
   if (state.mode === 'chapter') go('book', { bi: state.bi });
@@ -1191,50 +1213,105 @@ if (hasTts) {
 // Самый приятный доступный голос: сначала «естественные» нейронные голоса, затем Google и Microsoft.
 function pickVoice() {
   const code = LANG;
-  if (settings.voice) {
-    const v = tts.voices.find((x) => x.name === settings.voice && x.lang.toLowerCase().startsWith(code));
+  const want = (settings.voices || {})[code] || settings.voice;
+  if (want) {
+    const v = tts.voices.find((x) => x.name === want && x.lang.toLowerCase().replace('_', '-').startsWith(code));
     if (v) return v;
   }
   const list = tts.voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(code));
   const score = (v) => {
     const n = v.name.toLowerCase();
     let sc = 0;
-    if (/natural|neural|online|premium|enhanced/.test(n)) sc += 4;
+    if (/natural|neural/.test(n)) sc += 6;
+    if (/premium|enhanced|wavenet|studio/.test(n)) sc += 5;
+    if (n.includes('online')) sc += 3;
     if (n.includes('google')) sc += 3;
-    if (n.includes('microsoft')) sc += 2;
-    if (/svetlana|dariya|milena|alina|irina|ioana|alina/.test(n)) sc += 1;
+    if (n.includes('microsoft')) sc += 1;
+    if (!v.localService) sc += 1;
+    if (/svetlana|dariya|milena|katya|ioana|alina|emil/.test(n)) sc += 1;
+    if (/espeak|compact|eloquence|robot|novelty/.test(n)) sc -= 6;
     return sc;
   };
   return list.sort((a, b) => score(b) - score(a))[0] || null;
 }
 // В APK (Android WebView) нет speechSynthesis, там читает встроенный синтезатор Android через мост AndroidTTS.
-const androidDone = {};
+const androidDone = {}, androidStart = {};
 window.__ttsDone = (id) => { const f = androidDone[id]; delete androidDone[id]; if (f) f(); };
+window.__ttsStart = (id) => { const f = androidStart[id]; delete androidStart[id]; if (f) f(); };
+window.__ttsStopped = () => { if (tts.reading) stopReading(); };
+window.__ttsNoVoice = () => { if (!tts.warned['a' + LANG]) { tts.warned['a' + LANG] = true; toast(T().noVoiceAndroid, 9000); } };
+// Приложение свёрнуто или экран выключен: чтение идёт дальше, а картинка не обновляется.
+let appBg = false;
+const isBg = () => document.hidden || appBg;
+window.__appBackground = (b) => { appBg = !!b; if (!b) setTimeout(syncReadingView, 300); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(syncReadingView, 300); });
+
+// Текст для синтезатора: без ударений и служебных знаков, с раскрытыми сокращениями.
+function speechText(text) {
+  let t = String(text).replace(/́/g, '').replace(/[*+†‡]/g, '').replace(/\s+/g, ' ');
+  if (LANG === 'ru') {
+    t = t.replace(/до н\.\s?э\./g, 'до нашей эры').replace(/н\.\s?э\./g, 'нашей эры')
+      .replace(/и т\.\s?д\./g, 'и так далее').replace(/и т\.\s?п\./g, 'и тому подобное').replace(/т\.\s?е\./g, 'то есть');
+  } else {
+    t = t.replace(/î\.\s?e\.\s?n\./g, 'înaintea erei noastre').replace(/\be\.\s?n\./g, 'era noastră').replace(/\bș\.a\.m\.d\./g, 'și așa mai departe');
+  }
+  return t.replace(/\(([^)]*)\)\s*/, '$1. ').trim();
+}
+// Длинный стих делится на фразы: так голос не обрывается (известная ошибка Chrome) и паузы естественнее.
+function speechChunks(text, max = 180) {
+  const parts = text.match(/[^.!?;:…]+[.!?;:…]+["»“”]*\s*|[^.!?;:…]+$/g) || [text];
+  const out = [];
+  let cur = '';
+  for (const p of parts) {
+    if ((cur + p).length > max && cur) { out.push(cur.trim()); cur = ''; }
+    if (p.length > max) {
+      const words = p.split(/(?<=,)\s+|\s+/);
+      for (const w of words) { if ((cur + ' ' + w).length > max && cur) { out.push(cur.trim()); cur = ''; } cur += (cur ? ' ' : '') + w; }
+    } else cur += p;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+
+function androidVoices() {
+  try { return JSON.parse(window.AndroidTTS.voices(T().speech) || '[]'); } catch { return []; }
+}
+function applyAndroidVoice() {
+  const a = window.AndroidTTS;
+  if (a.setRate) a.setRate(settings.rate);
+  if (a.setPitch) a.setPitch(settings.pitch || 1);
+  if (a.setVoice) a.setVoice((settings.voices || {})[LANG] || '');
+}
+const nativeQueue = () => !!(window.AndroidTTS && window.AndroidTTS.speakList);
+
 function speak(text, onDone) {
   if (window.AndroidTTS) {
     const token = ++tts.token;
     const id = 'u' + token;
     tts.talking = true;
     androidDone[id] = () => { tts.talking = false; if (token === tts.token) onDone(); };
-    if (window.AndroidTTS.setRate) window.AndroidTTS.setRate(settings.rate);
-    window.AndroidTTS.speak(text.replace(/\u0301/g, ''), T().speech, id);
+    applyAndroidVoice();
+    window.AndroidTTS.speak(speechText(text), T().speech, id);
     return true;
   }
   if (!hasTts) { toast(T().noTts, 5000); return false; }
   speechSynthesis.cancel();
   const token = ++tts.token;
-  const u = new SpeechSynthesisUtterance(text.replace(/\u0301/g, '').replace(/\(([^)]*)\)\s*/, '$1. '));
   const v = pickVoice();
-  if (v) u.voice = v;
-  else if (!tts.warned[LANG]) { tts.warned[LANG] = true; toast(T().noVoice, 7000); }
-  u.lang = T().speech;
-  u.rate = settings.rate;
-  u.pitch = 1;
+  if (!v && !tts.warned[LANG]) { tts.warned[LANG] = true; toast(T().noVoice, 7000); }
+  const chunks = speechChunks(speechText(text));
   tts.talking = true;
-  u.onend = () => { tts.talking = false; if (token === tts.token) onDone(); };
-  u.onerror = (e) => { if (token === tts.token && e.error !== 'interrupted' && e.error !== 'canceled') stopReading(); };
-  tts.utter = u;
-  speechSynthesis.speak(u);
+  chunks.forEach((c, i) => {
+    const u = new SpeechSynthesisUtterance(c);
+    if (v) u.voice = v;
+    u.lang = T().speech;
+    u.rate = settings.rate;
+    u.pitch = settings.pitch || 1;
+    if (i === chunks.length - 1) u.onend = () => { tts.talking = false; if (token === tts.token) onDone(); };
+    u.onerror = (e) => { if (token === tts.token && e.error !== 'interrupted' && e.error !== 'canceled') stopReading(); };
+    tts.utter = u;
+    speechSynthesis.speak(u);
+  });
   return true;
 }
 
@@ -1265,32 +1342,119 @@ function markReading(vi) {
   }
 }
 
-async function readFrom(vi) {
-  const { bi, ci } = state;
-  if (state.mode !== 'chapter') return;
-  tts.reading = { bi, ci, vi };
-  hideToast();
-  if (state.chapter.pageOf[vi] !== state.page) {
-    await go('chapter', { bi, ci, page: state.chapter.pageOf[vi], keepReading: true });
-  }
-  if (!tts.reading || tts.reading.bi !== bi || tts.reading.ci !== ci) return;
-  markReading(vi);
+// Звуковая «сессия» в браузере: тихая дорожка не даёт телефону усыпить вкладку,
+// а на экране блокировки появляются кнопки «пауза / дальше / назад».
+const media = { audio: null };
+function silentWav() {
+  const n = 8000, buf = new Uint8Array(44 + n), dv = new DataView(buf.buffer);
+  const s = (o, t) => { for (let i = 0; i < t.length; i++) buf[o + i] = t.charCodeAt(i); };
+  s(0, 'RIFF'); dv.setUint32(4, 36 + n, true); s(8, 'WAVEfmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, 8000, true); dv.setUint32(28, 8000, true); dv.setUint16(32, 1, true); dv.setUint16(34, 8, true); s(36, 'data'); dv.setUint32(40, n, true);
+  buf.fill(128, 44);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+function startMediaSession() {
+  if (window.AndroidTTS || renderer.xr.isPresenting) return;
+  try {
+    if (!media.audio) { media.audio = new Audio(silentWav()); media.audio.loop = true; }
+    media.audio.play().catch(() => {});
+  } catch { /* без тихой дорожки читаем как обычно */ }
+  if (!('mediaSession' in navigator) || media.handlers) return;
+  media.handlers = true;
+  const ms = navigator.mediaSession;
+  const set = (a, f) => { try { ms.setActionHandler(a, f); } catch { /* действие не поддерживается */ } };
+  set('pause', () => stopReading());
+  set('stop', () => stopReading());
+  set('play', () => { const r = media.last; if (r && !tts.reading) readFrom(r.vi, { bi: r.bi, ci: r.ci }); });
+  set('nexttrack', () => { const r = tts.reading || media.last; if (r) { const n = neighbourChapter(r.bi, r.ci, 1); if (n) readFrom(0, n); } });
+  set('previoustrack', () => { const r = tts.reading || media.last; if (r) { const n = neighbourChapter(r.bi, r.ci, -1); if (n) readFrom(0, n); } });
+}
+function updateMediaSession() {
+  const r = tts.reading;
+  if (!r || window.AndroidTTS || !('mediaSession' in navigator)) return;
+  media.last = { ...r };
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: `${BOOKS[r.bi].name} ${r.ci + 1}:${r.vi + 1}`, artist: (ui.brand && ui.brand.textContent.trim()) || 'Bible Cosmos', album: BOOKS[r.bi].name });
+    navigator.mediaSession.playbackState = 'playing';
+  } catch { /* старый браузер */ }
+}
+function endMediaSession() {
+  if (media.audio) media.audio.pause();
+  try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; } catch { /* нет */ }
+}
+function neighbourChapter(bi, ci, d) {
+  let nb = bi, nc = ci + d;
+  if (nc >= BOOKS[nb].chapters.length) { nb++; nc = 0; }
+  if (nc < 0) { nb--; if (nb < 0) return null; nc = BOOKS[nb].chapters.length - 1; }
+  return nb < BOOKS.length ? { bi: nb, ci: nc } : null;
+}
+
+// Показ читаемого стиха: только когда программа на экране и открыта эта глава.
+async function showReadingVerse(vi) {
+  const r = tts.reading;
+  if (!r) return;
+  r.vi = vi;
+  updateMediaSession();
+  if (isBg() || state.mode !== 'chapter' || state.bi !== r.bi || state.ci !== r.ci || !state.chapter) return;
+  if (state.chapter.pageOf[vi] !== state.page) await go('chapter', { bi: r.bi, ci: r.ci, page: state.chapter.pageOf[vi], keepReading: true });
+  if (tts.reading === r) markReading(vi);
   updateListenButton();
-  const ok = speak(`${vi === 0 ? T().chapterComma(BOOKS[bi].name, ci + 1) + '. ' : ''}${verseText(bi, ci, vi)}`, () => {
-    if (!tts.reading) return;
-    const next = vi + 1;
-    if (next >= BOOKS[bi].chapters[ci].length) {
-      stopReading(); markRead(bi, ci);
-      if (quiet.on) {
-        let nb = bi, nc = ci + 1;
-        if (nc >= BOOKS[nb].chapters.length) { nb++; nc = 0; }
-        if (nb < BOOKS.length) go('chapter', { bi: nb, ci: nc, keepReading: true }).then(() => { if (quiet.on) readFrom(0); });
-      }
-      return;
+}
+// Вернулись в программу: показать главу и стих, которые сейчас звучат.
+function syncReadingView() {
+  const r = tts.reading;
+  if (!r || isBg() || renderer.xr.isPresenting || busy) return;
+  if (state.mode === 'chapter' && state.bi === r.bi && state.ci === r.ci) { showReadingVerse(r.vi); return; }
+  if (state.mode === 'chapter' || quiet.on) go('chapter', { bi: r.bi, ci: r.ci, focus: r.vi, keepReading: true }).then(() => { if (tts.reading) markReading(tts.reading.vi); updateListenButton(); });
+}
+
+function chapterHeading(bi, ci) { return (BOOKS[bi].code === 'Ps' ? T().psalm(ci + 1) : T().chapterComma(BOOKS[bi].name, ci + 1)) + '. '; }
+
+// Чтение с указанного стиха. В APK вся глава сразу ставится в очередь синтезатора Android,
+// поэтому чтение продолжается при выключенном экране и без пауз между стихами.
+async function readFrom(vi, at) {
+  const bi = at ? at.bi : state.bi, ci = at ? at.ci : state.ci;
+  if (!at && state.mode !== 'chapter') return;
+  const r = { bi, ci, vi };
+  tts.reading = r;
+  hideToast();
+  startMediaSession();
+  if (nativeQueue()) {
+    const token = ++tts.token;
+    const n = BOOKS[bi].chapters[ci].length;
+    const items = [];
+    for (let v = vi; v < n; v++) {
+      const id = `v${token}_${v}`;
+      androidStart[id] = () => { if (token === tts.token) showReadingVerse(v); };
+      items.push([id, speechText(`${v === 0 ? chapterHeading(bi, ci) : ''}${verseText(bi, ci, v)}`)]);
     }
-    readFrom(next);
+    const listId = `L${token}`;
+    androidDone[listId] = () => { if (token === tts.token) chapterDone(bi, ci); };
+    applyAndroidVoice();
+    tts.talking = true;
+    window.AndroidTTS.speakList(JSON.stringify(items), T().speech, listId, `${BOOKS[bi].name} ${ci + 1}`, T().stopReading);
+    showReadingVerse(vi);
+    updateListenButton();
+    return;
+  }
+  await showReadingVerse(vi);
+  if (tts.reading !== r) return;
+  updateListenButton();
+  const ok = speak(`${vi === 0 ? chapterHeading(bi, ci) : ''}${verseText(bi, ci, vi)}`, () => {
+    if (tts.reading !== r) return;
+    if (vi + 1 >= BOOKS[bi].chapters[ci].length) chapterDone(bi, ci);
+    else readFrom(vi + 1, { bi, ci });
   });
   if (!ok) stopReading();
+}
+// Глава дочитана: отметить её и, если включено, читать следующую.
+function chapterDone(bi, ci) {
+  markRead(bi, ci);
+  const next = neighbourChapter(bi, ci, 1);
+  if (!next || (settings.autoNext === false && !quiet.on)) { stopReading(); return; }
+  if (isBg() || state.mode !== 'chapter' || state.bi !== bi || state.ci !== ci || renderer.xr.isPresenting) { readFrom(0, next); return; }
+  tts.reading = { ...next, vi: 0 };
+  go('chapter', { bi: next.bi, ci: next.ci, keepReading: true }).then(() => { if (tts.reading) readFrom(0, next); });
 }
 function stopReading() {
   const was = !!tts.reading;
@@ -1299,6 +1463,7 @@ function stopReading() {
   tts.token++;
   if (hasTts) speechSynthesis.cancel();
   if (window.AndroidTTS) window.AndroidTTS.stop();
+  endMediaSession();
   readFrame.visible = false;
   if (was) updateListenButton();
 }
@@ -1391,6 +1556,7 @@ function personFor(bi) {
 async function loadExtras() {
   try { const r = await fetch('data/books-info.json'); if (r.ok) BOOKINFO = (await r.json()).b; } catch {}
   try { const r = await fetch('data/people.json'); if (r.ok) PEOPLE = await r.json(); } catch {}
+  loadKnowledge();
   if (state.mode === 'book') { renderBookPanel(); if (renderer.xr.isPresenting) rebuildPanel(); }
   try { const r = await fetch('data/xref.json'); if (r.ok) XREF = (await r.json()).x; } catch {}
   if (detail.open) selectVerse(detail.vi);
@@ -1521,15 +1687,16 @@ function makeAboutPlane(about, width) {
 
 // Дуги к связанным стихам в галактике.
 const arcs = (() => {
-  const MAXSEG = 12 * 24;
+  const MAXSEG = 16 * 24;
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAXSEG * 2 * 3), 3));
-  const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: '#f3c35b', transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false }));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(MAXSEG * 2 * 3), 3));
+  const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
   lines.frustumCulled = false;
   lines.visible = false;
   scene.add(lines);
   const dots = [];
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 16; i++) {
     const d = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ffe7a3', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     d.visible = false;
     d.scale.setScalar(1.6);
@@ -1544,11 +1711,13 @@ function hideArcs() {
 }
 function showArcs(pos, k, rel) {
   const a = new THREE.Vector3(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]);
-  const arr = arcs.geo.attributes.position.array;
+  const arr = arcs.geo.attributes.position.array, carr = arcs.geo.attributes.color.array;
   const SEG = 24;
   let n = 0;
   const p0 = new THREE.Vector3(), p1 = new THREE.Vector3(), ctrl = new THREE.Vector3(), b = new THREE.Vector3();
-  rel.slice(0, 12).forEach((r, i) => {
+  arcs.curves = [];
+  rel.slice(0, 16).forEach((r, i) => {
+    const color = r.quote ? arcColor.cyan : arcColor.gold;
     const it = galaxy.items[r.bi];
     if (!it) return;
     const kk = BOOKS[r.bi].chStart[r.ci] + r.vi;
@@ -1561,13 +1730,17 @@ function showArcs(pos, k, rel) {
     for (let s = 0; s < SEG; s++) {
       at(s / SEG, p0); at((s + 1) / SEG, p1);
       arr.set([p0.x, p0.y, p0.z, p1.x, p1.y, p1.z], n * 6);
+      carr.set([color.r, color.g, color.b, color.r, color.g, color.b], n * 6);
       n++;
     }
+    arcs.curves.push({ a: a.clone(), ctrl: ctrl.clone(), b: b.clone(), color });
+    arcs.dots[i].material.color.copy(color);
     arcs.dots[i].position.copy(b);
     arcs.dots[i].visible = true;
   });
   arcs.geo.setDrawRange(0, n * 2);
   arcs.geo.attributes.position.needsUpdate = true;
+  arcs.geo.attributes.color.needsUpdate = true;
   arcs.lines.visible = n > 0;
 }
 
@@ -1652,7 +1825,55 @@ function renderDetail(vi, rel) {
     }
     box.append(row);
   }
+  const chipRow = (title, items) => {
+    if (!items.length) return;
+    box.append(el2('h3', '', title));
+    const row = el2('div', 'chips');
+    for (const [label, fn] of items) { const c = el2('button', 'chip', label); c.type = 'button'; c.addEventListener('click', fn); row.append(c); }
+    box.append(row);
+  };
+  const vtext = verseText(bi, ci, vi);
+  chipRow(L.peopleInVerse, figuresIn(bi, vtext).map((f) => [LANG === 'ro' ? f.ro : f.ru, () => showFigure(f)]));
+  const terms = termsIn(vtext);
+  if (terms.length) {
+    const defBox = el2('p', 'def');
+    defBox.hidden = true;
+    chipRow(L.terms, terms.map((t) => [LANG === 'ro' ? t.ro : t.ru, () => { defBox.hidden = false; defBox.textContent = `${LANG === 'ro' ? t.ro : t.ru}: ${LANG === 'ro' ? t.def_ro : t.def_ru}`; }]));
+    box.append(defBox);
+  }
+  const meas = measuresIn(vtext);
+  if (meas.length) { box.append(el2('h3', '', L.measures)); for (const m of meas) box.append(el2('p', 'muted small', m)); }
+  const fns = b.fn && b.fn[ci] && b.fn[ci][vi];
+  if (fns && fns.length) { box.append(el2('h3', '', L.footnotes)); for (const f of fns) box.append(el2('p', 'fn', f)); }
+  const pars = PARALLELS ? parallelsFor(bi, ci, vi) : [];
+  if (pars.length) {
+    box.append(el2('h3', '', L.parallels));
+    for (const ev of pars) {
+      const row = el2('div', 'par-row');
+      row.append(el2('span', 'muted small', `${pick2(ev)}: ${Object.entries(ev.refs).map(([c, r]) => `${BOOKS[CODE_TO_BI[c]] ? BOOKS[CODE_TO_BI[c]].short : c} ${r.replace('.', ':')}`).join(' · ')}`));
+      const cb = el2('button', 'btn', L.compare); cb.type = 'button'; cb.addEventListener('click', () => showParallel(ev));
+      row.append(cb);
+      box.append(row);
+    }
+  }
+  const quotes = quotesFor(bi, ci, vi);
+  if (quotes.length) {
+    const ul = el2('ul', 'links');
+    for (const q of quotes) {
+      const li = el2('li'), btn = el2('button');
+      btn.type = 'button';
+      btn.append(el2('span', 'r q', `${q.dir === 'from' ? L.quoteFrom : L.quoteTo} ${relRef(q.r)}${q.kind === 'fulfillment' ? ' · ' + L.fulfillment : ''}`), el2('span', 't', plain(verseText(q.r.bi, q.r.ci, q.r.vi))));
+      btn.addEventListener('click', () => { addToTrail({ bi, ci, vi }); addToTrail(q.r); jumpTo(q.r); });
+      li.append(btn); ul.append(li);
+    }
+    box.append(ul);
+  }
   box.append(el2('h3', '', L.related));
+  if (XREF && rel.length) {
+    const nx = el2('button', 'btn primary', L.nextLink); nx.type = 'button';
+    nx.addEventListener('click', () => nextAlongLinks(bi, ci, vi));
+    box.append(el2('div', 'actions')); box.lastChild.append(nx);
+  }
   if (!XREF) box.append(el2('p', 'muted', L.relatedLoading));
   else if (!rel.length) box.append(el2('p', 'muted', L.noRelated));
   else {
@@ -1662,7 +1883,7 @@ function renderDetail(vi, rel) {
       const btn = el2('button');
       btn.type = 'button';
       btn.append(el2('span', 'r', relRef(r)), el2('span', 't', verseText(r.bi, r.ci, r.vi)));
-      btn.addEventListener('click', () => jumpTo(r));
+      btn.addEventListener('click', () => { addToTrail({ bi, ci, vi }); addToTrail(r); jumpTo(r); });
       li.append(btn);
       ul.append(li);
     }
@@ -1761,7 +1982,8 @@ function buildVrDetail(vi, rel) {
   const text = clampLines(wrap(g, verseText(bi, ci, vi), PX - pad * 2), 7);
   const about = bookAbout(bi);
   const note = noteOf(bi, ci, vi);
-  const info = (note ? [`✎ ${note.slice(0, 80)}${note.length > 80 ? '…' : ''}`] : []).concat(about ? about.rows.slice(0, 4).map(([k, v]) => `${k}: ${v}`) : []);
+  const fn1 = BOOKS[bi].fn && BOOKS[bi].fn[ci] && BOOKS[bi].fn[ci][vi];
+  const info = (note ? [`✎ ${note.slice(0, 80)}${note.length > 80 ? '…' : ''}`] : []).concat(fn1 ? [`* ${fn1[0].slice(0, 80)}`] : []).concat(about ? about.rows.slice(0, 4).map(([k, v]) => `${k}: ${v}`) : []);
   g.font = `italic 32px ${FONT_TEXT}`;
   const circ = about && about.circ ? clampLines(wrap(g, about.circ, PX - pad * 2), 3) : [];
   c.width = PX;
@@ -2227,6 +2449,7 @@ function closeList() {
   ui.listPanel.dataset.kind = '';
   if (kind === 'search') setGalaxyLayer('searchPts', null);
   if (kind === 'topic') setGalaxyLayer('topic', null);
+  if (kind === 'chlinks') setGalaxyLayer('chapterLinks', null);
 }
 function showBookmarks() {
   const items = bmList().map(parseKey).filter((r) => r && r.vi != null);
@@ -2408,20 +2631,48 @@ function renderSettings() {
   const rv = el2('span', 'set-val', `${settings.rate.toFixed(2)}×`);
   rate.addEventListener('input', () => { settings.rate = +rate.value; rv.textContent = `${settings.rate.toFixed(2)}×`; saveSettings(); });
   row(L.rate, rate, rv);
-  // Голос
-  const voices = hasTts && !window.AndroidTTS ? tts.voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(LANG)) : [];
-  if (voices.length) {
+  // Голос: список голосов устройства, лучшие сверху
+  const vkey = (settings.voices || {})[LANG] || '';
+  const setV = (name) => { settings.voices = { ...(settings.voices || {}), [LANG]: name }; saveSettings(); };
+  let vlist = [];
+  if (window.AndroidTTS && window.AndroidTTS.voices) {
+    vlist = androidVoices().map((v) => ({ value: v.name, label: `${v.label || v.name}${v.net ? ` · ${L.voiceNet}` : ''}${v.best ? ` · ${L.voiceBest}` : ''}` }));
+  } else if (hasTts && !window.AndroidTTS) {
+    vlist = tts.voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(LANG)).map((v) => ({ value: v.name, label: v.name }));
+  }
+  if (vlist.length) {
     const sel = el2('select'); sel.id = 'setVoice';
     sel.append(Object.assign(document.createElement('option'), { value: '', textContent: L.voiceAuto }));
-    for (const v of voices) sel.append(Object.assign(document.createElement('option'), { value: v.name, textContent: v.name }));
-    sel.value = settings.voice;
-    sel.addEventListener('change', () => { settings.voice = sel.value; saveSettings(); });
+    for (const v of vlist) sel.append(Object.assign(document.createElement('option'), { value: v.value, textContent: v.label }));
+    sel.value = vlist.some((v) => v.value === vkey) ? vkey : (settings.voice && !window.AndroidTTS && vlist.some((v) => v.value === settings.voice) ? settings.voice : '');
+    sel.addEventListener('change', () => setV(sel.value));
     row(L.voice, sel);
   }
+  const test = el2('button', 'btn', L.voiceTest); test.type = 'button'; test.id = 'voiceTest';
+  test.addEventListener('click', () => { stopReading(); const v0 = BOOKS[0] && BOOKS[0].chapters[0] && BOOKS[0].chapters[0][0]; speak(v0 || L.welcomeBtn, () => {}); });
+  const extra = [test];
+  if (window.AndroidTTS && window.AndroidTTS.installVoices) {
+    const inst = el2('button', 'btn', L.installVoices); inst.type = 'button';
+    inst.addEventListener('click', () => window.AndroidTTS.installVoices());
+    extra.push(inst);
+  }
+  row('', ...extra);
+  const pitch = el2('input'); pitch.type = 'range'; pitch.min = '0.8'; pitch.max = '1.2'; pitch.step = '0.05'; pitch.value = String(settings.pitch || 1); pitch.id = 'setPitch';
+  const pv = el2('span', 'set-val', `${(settings.pitch || 1).toFixed(2)}`);
+  pitch.addEventListener('input', () => { settings.pitch = +pitch.value; pv.textContent = settings.pitch.toFixed(2); saveSettings(); });
+  row(L.pitch, pitch, pv);
+  const an = el2('input'); an.type = 'checkbox'; an.id = 'setAutoNext'; an.checked = settings.autoNext !== false;
+  an.addEventListener('change', () => { settings.autoNext = an.checked; saveSettings(); });
+  row(L.autoNext, an);
+  box.append(el2('p', 'muted small', L.bgNote));
   // Музыка
   const mv = el2('input'); mv.type = 'range'; mv.min = '0'; mv.max = '1'; mv.step = '0.05'; mv.value = String(settings.musicVol ?? 0.5); mv.id = 'setMusic';
   mv.addEventListener('input', () => { settings.musicVol = +mv.value; saveSettings(); });
   row(L.musicVol, mv);
+  // Свечение звёзд
+  const bl = el2('input'); bl.type = 'checkbox'; bl.id = 'setBloom'; bl.checked = settings.bloom !== false;
+  bl.addEventListener('change', () => { settings.bloom = bl.checked; saveSettings(); });
+  row(L.bloom, bl);
   // Гироскоп
   const gy = el2('input'); gy.type = 'checkbox'; gy.id = 'setGyro'; gy.checked = gyro.on;
   gy.addEventListener('change', () => setGyro(gy.checked));
@@ -3076,9 +3327,498 @@ ui.notesBtn.addEventListener('click', showNotes);
 ui.mapBtn.addEventListener('click', () => openMap());
 ui.eventsBtn.addEventListener('click', showEvents);
 ui.planBtn.addEventListener('click', showPlan);
+ui.trailBtn.addEventListener('click', showTrail);
 ui.musicBtn.addEventListener('click', toggleMusic);
 ui.quiet.addEventListener('click', enterQuiet);
 ui.quietExit.addEventListener('click', exitQuiet);
+
+
+/* ---------- Объяснения и связи: краткие содержания, люди, понятия, меры, параллели, цитаты ---------- */
+
+let SUMMARIES = null, FIGURES = null, FACTS = null, PARALLELS = null, OTQ = null, GLOSSARY = null;
+async function loadKnowledge() {
+  const get = async (f) => { try { const r = await fetch(`data/${f}`); return r.ok ? await r.json() : null; } catch { return null; } };
+  [SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY] = await Promise.all(['summaries.json', 'figures.json', 'facts.json', 'parallels.json', 'otquotes.json', 'glossary.json'].map(get));
+  buildKnowledgeIndex();
+  if (state.mode === 'chapter') renderChapterInfo();
+  if (detail.open && !renderer.xr.isPresenting) selectVerse(detail.vi);
+}
+const pick2 = (o) => (o ? o[LANG] || o.ru : '');
+function chapterSummary(bi, ci) {
+  const b = BOOKS[bi];
+  const s = SUMMARIES && b.code && SUMMARIES[b.code] && SUMMARIES[b.code][ci + 1];
+  return s ? pick2(s) : '';
+}
+
+// Люди: поиск имён в тексте (с ограничением по книгам для одинаковых имён).
+const figRe = {};
+function figureRegex(f) {
+  const k = f.id + LANG;
+  if (!figRe[k]) {
+    const st = (LANG === 'ro' ? f.re_ro : f.re_ru) || f.re_ru || [];
+    try { figRe[k] = st.length ? new RegExp(`(?:^|[^\\p{L}])(?:${st.join('|')})`, 'u') : null; } catch { figRe[k] = null; }
+  }
+  return figRe[k];
+}
+function figuresIn(bi, text) {
+  if (!FIGURES) return [];
+  const code = BOOKS[bi].code;
+  return FIGURES.figures.filter((f) => (!f.books || f.books.includes(code)) && figureRegex(f) && figureRegex(f).test(text));
+}
+const chapterFigCache = {};
+function figuresInChapter(bi, ci) {
+  const k = `${LANG}:${bi}:${ci}:${BOOKS.length}`;
+  if (!chapterFigCache[k]) chapterFigCache[k] = figuresIn(bi, BOOKS[bi].chapters[ci].join(' '));
+  return chapterFigCache[k];
+}
+function showFigure(f) {
+  const L = T();
+  const re = figureRegex(f);
+  const res = [];
+  if (re) BOOKS.forEach((b) => { if (f.books && !f.books.includes(b.code)) return; b.chapters.forEach((c, ci) => c.forEach((v, vi) => { if (res.length < 300 && re.test(v)) res.push({ bi: b.i, ci, vi }); })); });
+  const name = LANG === 'ro' ? f.ro : f.ru;
+  openList('person', name, `${LANG === 'ro' ? f.bio_ro : f.bio_ru} ${L.mentions(res.length)}`, res.slice(0, 150));
+}
+
+// Понятия
+const termRe = {};
+function termsIn(text) {
+  if (!GLOSSARY) return [];
+  return GLOSSARY.terms.filter((t) => {
+    const k = t.id + LANG;
+    if (termRe[k] === undefined) {
+      const st = (LANG === 'ro' ? t.re_ro : t.re_ru) || [];
+      try { termRe[k] = st.length ? new RegExp(`(?:^|[^\\p{L}])(?:${st.join('|')})`, 'iu') : null; } catch { termRe[k] = null; }
+    }
+    return termRe[k] && termRe[k].test(text);
+  }).slice(0, 6);
+}
+
+// Меры, вес, деньги: перевод в привычные единицы.
+const MEASURES = [
+  { re_ru: 'локт|локот|локоть', re_ro: 'co[tț]i?(?![a-zăâîșț])|cubi', ru: 'Локоть ≈ 44,5 см (длина от локтя до кончиков пальцев)', ro: 'Cot ≈ 44,5 cm (de la cot până la vârful degetelor)' },
+  { re_ru: 'пяд', re_ro: 'palm[ăe] de mân|lat de palm', ru: 'Пядь ≈ 22 см (половина локтя)', ro: 'Palmă ≈ 22 cm (jumătate de cot)' },
+  { re_ru: 'стади(?:й|я|ев|ям|ях)', re_ro: 'stadi', ru: 'Стадий ≈ 185 м', ro: 'Stadiu ≈ 185 m' },
+  { re_ru: 'мил(?:ю|и|ь)(?![а-яё])', re_ro: 'mil[ăe](?![a-zăâîșț])', ru: 'Римская миля ≈ 1,5 км', ro: 'Milă romană ≈ 1,5 km' },
+  { re_ru: 'шекел|сикл', re_ro: 'siclu|sicli|șechel', ru: 'Шекель (сикль) ≈ 11,4 г серебра', ro: 'Siclu ≈ 11,4 g de argint' },
+  { re_ru: 'талант', re_ro: 'talan[tț]', ru: 'Талант ≈ 34 кг (3 000 шекелей)', ro: 'Talant ≈ 34 kg (3.000 de sicli)' },
+  { re_ru: 'мин(?:а|ы|ам|ах)(?![а-яё])', re_ro: 'mine(?![a-zăâîșț])|mina(?![a-zăâîșț])', ru: 'Мина ≈ 570 г (50 шекелей)', ro: 'Mina ≈ 570 g (50 de sicli)' },
+  { re_ru: 'гер(?:а|ы|ам|ах)(?![а-яё])', re_ro: 'ghera|ghere', ru: 'Гера ≈ 0,57 г (1/20 шекеля)', ro: 'Ghera ≈ 0,57 g (1/20 dintr-un siclu)' },
+  { re_ru: 'ефа|ефы|ефу|эфа|эфы|эфу', re_ro: 'ef[ăe](?![a-zăâîșț])', ru: 'Ефа ≈ 22 л (сыпучие продукты)', ro: 'Efă ≈ 22 l (pentru cereale)' },
+  { re_ru: 'бат(?:а|ов|ам)?(?![а-яё])', re_ro: 'ba[tț]i?(?![a-zăâîșț])', ru: 'Бат ≈ 22 л (жидкости)', ro: 'Bat ≈ 22 l (pentru lichide)' },
+  { re_ru: 'гомер|хомер', re_ro: 'homer', ru: 'Гомер ≈ 220 л', ro: 'Homer ≈ 220 l' },
+  { re_ru: 'омер', re_ro: 'omer', ru: 'Омер ≈ 2,2 л', ro: 'Omer ≈ 2,2 l' },
+  { re_ru: 'хин(?:а|ов)?(?![а-яё])', re_ro: 'hin(?![a-zăâîșț])', ru: 'Хин ≈ 3,7 л', ro: 'Hin ≈ 3,7 l' },
+  { re_ru: 'денари', re_ro: 'dinar', ru: 'Денарий — дневная плата работника', ro: 'Dinar — plata unui lucrător pentru o zi' },
+  { re_ru: 'драхм', re_ro: 'drahm', ru: 'Драхма ≈ денарий, дневная плата', ro: 'Drahmă ≈ un dinar, plata pentru o zi' },
+  { re_ru: 'лепт', re_ro: 'lept', ru: 'Лепта — самая мелкая монета, 1/128 денария', ro: 'Lepta — cea mai mică monedă, 1/128 dintr-un dinar' },
+  { re_ru: 'кодрант', re_ro: 'codrant', ru: 'Кодрант — 1/64 денария', ro: 'Codrant — 1/64 dintr-un dinar' },
+  { re_ru: 'статир', re_ro: 'stater', ru: 'Статир ≈ 4 драхмы', ro: 'Stater ≈ 4 drahme' },
+];
+const measRe = {};
+function measuresIn(text) {
+  return MEASURES.filter((m, i) => {
+    const k = i + LANG;
+    if (!measRe[k]) measRe[k] = new RegExp(`(?:^|[^\\p{L}])(?:${LANG === 'ro' ? m.re_ro : m.re_ru})`, 'iu');
+    return measRe[k].test(text);
+  }).map((m) => pick2(m));
+}
+
+// Индексы параллелей Евангелий и цитат Ветхого Завета.
+let parallelIndex = {}, quoteIndex = {};
+function rangeKeys(code, range) {
+  const out = [];
+  const m = range.match(/^(\d+)\.(\d+)(?:-(?:(\d+)\.)?(\d+))?$/);
+  if (!m) return out;
+  const c1 = +m[1], v1 = +m[2], c2 = m[3] ? +m[3] : c1, v2 = m[4] ? +m[4] : v1;
+  for (let c = c1; c <= c2; c++) {
+    const bi = CODE_TO_BI[code];
+    const len = bi != null && BOOKS[bi].chapters[c - 1] ? BOOKS[bi].chapters[c - 1].length : 200;
+    for (let v = c === c1 ? v1 : 1; v <= (c === c2 ? v2 : len); v++) out.push(`${code}.${c}.${v}`);
+  }
+  return out;
+}
+function buildKnowledgeIndex() {
+  parallelIndex = {}; quoteIndex = {};
+  if (PARALLELS) PARALLELS.events.forEach((ev, i) => { for (const [code, r] of Object.entries(ev.refs)) for (const k of rangeKeys(code, r)) (parallelIndex[k] = parallelIndex[k] || []).push(i); });
+  if (OTQ) OTQ.quotes.forEach((q) => {
+    (quoteIndex[q.nt] = quoteIndex[q.nt] || []).push({ other: q.ot, kind: q.kind, dir: 'from' });
+    (quoteIndex[q.ot] = quoteIndex[q.ot] || []).push({ other: q.nt, kind: q.kind, dir: 'to' });
+  });
+}
+function quotesFor(bi, ci, vi) {
+  return (quoteIndex[refKey(bi, ci, vi)] || []).map((q) => ({ ...q, r: fromRef(q.other) })).filter((q) => q.r);
+}
+function parallelsFor(bi, ci, vi) {
+  return [...new Set(parallelIndex[refKey(bi, ci, vi)] || [])].map((i) => PARALLELS.events[i]);
+}
+function showParallel(ev) {
+  const L = T(), box = ui.parallelPanel;
+  box.replaceChildren();
+  const close = el2('button', 'close', '✕');
+  close.type = 'button'; close.setAttribute('aria-label', L.close2);
+  close.addEventListener('click', () => { box.hidden = true; });
+  box.append(close, el2('h3', '', pick2(ev)));
+  const cols = el2('div', 'par-cols');
+  for (const [code, range] of Object.entries(ev.refs)) {
+    const bi = CODE_TO_BI[code];
+    if (bi == null) continue;
+    const keys = rangeKeys(code, range);
+    const col = el2('div', 'par-col');
+    const first = parseKey(keys[0]);
+    const head = el2('button', 'par-head', `${BOOKS[bi].name} ${range.replace('.', ':')}`);
+    head.type = 'button';
+    head.addEventListener('click', () => { box.hidden = true; if (first) jumpTo(first); });
+    col.append(head);
+    for (const k of keys.slice(0, 60)) {
+      const r = parseKey(k);
+      if (!r || r.vi == null) continue;
+      const p = el2('p');
+      p.append(el2('sup', '', String(r.vi + 1)), document.createTextNode(' ' + plain(verseText(r.bi, r.ci, r.vi))));
+      col.append(p);
+    }
+    cols.append(col);
+  }
+  box.append(cols);
+  box.hidden = false;
+  box.scrollTop = 0;
+  box.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
+}
+
+// Связи главы: с какими книгами глава связана сильнее всего.
+function chapterLinks(bi, ci) {
+  const counts = new Map();
+  BOOKS[bi].chapters[ci].forEach((_, vi) => {
+    for (const r of related(bi, ci, vi)) if (r.bi !== bi) counts.set(r.bi, (counts.get(r.bi) || 0) + 1);
+    for (const q of quotesFor(bi, ci, vi)) if (q.r.bi !== bi) counts.set(q.r.bi, (counts.get(q.r.bi) || 0) + 2);
+  });
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([b, n]) => ({ bi: b, n }));
+}
+async function showChapterLinksOnSky(bi, ci) {
+  const links = chapterLinks(bi, ci);
+  await go('galaxy');
+  const src = galaxy.items[bi];
+  if (!src) return;
+  const k0 = BOOKS[bi].chStart[ci];
+  const a = new THREE.Vector3(src.pos[k0 * 3], src.pos[k0 * 3 + 1], src.pos[k0 * 3 + 2]);
+  const targets = links.map((l) => ({ p: galaxy.items[l.bi].center.clone(), w: l.n }));
+  setGalaxyLayer('chapterLinks', buildArcObject(a, targets, '#f3c35b'));
+  if (!renderer.xr.isPresenting) { const d = a.clone().sub(EYE); look.target = Math.atan2(d.x, -d.z); }
+  openList('chlinks', T().chLinksTitle(`${BOOKS[bi].short} ${ci + 1}`), '', links.map((l) => ({ bi: l.bi, ci: 0, vi: null, label: `${BOOKS[l.bi].name} · ${T().linksN(l.n)}`, onClick: () => go('book', { bi: l.bi }) })));
+}
+
+// Панель «О главе»: краткое содержание, люди, связи, «Знаете ли вы?».
+function renderChapterInfo() {
+  const box = ui.chapterInfo;
+  if (state.mode !== 'chapter' || renderer.xr.isPresenting || quiet.on || box.dataset.closed === `${state.bi}:${state.ci}`) { box.hidden = true; return; }
+  const L = T(), bi = state.bi, ci = state.ci, b = BOOKS[bi];
+  box.replaceChildren();
+  const close = el2('button', 'close', '✕');
+  close.type = 'button'; close.setAttribute('aria-label', L.close2);
+  close.addEventListener('click', () => { box.dataset.closed = `${bi}:${ci}`; box.hidden = true; });
+  box.append(close, el2('h3', '', L.aboutChapter(b.code === 'Ps' ? L.psalm(ci + 1) : `${b.name} ${ci + 1}`)));
+  const sum = chapterSummary(bi, ci);
+  if (sum) box.append(el2('p', 'circ', sum));
+  const figs = figuresInChapter(bi, ci);
+  if (figs.length) {
+    box.append(el2('h3', '', L.peopleHere));
+    const row = el2('div', 'chips');
+    for (const f of figs.slice(0, 10)) {
+      const c = el2('button', 'chip', LANG === 'ro' ? f.ro : f.ru);
+      c.type = 'button'; c.addEventListener('click', () => showFigure(f));
+      row.append(c);
+    }
+    box.append(row);
+  }
+  const links = XREF ? chapterLinks(bi, ci) : [];
+  if (links.length) {
+    box.append(el2('h3', '', L.chLinks));
+    const max = links[0].n;
+    for (const l of links) {
+      const row = el2('button', 'linkbar');
+      row.type = 'button';
+      const bar = el2('span', 'bar'); bar.style.width = `${Math.round((l.n / max) * 100)}%`;
+      row.append(el2('span', 'name', BOOKS[l.bi].name), bar);
+      row.addEventListener('click', () => go('book', { bi: l.bi }));
+      box.append(row);
+    }
+    const sky2 = el2('button', 'btn', L.showOnSky);
+    sky2.type = 'button'; sky2.addEventListener('click', () => showChapterLinksOnSky(bi, ci));
+    box.append(sky2);
+  }
+  const facts = FACTS && b.code && FACTS[b.code] ? (FACTS[b.code][LANG] || FACTS[b.code].ru) : null;
+  if (facts && facts.length) box.append(el2('h3', '', L.didYouKnow), el2('p', 'fact', facts[ci % facts.length]));
+  if (!sum && !figs.length && !links.length) { box.hidden = true; return; }
+  box.hidden = false;
+  box.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
+}
+
+// Путешествие по связям: след на небе.
+function trail() { return store.get('trail', []); }
+function addToTrail(r) {
+  const t = trail();
+  const k = refKey(r.bi, r.ci, r.vi);
+  if (t[t.length - 1] !== k) { t.push(k); if (t.length > 60) t.shift(); store.set('trail', t); }
+}
+function nextAlongLinks(bi, ci, vi) {
+  const seen = new Set(trail());
+  const rel = related(bi, ci, vi).concat(quotesFor(bi, ci, vi).map((q) => q.r));
+  const next = rel.find((r) => !seen.has(refKey(r.bi, r.ci, r.vi))) || rel[0];
+  if (!next) return;
+  addToTrail({ bi, ci, vi });
+  addToTrail(next);
+  jumpTo(next);
+}
+function showTrail() {
+  const L = T();
+  const list = trail().map(parseKey).filter((r) => r && r.vi != null);
+  const extra = el2('div', 'actions');
+  if (list.length) {
+    const sky2 = el2('button', 'btn', L.showOnSky); sky2.type = 'button';
+    sky2.addEventListener('click', async () => { await go('galaxy'); drawTrail(); });
+    const clr = el2('button', 'btn danger', L.trailClear); clr.type = 'button';
+    clr.addEventListener('click', () => { store.set('trail', []); setGalaxyLayer('trail', null); showTrail(); });
+    extra.append(sky2, clr);
+  }
+  openList('trail', L.trail, list.length ? L.trailNote : L.trailEmpty, list.slice().reverse(), extra);
+  drawTrail();
+}
+function drawTrail() {
+  const list = trail().map(parseKey).filter((r) => r && r.vi != null && galaxy.items[r.bi]);
+  if (list.length < 2) { setGalaxyLayer('trail', null); return; }
+  const pts = list.map((r) => { const it = galaxy.items[r.bi]; const k = BOOKS[r.bi].chStart[r.ci] + r.vi; return new THREE.Vector3(it.pos[k * 3], it.pos[k * 3 + 1], it.pos[k * 3 + 2]); });
+  const grp = new THREE.Group();
+  const seg = [];
+  for (let i = 1; i < pts.length; i++) seg.push(...pts[i - 1].toArray(), ...pts[i].toArray());
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(seg), 3));
+  grp.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: '#ffb3e6', transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false })));
+  for (const p of pts) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#ffc8ef', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    s.position.copy(p); s.scale.setScalar(2.2); grp.add(s);
+  }
+  setGalaxyLayer('trail', grp);
+}
+
+/* ---------- Графика: дуги-кривые с бегущими искрами ---------- */
+
+// Набор дуг из одной точки к нескольким целям (для «связей главы»).
+function buildArcObject(a, targets, color) {
+  const grp = new THREE.Group();
+  const seg = [];
+  const SEG = 28, p0 = new THREE.Vector3(), p1 = new THREE.Vector3(), ctrl = new THREE.Vector3();
+  const curves = [];
+  for (const t of targets) {
+    const b = t.p;
+    ctrl.addVectors(a, b).multiplyScalar(0.5).sub(EYE);
+    if (ctrl.lengthSq() < 1e-6) ctrl.set(0, 1, 0);
+    ctrl.normalize().multiplyScalar(64 + a.distanceTo(b) * 0.35).add(EYE);
+    const c = { a: a.clone(), ctrl: ctrl.clone(), b: b.clone() };
+    curves.push(c);
+    for (let s = 0; s < SEG; s++) { bez(c, s / SEG, p0); bez(c, (s + 1) / SEG, p1); seg.push(...p0.toArray(), ...p1.toArray()); }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(seg), 3));
+  grp.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false })));
+  grp.userData.curves = curves;
+  return grp;
+}
+function bez(c, t, out) { return out.set(0, 0, 0).addScaledVector(c.a, (1 - t) * (1 - t)).addScaledVector(c.ctrl, 2 * (1 - t) * t).addScaledVector(c.b, t * t); }
+const sparks = (() => {
+  const MAX = 64;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAX * 3), 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(MAX * 3), 3));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 14, sizeAttenuation: false, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  pts.frustumCulled = false;
+  pts.visible = false;
+  scene.add(pts);
+  return { pts, geo, MAX, list: [] };
+})();
+// Искры бегут по дугам наведения и по «связям главы».
+function updateSparks(time) {
+  const curves = [];
+  if (arcs.lines.visible && arcs.curves) curves.push(...arcs.curves);
+  if (galaxy.group && galaxy.group.visible && galaxy.chapterLinks) curves.push(...galaxy.chapterLinks.userData.curves.map((c) => ({ ...c, color: arcColor.gold })));
+  if (!curves.length || reducedMotion) { sparks.pts.visible = false; return; }
+  const pos = sparks.geo.attributes.position.array, col = sparks.geo.attributes.color.array;
+  let n = 0;
+  const v = new THREE.Vector3();
+  curves.forEach((c, i) => {
+    for (let j = 0; j < 3 && n < sparks.MAX; j++) {
+      const t = (time * 0.32 + i * 0.37 + j / 3) % 1;
+      bez(c, t, v);
+      pos.set([v.x, v.y, v.z], n * 3);
+      const cc = c.color || arcColor.gold, f = Math.sin(t * Math.PI);
+      col.set([cc.r * f, cc.g * f, cc.b * f], n * 3);
+      n++;
+    }
+  });
+  sparks.geo.setDrawRange(0, n);
+  sparks.geo.attributes.position.needsUpdate = true;
+  sparks.geo.attributes.color.needsUpdate = true;
+  sparks.pts.visible = true;
+}
+const arcColor = { gold: new THREE.Color('#ffd27a'), cyan: new THREE.Color('#7fe7ff') };
+
+/* ---------- Графика: свечение (bloom) на экране ---------- */
+
+const post = (() => {
+  const FULL = /* glsl */ 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+  const bright = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: null }, uTh: { value: 0.55 } },
+    vertexShader: FULL,
+    fragmentShader: 'uniform sampler2D tDiffuse; uniform float uTh; varying vec2 vUv; void main() { vec3 c = texture2D(tDiffuse, vUv).rgb; float l = dot(c, vec3(0.299, 0.587, 0.114)); gl_FragColor = vec4(c * smoothstep(uTh, uTh + 0.5, l), 1.0); }',
+    depthTest: false, depthWrite: false,
+  });
+  const blur = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: null }, uDir: { value: new THREE.Vector2() } },
+    vertexShader: FULL,
+    fragmentShader: `uniform sampler2D tDiffuse; uniform vec2 uDir; varying vec2 vUv;
+      void main() { vec3 s = texture2D(tDiffuse, vUv).rgb * 0.227;
+        s += texture2D(tDiffuse, vUv + uDir * 1.385).rgb * 0.316; s += texture2D(tDiffuse, vUv - uDir * 1.385).rgb * 0.316;
+        s += texture2D(tDiffuse, vUv + uDir * 3.231).rgb * 0.070; s += texture2D(tDiffuse, vUv - uDir * 3.231).rgb * 0.070;
+        gl_FragColor = vec4(s, 1.0); }`,
+    depthTest: false, depthWrite: false,
+  });
+  const comp = new THREE.ShaderMaterial({
+    uniforms: { tScene: { value: null }, tBloom: { value: null }, uStrength: { value: 0.9 } },
+    vertexShader: FULL,
+    fragmentShader: `uniform sampler2D tScene; uniform sampler2D tBloom; uniform float uStrength; varying vec2 vUv;
+      void main() { vec3 c = texture2D(tScene, vUv).rgb + texture2D(tBloom, vUv).rgb * uStrength; gl_FragColor = vec4(c, 1.0);
+        #include <colorspace_fragment>
+      }`,
+    depthTest: false, depthWrite: false,
+  });
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), bright);
+  quad.frustumCulled = false;
+  const pscene = new THREE.Scene();
+  pscene.add(quad);
+  const pcam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  let w = 0, h = 0, sceneRT = null, rA = null, rB = null;
+  const size = new THREE.Vector2();
+  function ensure() {
+    renderer.getDrawingBufferSize(size);
+    if (size.x === w && size.y === h && sceneRT) return;
+    w = size.x; h = size.y;
+    [sceneRT, rA, rB].forEach((t) => t && t.dispose());
+    sceneRT = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: 4 });
+    const bw = Math.max(1, w >> 2), bh = Math.max(1, h >> 2);
+    rA = new THREE.WebGLRenderTarget(bw, bh, { type: THREE.HalfFloatType });
+    rB = new THREE.WebGLRenderTarget(bw, bh, { type: THREE.HalfFloatType });
+  }
+  const pass = (mat, target) => { quad.material = mat; renderer.setRenderTarget(target); renderer.render(pscene, pcam); };
+  return {
+    render() {
+      ensure();
+      renderer.setRenderTarget(sceneRT);
+      renderer.render(scene, camera);
+      bright.uniforms.tDiffuse.value = sceneRT.texture;
+      pass(bright, rA);
+      for (let i = 0; i < 2; i++) {
+        blur.uniforms.tDiffuse.value = rA.texture; blur.uniforms.uDir.value.set(1 / rA.width, 0); pass(blur, rB);
+        blur.uniforms.tDiffuse.value = rB.texture; blur.uniforms.uDir.value.set(0, 1 / rA.height); pass(blur, rA);
+      }
+      comp.uniforms.tScene.value = sceneRT.texture;
+      comp.uniforms.tBloom.value = rA.texture;
+      pass(comp, null);
+    },
+  };
+})();
+function renderFrame() {
+  if (settings.bloom !== false && !renderer.xr.isPresenting) {
+    try { post.render(); return; } catch (err) { console.warn('bloom', err); settings.bloom = false; }
+  }
+  renderer.render(scene, camera);
+}
+
+/* ---------- Графика: формы скоплений по жанрам и символы ---------- */
+
+// Возвращает [x, y, глубина] звезды k из N в плоскости скопления радиуса r.
+function clusterPoint(genre, k, N, r, T, phase0) {
+  const t = (k + 0.5) / N, st = Math.sqrt(t), rnd = Math.random;
+  const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
+  switch (genre) {
+    case 'proph': { // туманность: рыхлое облако с «завитками»
+      const a = rnd() * Math.PI * 2, rr = r * Math.pow(rnd(), 0.6);
+      const sw = Math.sin(a * 3 + phase0) * 0.25;
+      return [Math.cos(a) * rr * (1 + sw), Math.sin(a) * rr * (0.75 + sw), gauss() * r * 0.35];
+    }
+    case 'gospel': { // яркое шаровое скопление
+      const a = rnd() * Math.PI * 2, rr = r * Math.pow(t, 1.4) * 0.95;
+      return [Math.cos(a) * rr, Math.sin(a) * rr, gauss() * rr * 0.6];
+    }
+    case 'wisdom': { // «роза»: лепестки
+      const th = T * Math.PI * 2 * st + phase0, rr = r * (0.15 + 0.85 * st) * (0.6 + 0.4 * Math.abs(Math.sin(th * 2.5)));
+      return [Math.cos(th) * rr, Math.sin(th) * rr, gauss() * r * 0.06];
+    }
+    case 'cath': { // двойные звёзды
+      const side = k % 2 ? 1 : -1, a = rnd() * Math.PI * 2, rr = r * 0.48 * Math.pow(rnd(), 0.7);
+      return [side * r * 0.45 + Math.cos(a) * rr, Math.sin(a) * rr, gauss() * r * 0.1];
+    }
+    case 'paul': { // голубая спираль с двумя рукавами
+      const arm = k % 2, th = T * Math.PI * 1.4 * st + phase0 + arm * Math.PI;
+      const rr = r * (0.08 + 0.92 * st) + gauss() * (r / T) * 0.35;
+      return [Math.cos(th) * rr, Math.sin(th) * rr, gauss() * r * 0.05];
+    }
+    case 'rev': { // вихрь
+      const th = T * Math.PI * 3 * st + phase0, rr = r * Math.pow(t, 0.8) + gauss() * r * 0.04;
+      return [Math.cos(th) * rr, Math.sin(th) * rr, (1 - t) * r * 0.3 * gauss()];
+    }
+    case 'hist':
+    case 'hist2': { // спираль с перемычкой
+      if (k % 4 === 0) { const x = (rnd() - 0.5) * r * 0.9; return [x, gauss() * r * 0.08, gauss() * r * 0.05]; }
+      const th = T * Math.PI * 2 * st + phase0, rr = r * (0.3 + 0.7 * st) + gauss() * (r / T) * 0.4;
+      return [Math.cos(th) * rr, Math.sin(th) * rr, gauss() * r * 0.06];
+    }
+    default: { // Закон и остальные: золотая спираль
+      const th = T * Math.PI * 2 * st + phase0;
+      const rho = r * (0.06 + 0.94 * st) + (rnd() - 0.5) * (r / T) * 0.55;
+      return [Math.cos(th) * rho, Math.sin(th) * rho, (rnd() - 0.5) * r * 0.12];
+    }
+  }
+}
+// Символы жанров: простые светящиеся знаки над группами книг.
+const symbolTex = {};
+function genreSymbol(genre) {
+  if (symbolTex[genre]) return symbolTex[genre];
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d');
+  g.strokeStyle = '#ffe2a0'; g.fillStyle = '#ffe2a0'; g.lineWidth = 9; g.lineCap = 'round'; g.lineJoin = 'round';
+  g.shadowColor = '#ffcf6b'; g.shadowBlur = 22;
+  const P = () => g.stroke();
+  g.beginPath();
+  switch (genre) {
+    case 'law': // скрижали
+      for (const x of [62, 134]) { g.moveTo(x, 200); g.lineTo(x, 100); g.arc(x + 30, 100, 30, Math.PI, 0); g.lineTo(x + 60, 200); g.closePath(); for (let y = 110; y < 190; y += 22) { g.moveTo(x + 12, y); g.lineTo(x + 48, y); } }
+      P(); break;
+    case 'hist': case 'hist2': // корона
+      g.moveTo(50, 190); g.lineTo(206, 190); g.lineTo(220, 90); g.lineTo(170, 140); g.lineTo(128, 70); g.lineTo(86, 140); g.lineTo(36, 90); g.closePath(); P(); break;
+    case 'wisdom': // лира
+      g.moveTo(70, 70); g.quadraticCurveTo(60, 200, 128, 210); g.quadraticCurveTo(196, 200, 186, 70); g.moveTo(80, 90); g.lineTo(176, 90);
+      for (const x of [104, 128, 152]) { g.moveTo(x, 90); g.lineTo(x, 190); } P(); break;
+    case 'proph': // свиток
+      g.rect(70, 70, 116, 120); g.moveTo(58, 70); g.arc(70, 70, 12, Math.PI, 0); g.moveTo(58, 190); g.arc(70, 190, 12, Math.PI, 0);
+      g.moveTo(198, 70); g.arc(186, 70, 12, 0, Math.PI, true); g.moveTo(198, 190); g.arc(186, 190, 12, 0, Math.PI, true);
+      for (let y = 95; y < 175; y += 20) { g.moveTo(88, y); g.lineTo(168, y); } P(); break;
+    case 'gospel': // четырёхлучевая звезда
+      g.moveTo(128, 30); g.lineTo(146, 110); g.lineTo(226, 128); g.lineTo(146, 146); g.lineTo(128, 226); g.lineTo(110, 146); g.lineTo(30, 128); g.lineTo(110, 110); g.closePath(); g.fill(); break;
+    case 'acts': // пламя
+      g.moveTo(128, 220); g.bezierCurveTo(50, 200, 70, 120, 128, 40); g.bezierCurveTo(186, 120, 206, 200, 128, 220); g.moveTo(128, 200); g.bezierCurveTo(100, 180, 108, 150, 128, 120); g.bezierCurveTo(148, 150, 156, 180, 128, 200); P(); break;
+    case 'cath': case 'paul': // письмо
+      g.rect(48, 80, 160, 110); g.moveTo(48, 80); g.lineTo(128, 140); g.lineTo(208, 80); P();
+      if (genre === 'paul') { g.beginPath(); g.arc(128, 150, 14, 0, Math.PI * 2); g.fill(); } break;
+    case 'rev': // семь звёзд
+      for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2 - Math.PI / 2; g.moveTo(128 + Math.cos(a) * 80 + 9, 128 + Math.sin(a) * 80); g.arc(128 + Math.cos(a) * 80, 128 + Math.sin(a) * 80, 9, 0, Math.PI * 2); }
+      g.fill(); break;
+    default: g.arc(128, 128, 50, 0, Math.PI * 2); P();
+  }
+  const tex = makeTexture(c);
+  tex.userData.keep = true;
+  symbolTex[genre] = tex;
+  return tex;
+}
 
 /* ---------- Наведение ---------- */
 
@@ -3174,7 +3914,7 @@ function applyHover() {
       ref = refOf(h.bi, b.ci[h.k], b.vi[h.k]);
       text = verseText(h.bi, b.ci[h.k], b.vi[h.k]);
       showMarker(it.pos, h.k, 1.4);
-      const rel = related(h.bi, b.ci[h.k], b.vi[h.k]);
+      const rel = quotesFor(h.bi, b.ci[h.k], b.vi[h.k]).map((q) => ({ ...q.r, quote: true })).concat(related(h.bi, b.ci[h.k], b.vi[h.k]));
       if (rel.length) { showArcs(it.pos, h.k, rel); hint = `${T().linksHint(rel.length)} · ${hint}`; }
     }
     const when = bookWritten(h.bi);
@@ -3323,9 +4063,14 @@ function rebuildPanel() {
   lbl.position.set(0, 0.08, 0);
   grp.add(lbl);
   // В VR справка о книге висит слева от панели кнопок.
-  const about = state.mode === 'book' ? bookAbout(state.bi) : null;
+  let about = state.mode === 'book' ? bookAbout(state.bi) : null;
+  if (state.mode === 'chapter' && !quiet.on) {
+    const sum = chapterSummary(state.bi, state.ci);
+    const figs = figuresInChapter(state.bi, state.ci).slice(0, 6).map((f) => (LANG === 'ro' ? f.ro : f.ru));
+    if (sum || figs.length) about = { rows: figs.length ? [[L.peopleHere, figs.join(', ')]] : [], circ: sum, fromEdition: true };
+  }
   if (about) {
-    about.person = personFor(state.bi);
+    if (state.mode === 'book') about.person = personFor(state.bi);
     const plane = makeAboutPlane(about, 0.62);
     plane.material.depthTest = false;
     plane.renderOrder = 30;
@@ -3487,6 +4232,7 @@ el.addEventListener('wheel', (e) => {
 addEventListener('keydown', (e) => {
   if (e.target === ui.q) return;
   if (e.key === 'Escape' && quiet.on) exitQuiet();
+  else if (e.key === 'Escape' && !ui.parallelPanel.hidden) ui.parallelPanel.hidden = true;
   else if (e.key === 'Escape' && !ui.mapPanel.hidden) closeMap();
   else if (e.key === 'Escape' && !ui.settingsPanel.hidden) ui.settingsPanel.hidden = true;
   else if (e.key === 'Escape' && !ui.listPanel.hidden) closeList();
@@ -3536,6 +4282,7 @@ function updateChrome() {
   renderContinue();
   if (state.mode !== 'galaxy') ui.votd.hidden = true;
   renderBookPanel();
+  renderChapterInfo();
   if (state.mode === 'book') toast(T().toastBook, 6000, true);
   if (state.mode === 'chapter' && !tts.reading) toast(T().toastChapter, 6000, true);
   updateListenButton();
@@ -3911,7 +4658,8 @@ function tick() {
   }
   const key = hoverKey(h);
   if (key !== lastHoverKey) { hover = h; lastHoverKey = key; applyHover(); }
-  renderer.render(scene, camera);
+  updateSparks(shared.uTime.value);
+  renderFrame();
 }
 
 /* ---------- Старт ---------- */
@@ -3958,6 +4706,7 @@ start();
 // Кнопка «Назад» телефона в APK: сначала закрываем окна и поднимаемся на уровень выше.
 window.__androidBack = () => {
   if (quiet.on) { exitQuiet(); return true; }
+  if (!ui.parallelPanel.hidden) { ui.parallelPanel.hidden = true; return true; }
   if (!ui.mapPanel.hidden) { closeMap(); return true; }
   if (!ui.settingsPanel.hidden) { ui.settingsPanel.hidden = true; return true; }
   if (!ui.listPanel.hidden) { closeList(); return true; }
@@ -3968,7 +4717,8 @@ window.__androidBack = () => {
 
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
-  buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage,
+  tts, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },
 };
