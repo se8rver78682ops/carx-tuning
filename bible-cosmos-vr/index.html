@@ -392,6 +392,15 @@
   #aiPanel .ai-ref:hover, #aiPanel .ai-ref:focus-visible { color: #fff2c8; }
   #aiPanel .ai-form { display: flex; gap: 6px; align-items: flex-end; }
   #aiPanel .ai-form textarea { flex: 1; resize: none; }
+  #earsBadge { left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 30; min-width: 260px; padding: 18px 26px 16px; border-radius: 18px;
+    background: rgba(120, 20, 20, 0.92); border: 2px solid #ff7a6b; color: #fff; text-align: center; pointer-events: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+  #earsBadge[hidden] { display: none; }
+  #earsBadge.hear { background: rgba(20, 30, 70, 0.94); border-color: var(--gold); }
+  #earsBadge .eb-icon { font-size: 44px; line-height: 1; }
+  #earsBadge .eb-text { margin-top: 6px; font: 600 22px var(--font-ui); }
+  #earsBadge .eb-hint { margin-top: 4px; font: 14px var(--font-ui); opacity: 0.85; }
+  #earsBadge .eb-bar { --lvl: 0; margin: 10px auto 0; height: 6px; width: calc(20px + var(--lvl) * 200px); max-width: 220px; border-radius: 3px; background: #fff; transition: width 0.1s; }
+  #earsBadge.hear .eb-bar { display: none; }
   #aiPanel .ai-mic { --lvl: 0; min-width: 44px; padding: 8px 10px; font-size: 18px; }
   #aiPanel .ai-mic.on { background: #c0392b; border-color: #ff7a6b; color: #fff; box-shadow: 0 0 0 calc(2px + var(--lvl) * 10px) rgba(255, 90, 70, 0.35); }
   #aiPanel .ai-mic.wait { opacity: 0.7; }

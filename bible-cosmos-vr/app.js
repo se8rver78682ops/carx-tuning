@@ -5459,7 +5459,7 @@ el.addEventListener('wheel', (e) => {
   camera.updateProjectionMatrix();
 }, { passive: false });
 addEventListener('keydown', (e) => {
-  if (e.target === ui.q || typing(e.target)) return;
+  if (e.target === ui.q || typing(e.target) || e.code === 'Space') return;
   if (e.key === 'Escape' && quiet.on) exitQuiet();
   else if (e.key === 'Escape' && !ui.parallelPanel.hidden) ui.parallelPanel.hidden = true;
   else if (e.key === 'Escape' && !ui.mapPanel.hidden) closeMap();
@@ -5470,7 +5470,6 @@ addEventListener('keydown', (e) => {
   else if (e.key === 'Escape' && detail.open) closeDetail();
   else if (e.key === 'Escape' && tts.reading) stopReading();
   else if (e.key === 'Escape' || e.key === 'Backspace') back();
-  else if (e.key === ' ' && state.mode === 'chapter') { e.preventDefault(); toggleListen(); }
   else if (e.key === 'ArrowLeft') { look.yaw -= 0.15; applyLook(); }
   else if (e.key === 'ArrowRight') { look.yaw += 0.15; applyLook(); }
   else if (e.key === 'ArrowUp') { look.pitch = Math.min(1.45, look.pitch + 0.1); applyLook(); }
@@ -6363,8 +6362,8 @@ function closeAi() {
 // Удерживать пробел или боковую кнопку мыши (Mouse 5) — говорить, отпустить — вопрос уходит. Короткий щелчок Mouse 5 или 🎤 —
 // слушать, пока человек не замолчит.
 const EARS_TXT = {
-  ru: { mic: '🎤', listen: 'Слушаю… говорите', hear: 'Распознаю…', none: 'Распознавание речи здесь недоступно — напишите вопрос.', noMic: 'Нет доступа к микрофону. Разрешите микрофон для программы (Windows: Параметры → Конфиденциальность → Микрофон).', empty: 'Не расслышал. Попробуйте ещё раз.', fail: 'Не удалось распознать речь.', hint: 'Говорить: удерживайте пробел или боковую кнопку мыши (Mouse 5), или нажмите 🎤' },
-  ro: { mic: '🎤', listen: 'Ascult… vorbiți', hear: 'Recunosc…', none: 'Recunoașterea vorbirii nu este disponibilă aici — scrieți întrebarea.', noMic: 'Nu există acces la microfon. Permiteți microfonul pentru program.', empty: 'Nu am auzit. Încercați din nou.', fail: 'Vorbirea nu a putut fi recunoscută.', hint: 'Vorbiți: țineți apăsat Space sau butonul lateral al mouse-ului (Mouse 5), sau apăsați 🎤' },
+  ru: { holdHint: 'Отпустите, чтобы отправить', tapHint: 'Замолчите — и вопрос уйдёт сам', heard: (t) => `Вы сказали: «${t}»`, mic: '🎤', listen: 'Слушаю… говорите', hear: 'Распознаю…', none: 'Распознавание речи здесь недоступно — напишите вопрос.', noMic: 'Нет доступа к микрофону. Разрешите микрофон для программы (Windows: Параметры → Конфиденциальность → Микрофон).', empty: 'Не расслышал. Попробуйте ещё раз.', fail: 'Не удалось распознать речь.', hint: 'Говорить: удерживайте пробел или боковую кнопку мыши (Mouse 5) и отпустите, или нажмите 🎤 и говорите до паузы' },
+  ro: { holdHint: 'Eliberați pentru a trimite', tapHint: 'Tăceți — și întrebarea pleacă singură', heard: (t) => `Ați spus: „${t}”`, mic: '🎤', listen: 'Ascult… vorbiți', hear: 'Recunosc…', none: 'Recunoașterea vorbirii nu este disponibilă aici — scrieți întrebarea.', noMic: 'Nu există acces la microfon. Permiteți microfonul pentru program.', empty: 'Nu am auzit. Încercați din nou.', fail: 'Vorbirea nu a putut fi recunoscută.', hint: 'Vorbiți: țineți apăsat Space sau butonul lateral al mouse-ului (Mouse 5), sau apăsați 🎤' },
 };
 const ET = () => EARS_TXT[LANG] || EARS_TXT.ru;
 const ears = { on: false, mode: '', stage: '', rec: null, stream: null, chunks: [], ctx: null, timer: 0, t0: 0, loud: 0, heard: false, sr: null, cancel: false };
@@ -6374,7 +6373,33 @@ const earsKind = () => {
   if (!window.DesktopEars && (window.SpeechRecognition || window.webkitSpeechRecognition)) return 'web';
   return 'none';
 };
+// Крупная надпись посреди экрана: видно, что программа слушает или распознаёт.
+function earsBadge() {
+  let b = document.getElementById('earsBadge');
+  if (!b) {
+    b = el2('div', 'hud'); b.id = 'earsBadge'; b.hidden = true;
+    b.append(el2('div', 'eb-icon'), el2('div', 'eb-text'), el2('div', 'eb-hint'), el2('div', 'eb-bar'));
+    document.body.append(b);
+  }
+  const E = ET();
+  b.hidden = !ears.stage;
+  b.classList.toggle('hear', ears.stage === 'hear');
+  b.querySelector('.eb-icon').textContent = ears.stage === 'hear' ? '⏳' : '🎤';
+  b.querySelector('.eb-text').textContent = ears.stage === 'hear' ? E.hear : E.listen;
+  b.querySelector('.eb-hint').textContent = ears.stage === 'listen' ? (ears.mode === 'hold' ? E.holdHint : E.tapHint) : '';
+}
+function beep(up) {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const c = beep.ctx || (beep.ctx = new AC());
+    const o = c.createOscillator(), g = c.createGain();
+    o.frequency.value = up ? 880 : 520; o.connect(g); g.connect(c.destination);
+    const t = c.currentTime; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.start(t); o.stop(t + 0.18);
+  } catch { /* без звука */ }
+}
 function earsUi() {
+  earsBadge();
   const p = aiPanel(); if (!p) return;
   const b = p.querySelector('.ai-mic'), q = p.querySelector('.ai-q');
   if (!b) return;
@@ -6386,13 +6411,17 @@ function earsUi() {
 }
 function earsDone(text) {
   ears.on = false; ears.stage = ''; earsUi();
-  text = String(text || '').trim();
-  if (!text || /^[\s.,!?…-]*$/.test(text)) { if (!ears.cancel) toast(ET().empty, 3000); return; }
+  text = String(text || '').replace(/\s+/g, ' ').trim();
+  // Whisper на тишине и шуме иногда «слышит» фразы из субтитров — их отбрасываем
+  const junk = /^(продолжение следует|субтитр|редактор субтитров|спасибо за (просмотр|внимание)|подписывайтесь|dimatorzok|amara\.org|музыка|аплодисменты|смех|\(.*\)|\[.*\])/i;
+  if (!text || /^[\s.,!?…-]*$/.test(text) || junk.test(text) || /субтитр|dimatorzok/i.test(text)) { if (!ears.cancel) toast(ET().empty, 3000); return; }
+  toast(ET().heard(text), 4000);
   aiAsk(text);
 }
 function earsStop(cancel) {
   if (!ears.on) return;
   ears.cancel = !!cancel;
+  if (ears.stage === 'listen') beep(false);
   clearInterval(ears.timer);
   if (ears.sr) { try { cancel ? ears.sr.abort() : ears.sr.stop(); } catch { /* уже остановлено */ } return; }
   if (ears.rec && ears.rec.state !== 'inactive') { ears.rec.stop(); return; }
@@ -6424,8 +6453,9 @@ async function earsStart(mode) {
   if (kind === 'none') { toast(ET().none, 6000); return; }
   stopReading(); stopNarration();
   try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch { /* нет синтезатора */ }
-  Object.assign(ears, { on: true, mode, stage: 'listen', cancel: false, heard: false, t0: performance.now(), loud: performance.now(), chunks: [], sr: null, rec: null });
+  Object.assign(ears, { on: true, mode, stage: 'listen', cancel: false, heard: false, t0: performance.now(), loud: performance.now(), chunks: [], sr: null, rec: null, floor: 0, floorN: 0 });
   earsUi();
+  beep(true);
   if (kind === 'android') {
     const id = 'h' + Date.now();
     window.__heard = (rid, text) => { if (rid === id) earsDone(text); };
@@ -6483,7 +6513,10 @@ async function earsStart(mode) {
     const rms = Math.sqrt(s / data.length), now = performance.now();
     const b = aiPanel() && aiPanel().querySelector('.ai-mic');
     if (b) b.style.setProperty('--lvl', String(Math.min(1, rms * 12)));
-    if (rms > 0.025) { ears.heard = true; ears.loud = now; }
+    // порог речи подстраивается под шум комнаты (первые 0,3 с)
+    if (now - ears.t0 < 300) { ears.floor = (ears.floor * ears.floorN + rms) / (ears.floorN + 1); ears.floorN++; }
+    const bar = document.querySelector('#earsBadge .eb-bar'); if (bar) bar.style.setProperty('--lvl', String(Math.min(1, rms * 12)));
+    if (rms > Math.max(0.012, ears.floor * 3)) { ears.heard = true; ears.loud = now; }
     if (now - ears.t0 > 60000) earsStop(false);
     else if (ears.mode === 'tap' && ears.heard && now - ears.loud > 1500) earsStop(false);
     else if (ears.mode === 'tap' && !ears.heard && now - ears.t0 > 8000) earsStop(true);
@@ -6491,12 +6524,13 @@ async function earsStart(mode) {
 }
 function earsToggle() { if (ears.on) earsStop(false); else earsStart('tap'); }
 
-// Пробел: удерживать — говорить; короткое нажатие в главе — как раньше, «Слушать главу».
+// Пробел: удерживать — говорить, отпустить — отправить; короткое нажатие — слушать до паузы.
 // Mouse 5: удерживать — говорить; короткий щелчок — слушать до паузы.
 const typing = (el) => !!(el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));
 const ptt = { space: 0, spaceTimer: 0, spaceHeld: false, mouse: 0, mouseHeld: false, mouseTimer: 0 };
+const spaceTalks = (el) => !typing(el) || (el.classList && el.classList.contains('ai-q') && !el.value.trim());
 addEventListener('keydown', (e) => {
-  if (e.code !== 'Space' || typing(e.target) || renderer.xr.isPresenting) return;
+  if (e.code !== 'Space' || !spaceTalks(e.target) || renderer.xr.isPresenting || e.ctrlKey || e.altKey || e.metaKey) return;
   e.preventDefault(); e.stopImmediatePropagation();
   if (e.repeat || ptt.space) return;
   if (ears.on) { earsStop(false); ptt.space = -1; return; }
@@ -6510,10 +6544,7 @@ addEventListener('keyup', (e) => {
   const held = ptt.spaceHeld, was = ptt.space;
   ptt.space = 0; ptt.spaceHeld = false;
   if (was === -1) return;
-  if (held) earsStop(false);
-  else if (aiPanel() && !aiPanel().hidden) earsStart('tap');
-  else if (state.mode === 'chapter') toggleListen();
-  else earsStart('tap');
+  if (held) earsStop(false); else earsStart('tap');
 }, true);
 addEventListener('mousedown', (e) => {
   if (e.button !== 4) return;
