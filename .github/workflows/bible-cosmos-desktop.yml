@@ -58,9 +58,55 @@ jobs:
             if ((Get-Item $f).Length -lt 2000) { throw 'wav too small' }
           }
 
-      # Папки для нейросетевого голоса Piper: пока пустые, программа читает голосами системы.
-      - name: Voice folders
+      # Нейросетевой голос Piper (с разрешения владельца): синтезатор github.com/rhasspy/piper
+      # и голоса «Ирина» (RU) и «Михай» (RO) из huggingface.co/rhasspy/piper-voices. Работает без интернета.
+      - name: Piper for Windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          Invoke-WebRequest -Uri https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip -OutFile piper.zip
+          Expand-Archive piper.zip -DestinationPath .
+          Remove-Item piper.zip
+          Get-ChildItem piper | Select-Object -First 12
+
+      - name: Piper for Linux
+        if: runner.os == 'Linux'
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          curl -sSfL https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz | tar -xz -C .
+          ls piper | head -20
+
+      - name: Piper voices
+        if: runner.os != 'macOS'
         shell: bash
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          mkdir -p voices
+          base=https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0
+          for f in ru/ru_RU/irina/medium/ru_RU-irina-medium ro/ro_RO/mihai/medium/ro_RO-mihai-medium; do
+            n=$(basename "$f")
+            curl -sSfL -o "voices/$n.onnx" "$base/$f.onnx"
+            curl -sSfL -o "voices/$n.onnx.json" "$base/$f.onnx.json"
+          done
+          ls -la voices
+
+      - name: Piper test (one phrase in each language)
+        if: runner.os != 'macOS'
+        shell: bash
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          exe=piper/piper; [ "$RUNNER_OS" = "Windows" ] && exe=piper/piper.exe
+          export LD_LIBRARY_PATH="$PWD/piper"
+          mkdir -p voicetest
+          printf 'Вначале Бог сотворил небо и землю.\n' | "$exe" --model voices/ru_RU-irina-medium.onnx --output_dir voicetest | tee ru.txt
+          printf 'La început, Dumnezeu a creat cerurile și pământul.\n' | "$exe" --model voices/ro_RO-mihai-medium.onnx --output_dir voicetest | tee ro.txt
+          grep -qi 'wav' ru.txt && grep -qi 'wav' ro.txt
+          ls -la voicetest
+          rm -rf voicetest ru.txt ro.txt
+
+      - name: Empty voice folders on macOS (system voices are used)
+        if: runner.os == 'macOS'
         run: mkdir -p bible-cosmos-vr/desktop/piper bible-cosmos-vr/desktop/voices
 
       - name: Build
