@@ -9,6 +9,10 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.Settings;
+import android.webkit.RenderProcessGoneDetail;
+import android.view.ViewGroup;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
@@ -50,8 +54,25 @@ public class MainActivity extends Activity {
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private ValueCallback<Uri[]> fileCallback;
-    /** Идёт чтение главы: тогда при сворачивании программы речь не останавливается. */
-    private volatile boolean reading = false;
+    /** Звучит очередь главы (listActive) или длинный рассказ (soloActive): речь не останавливается в фоне. */
+    private volatile boolean listActive = false;
+    private volatile boolean soloActive = false;
+    private volatile String soloId = null;
+    /** Страница была пересоздана во время чтения: конец старой очереди просто завершает чтение. */
+    private volatile boolean orphanList = false;
+    private TtsBridge ttsBridge;
+    private ShareBridge shareBridge;
+
+    private boolean speechActive() {
+        return listActive || soloActive || (tts != null && tts.isSpeaking());
+    }
+
+    private void endSpeechSession() {
+        listActive = false;
+        soloActive = false;
+        soloId = null;
+        runOnUiThread(() -> ReadingService.stop(MainActivity.this));
+    }
     private boolean askedNotify = false;
     private static WeakReference<MainActivity> current = new WeakReference<>(null);
 
@@ -60,9 +81,9 @@ public class MainActivity extends Activity {
         MainActivity a = current.get();
         if (a == null) return;
         a.runOnUiThread(() -> {
-            a.reading = false;
             if (a.tts != null) a.tts.stop();
-            a.web.evaluateJavascript("window.__ttsStopped && window.__ttsStopped()", null);
+            a.endSpeechSession();
+            if (a.web != null) a.web.evaluateJavascript("window.__ttsStopped && window.__ttsStopped()", null);
         });
     }
 
@@ -72,6 +93,28 @@ public class MainActivity extends Activity {
         current = new WeakReference<>(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        tts = new TextToSpeech(this, status -> {
+            ttsReady = status == TextToSpeech.SUCCESS;
+            if (ttsReady) {
+                tts.setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build());
+            }
+        });
+        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override public void onStart(String id) { notifyStart(id); }
+            @Override public void onDone(String id) { notifyDone(id); }
+            @Override public void onError(String id) { notifyDone(id); }
+        });
+        ttsBridge = new TtsBridge();
+        shareBridge = new ShareBridge();
+        createWeb(savedInstanceState);
+        hideSystemBars();
+    }
+
+    /** Страница программы. Её отрисовщик остаётся «важным» и в фоне, чтобы система не закрывала его при блокировке. */
+    private void createWeb(Bundle savedInstanceState) {
         web = new WebView(this);
         setContentView(web);
 
@@ -90,6 +133,18 @@ public class MainActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return loader.shouldInterceptRequest(request.getUrl());
+            }
+
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                // Система закрыла страницу (например, не хватило памяти в фоне). Речь продолжает звучать,
+                // а страница создаётся заново — программа не закрывается.
+                if (listActive) orphanList = true;
+                ViewGroup parent = (ViewGroup) view.getParent();
+                if (parent != null) parent.removeView(view);
+                view.destroy();
+                createWeb(null);
+                return true;
             }
         });
 
@@ -112,30 +167,24 @@ public class MainActivity extends Activity {
             }
         });
 
-        tts = new TextToSpeech(this, status -> {
-            ttsReady = status == TextToSpeech.SUCCESS;
-            if (ttsReady) {
-                tts.setAudioAttributes(new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                        .build());
-            }
-        });
-        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-            @Override public void onStart(String id) { notifyStart(id); }
-            @Override public void onDone(String id) { notifyDone(id); }
-            @Override public void onError(String id) { notifyDone(id); }
-        });
-        web.addJavascriptInterface(new TtsBridge(), "AndroidTTS");
-        web.addJavascriptInterface(new ShareBridge(), "AndroidShare");
-
+        if (Build.VERSION.SDK_INT >= 26) web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
+        web.addJavascriptInterface(ttsBridge, "AndroidTTS");
+        web.addJavascriptInterface(shareBridge, "AndroidShare");
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl(START_URL);
-        hideSystemBars();
     }
 
     private void notifyDone(String id) {
         if (id == null || id.startsWith("part-") || id.startsWith("gap-")) return;
+        if (soloActive && id.equals(soloId)) {
+            soloActive = false;
+            if (!listActive) endSpeechSession();
+        }
+        if (orphanList && id.startsWith("L")) {
+            orphanList = false;
+            endSpeechSession();
+            return;
+        }
         final String js = "window.__ttsDone && window.__ttsDone('" + id.replace("'", "") + "')";
         web.post(() -> web.evaluateJavascript(js, null));
     }
@@ -286,7 +335,51 @@ public class MainActivity extends Activity {
         public void speak(String text, String lang, String id) {
             if (!ttsReady) { notifyDone(id); return; }
             begin(lang);
+            final boolean wasActive = listActive || soloActive;
+            listActive = false;
             enqueue(text, id);
+            // Длинный текст (рассказ о пророке, стих) звучит и при заблокированном экране.
+            if (text != null && text.length() > 150) {
+                soloActive = true;
+                soloId = id;
+                final String title = getString(R.string.app_name);
+                runOnUiThread(() -> {
+                    askNotificationPermission();
+                    ReadingService.start(MainActivity.this, title, stopLabel);
+                });
+            } else if (wasActive) {
+                soloActive = false;
+                runOnUiThread(() -> ReadingService.stop(MainActivity.this));
+            }
+        }
+
+        private String stopLabel = "Stop";
+
+        @JavascriptInterface
+        public void setStopLabel(String label) {
+            if (label != null && !label.isEmpty()) stopLabel = label;
+        }
+
+        /** Разрешено ли программе работать в фоне без ограничений батареи. */
+        @JavascriptInterface
+        public boolean backgroundAllowed() {
+            if (Build.VERSION.SDK_INT < 23) return true;
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            return pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
+        }
+
+        /** Системное окно «Разрешить работу в фоне» (без ограничений батареи). */
+        @JavascriptInterface
+        public void allowBackground() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    i.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(i);
+                } catch (Exception e) {
+                    try { startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)); } catch (Exception ignored) { }
+                }
+            });
         }
 
         /**
@@ -305,7 +398,10 @@ public class MainActivity extends Activity {
                     tts.playSilentUtterance(i == 0 ? 450 : 280, TextToSpeech.QUEUE_ADD, "gap-" + i);
                 }
                 tts.playSilentUtterance(10, TextToSpeech.QUEUE_ADD, listId);
-                reading = true;
+                listActive = true;
+                soloActive = false;
+                orphanList = false;
+                if (stopLabel != null) this.stopLabel = stopLabel;
                 runOnUiThread(() -> {
                     askNotificationPermission();
                     ReadingService.start(MainActivity.this, title, stopLabel);
@@ -318,10 +414,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void stop() {
             tts.stop();
-            if (reading) {
-                reading = false;
-                runOnUiThread(() -> ReadingService.stop(MainActivity.this));
-            }
+            if (listActive || soloActive) endSpeechSession();
         }
     }
 
@@ -411,9 +504,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        // Во время чтения главы речь и страница продолжают работать в фоне.
-        if (reading) return;
-        if (tts != null) tts.stop();
+        // Речь не обрывается, когда программу сворачивают или блокируют экран.
+        // Страница «засыпает» только если ничего не звучит.
+        if (speechActive()) return;
         web.onPause();
     }
 
@@ -437,7 +530,8 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        reading = false;
+        listActive = false;
+        soloActive = false;
         ReadingService.stop(this);
         if (tts != null) tts.shutdown();
         web.destroy();

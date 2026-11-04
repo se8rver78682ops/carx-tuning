@@ -130,6 +130,9 @@ const I18N = {
     noVoiceAndroid: 'Для этого языка на телефоне нет голоса. Откройте «Настройки → Голос → Установить голоса».', stopReading: 'Остановить',
     autoNext: 'Читать главы подряд', pitch: 'Высота голоса', voiceTest: '▶ Проба голоса', installVoices: 'Установить голоса', voiceNet: 'нужен интернет', voiceBest: 'лучшее качество',
     bgNote: 'Чтение продолжается, если свернуть программу или выключить экран.',
+    gfx: 'Графика', gfxAuto: 'Авто — подстраивается под устройство', gfxFast: 'Быстрая — плавнее, бережёт батарею', gfxBest: 'Красивая — все эффекты',
+    allowBg: 'Разрешить работу в фоне', bgAllowed: 'Работа в фоне разрешена',
+    bgHint: 'Чтобы чтение не прерывалось при блокировке экрана, разрешите программе работать в фоне: «Ещё → Настройки → Разрешить работу в фоне».',
     welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
     showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
@@ -237,6 +240,9 @@ const I18N = {
     noVoiceAndroid: 'Pe telefon nu există o voce pentru această limbă. Deschideți „Setări → Vocea → Instalează voci”.', stopReading: 'Oprește',
     autoNext: 'Citește capitolele la rând', pitch: 'Tonul vocii', voiceTest: '▶ Ascultă vocea', installVoices: 'Instalează voci', voiceNet: 'necesită internet', voiceBest: 'cea mai bună calitate',
     bgNote: 'Citirea continuă dacă minimizați aplicația sau stingeți ecranul.',
+    gfx: 'Grafica', gfxAuto: 'Automată — se adaptează dispozitivului', gfxFast: 'Rapidă — mai fluidă, cruță bateria', gfxBest: 'Frumoasă — toate efectele',
+    allowBg: 'Permite funcționarea în fundal', bgAllowed: 'Funcționarea în fundal este permisă',
+    bgHint: 'Ca citirea să nu se oprească la blocarea ecranului, permiteți aplicației să funcționeze în fundal: „Mai mult → Setări → Permite funcționarea în fundal”.',
     welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
     showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
@@ -287,8 +293,10 @@ const ui = {
 
 /* ---------- Three.js: сцена ---------- */
 
+// Телефоны и шлемы: экран очень плотный, поэтому рисуем меньше пикселей и без тяжёлых эффектов.
+const MOBILE = /Android|iPhone|iPad|iPod|OculusBrowser|Quest|Pico|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && matchMedia('(pointer: coarse)').matches);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, MOBILE ? 1.5 : 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.xr.enabled = true;
@@ -1276,8 +1284,16 @@ function speechChunks(text, max = 180) {
 function androidVoices() {
   try { return JSON.parse(window.AndroidTTS.voices(T().speech) || '[]'); } catch { return []; }
 }
+function bgHint() {
+  const a = window.AndroidTTS;
+  if (!a || !a.backgroundAllowed || store.get('bgHint', false)) return;
+  try { if (a.backgroundAllowed()) return; } catch { return; }
+  store.set('bgHint', true);
+  toast(T().bgHint, 12000);
+}
 function applyAndroidVoice() {
   const a = window.AndroidTTS;
+  if (a.setStopLabel) a.setStopLabel(T().stopReading);
   if (a.setRate) a.setRate(settings.rate);
   if (a.setPitch) a.setPitch(settings.pitch || 1);
   if (a.setVoice) a.setVoice((settings.voices || {})[LANG] || '');
@@ -1292,6 +1308,7 @@ function speak(text, onDone) {
     androidDone[id] = () => { tts.talking = false; if (token === tts.token) onDone(); };
     applyAndroidVoice();
     window.AndroidTTS.speak(speechText(text), T().speech, id);
+    if (text.length > 150) bgHint();
     return true;
   }
   if (!hasTts) { toast(T().noTts, 5000); return false; }
@@ -1433,6 +1450,7 @@ async function readFrom(vi, at) {
     applyAndroidVoice();
     tts.talking = true;
     window.AndroidTTS.speakList(JSON.stringify(items), T().speech, listId, `${BOOKS[bi].name} ${ci + 1}`, T().stopReading);
+    bgHint();
     showReadingVerse(vi);
     updateListenButton();
     return;
@@ -2665,13 +2683,24 @@ function renderSettings() {
   an.addEventListener('change', () => { settings.autoNext = an.checked; saveSettings(); });
   row(L.autoNext, an);
   box.append(el2('p', 'muted small', L.bgNote));
+  if (window.AndroidTTS && window.AndroidTTS.allowBackground) {
+    const ok = window.AndroidTTS.backgroundAllowed ? window.AndroidTTS.backgroundAllowed() : false;
+    const bg = el2('button', ok ? 'btn' : 'btn primary', ok ? `✓ ${L.bgAllowed}` : L.allowBg); bg.type = 'button'; bg.id = 'allowBg';
+    bg.addEventListener('click', () => window.AndroidTTS.allowBackground());
+    row('', bg);
+  }
   // Музыка
   const mv = el2('input'); mv.type = 'range'; mv.min = '0'; mv.max = '1'; mv.step = '0.05'; mv.value = String(settings.musicVol ?? 0.5); mv.id = 'setMusic';
   mv.addEventListener('input', () => { settings.musicVol = +mv.value; saveSettings(); });
   row(L.musicVol, mv);
   // Свечение звёзд
-  const bl = el2('input'); bl.type = 'checkbox'; bl.id = 'setBloom'; bl.checked = settings.bloom !== false;
-  bl.addEventListener('change', () => { settings.bloom = bl.checked; saveSettings(); });
+  const gsel = el2('select'); gsel.id = 'setGfx';
+  for (const [v, t] of [['auto', L.gfxAuto], ['fast', L.gfxFast], ['best', L.gfxBest]]) gsel.append(Object.assign(document.createElement('option'), { value: v, textContent: t }));
+  gsel.value = gfxMode();
+  row(L.gfx, gsel);
+  const bl = el2('input'); bl.type = 'checkbox'; bl.id = 'setBloom'; bl.checked = bloomOn();
+  bl.addEventListener('change', () => { settings.bloom = bl.checked; perf.noBloom = false; saveSettings(); });
+  gsel.addEventListener('change', () => { settings.gfx = gsel.value; saveSettings(); applyGfx(); bl.checked = bloomOn(); });
   row(L.bloom, bl);
   // Гироскоп
   const gy = el2('input'); gy.type = 'checkbox'; gy.id = 'setGyro'; gy.checked = gyro.on;
@@ -3702,7 +3731,7 @@ const post = (() => {
     if (size.x === w && size.y === h && sceneRT) return;
     w = size.x; h = size.y;
     [sceneRT, rA, rB].forEach((t) => t && t.dispose());
-    sceneRT = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: 4 });
+    sceneRT = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: MOBILE ? 0 : 4 });
     const bw = Math.max(1, w >> 2), bh = Math.max(1, h >> 2);
     rA = new THREE.WebGLRenderTarget(bw, bh, { type: THREE.HalfFloatType });
     rB = new THREE.WebGLRenderTarget(bw, bh, { type: THREE.HalfFloatType });
@@ -3726,10 +3755,55 @@ const post = (() => {
   };
 })();
 function renderFrame() {
-  if (settings.bloom !== false && !renderer.xr.isPresenting) {
-    try { post.render(); return; } catch (err) { console.warn('bloom', err); settings.bloom = false; }
+  perfSample();
+  if (bloomOn() && !renderer.xr.isPresenting) {
+    try { post.render(); return; } catch (err) { console.warn('bloom', err); perf.noBloom = true; }
   }
   renderer.render(scene, camera);
+}
+
+/* ---------- Скорость: качество графики подстраивается под устройство ---------- */
+// «Авто»: если кадры идут медленно, сначала выключается свечение, затем уменьшается разрешение;
+// когда запас скорости большой, разрешение возвращается (но не выше того, на котором уже тормозило).
+const perf = { pr: renderer.getPixelRatio(), okPr: 9, noBloom: false, frames: [], last: 0, good: 0 };
+const gfxMode = () => settings.gfx || 'auto';
+function bloomOn() {
+  const m = gfxMode();
+  if (m === 'fast' || (m === 'auto' && perf.noBloom)) return false;
+  return settings.bloom ?? (m === 'best' || !MOBILE);
+}
+function prCap() {
+  const d = window.devicePixelRatio || 1, m = gfxMode();
+  return m === 'fast' ? Math.min(d, 1) : m === 'best' ? Math.min(d, 2) : Math.min(d, MOBILE ? 1.5 : 2);
+}
+function applyGfx() {
+  perf.noBloom = false; perf.okPr = 9; perf.frames = []; perf.good = 0;
+  perf.pr = prCap();
+  renderer.setPixelRatio(perf.pr);
+}
+function perfSample() {
+  if (renderer.xr.isPresenting || gfxMode() !== 'auto' || document.hidden) { perf.last = 0; return; }
+  const now = performance.now();
+  if (perf.last) perf.frames.push(now - perf.last);
+  perf.last = now;
+  if (busy) { perf.frames.length = 0; return; } // переходы с построением главы не считаем
+  // Окно: 60 кадров или 2 секунды (на очень медленном устройстве не ждём долго).
+  const n = perf.frames.length;
+  if (n < 60 && !(n >= 4 && perf.frames.reduce((x, y) => x + y, 0) > 2000)) return;
+  const f = perf.frames.sort((a, b) => a - b), med = f[f.length >> 1];
+  perf.frames = [];
+  if (med > 26) {
+    perf.good = 0;
+    if (bloomOn()) { perf.noBloom = true; if (med < 60) return; }
+    if (perf.pr > 0.75) {
+      perf.okPr = Math.max(0.75, perf.pr - 0.25);
+      perf.pr = perf.okPr;
+      renderer.setPixelRatio(perf.pr);
+    }
+  } else if (med < 17.5) {
+    const top = Math.min(prCap(), perf.okPr);
+    if (++perf.good >= 4 && perf.pr < top) { perf.pr = Math.min(top, perf.pr + 0.25); renderer.setPixelRatio(perf.pr); perf.good = 0; }
+  } else perf.good = 0;
 }
 
 /* ---------- Графика: формы скоплений по жанрам и символы ---------- */
@@ -4182,7 +4256,10 @@ function pollGamepads(dt = 0.016) {
 /* ---------- Мышь и сенсор ---------- */
 
 const look = { yaw: 0, pitch: 0.12, down: null, moved: false, ndc: new THREE.Vector2(), has: false };
-function applyLook() { camera.rotation.set(look.pitch, -look.yaw, 0); }
+function applyLook() {
+  look.dirty = true;
+  camera.rotation.set(look.pitch, -look.yaw, 0);
+}
 look.target = null;
 applyLook();
 const el = renderer.domElement;
@@ -4192,6 +4269,7 @@ el.addEventListener('pointerdown', (e) => { lastPointer = e.pointerType || 'mous
 el.addEventListener('pointermove', (e) => {
   look.ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   look.has = true;
+  look.dirty = true;
   if (!look.down) return;
   const dx = e.clientX - look.down.x, dy = e.clientY - look.down.y;
   if (Math.hypot(dx, dy) > 5) look.moved = true;
@@ -4605,6 +4683,7 @@ function updateScale() {
   shared.uScale.value = (e5 * h) / 2;
 }
 
+let pickFrame = 0;
 function tick() {
   const dt = Math.min(clock.getDelta(), 0.1);
   shared.uTime.value += dt;
@@ -4653,8 +4732,11 @@ function tick() {
     if (Math.abs(d) < 0.003) look.target = null;
   }
   if (!renderer.xr.isPresenting && look.has && !look.down && !busy) {
-    raycaster.setFromCamera(look.ndc, camera);
-    h = pick(raycaster.ray.clone());
+    if (look.dirty || (pickFrame = (pickFrame + 1) % 12) === 0) {
+      look.dirty = false;
+      raycaster.setFromCamera(look.ndc, camera);
+      h = pick(raycaster.ray.clone());
+    } else h = hover;
   }
   const key = hoverKey(h);
   if (key !== lastHoverKey) { hover = h; lastHoverKey = key; applyHover(); }
@@ -4686,6 +4768,7 @@ async function start() {
     buildGalaxy();
     buildLegend();
     updateChrome();
+    applyGfx();
     renderer.setAnimationLoop(tick);
     ui.loader.classList.add('done');
     window.__started = true;
@@ -4717,7 +4800,8 @@ window.__androidBack = () => {
 
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
-  tts, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  get look() { return look; }, pickAt(x, y) { const v = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); raycaster.setFromCamera(v, camera); const h = pick(raycaster.ray.clone()); return h && { type: h.type, vi: h.vi, bi: h.bi, ci: h.ci }; }, get busy() { return busy; },
+  tts, perf, bloomOn, applyGfx, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
   buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },
