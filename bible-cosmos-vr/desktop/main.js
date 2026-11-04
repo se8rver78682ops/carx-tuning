@@ -285,6 +285,41 @@ function scanAudio() {
   audioFiles.clear();
   for (const d of [homeDir(), ...savedAudioDirs()]) scanDir(d, 0);
 }
+// «Уши» советника: распознавание речи Whisper (whisper.cpp) на этом компьютере, без интернета.
+const WHISPER_DIR = path.join(RES, 'whisper');
+const WHISPER = path.join(WHISPER_DIR, process.platform === 'win32' ? 'whisper-cli.exe' : 'whisper-cli');
+function whisperModel() {
+  try {
+    const m = fs.readdirSync(WHISPER_DIR).filter((f) => /^ggml-.*\.bin$/i.test(f)).sort();
+    return m.length ? path.join(WHISPER_DIR, m[0]) : null;
+  } catch { return null; }
+}
+ipcMain.on('ears:info', (event) => { event.returnValue = { ok: fs.existsSync(WHISPER) && !!whisperModel() }; });
+ipcMain.handle('ears:hear', async (event, { wav, lang }) => {
+  const model = whisperModel();
+  if (!fs.existsSync(WHISPER) || !model) throw new Error('no whisper');
+  const file = path.join(tmpVoiceDir, `heard-${Date.now()}.wav`);
+  await fs.promises.writeFile(file, Buffer.from(wav));
+  const ro = lang === 'ro';
+  const args = ['-m', model, '-f', file, '-l', ro ? 'ro' : 'ru', '-nt', '-np',
+    '-t', String(Math.max(2, Math.min(8, os.cpus().length - 1))),
+    '--prompt', ro ? 'Biblia, Iehova, Isus, Moise, Avraam, profeție.' : 'Библия, Иегова, Иисус, Моисей, Авраам, пророчество. Тарс, объясни стих.'];
+  try {
+    const out = await new Promise((resolve, reject) => {
+      const p = spawn(WHISPER, args, { cwd: WHISPER_DIR, windowsHide: true });
+      const chunks = [];
+      const timer = setTimeout(() => { try { p.kill(); } catch { /* уже завершён */ } reject(new Error('timeout')); }, 90000);
+      p.stdout.on('data', (d) => chunks.push(d));
+      p.stderr.on('data', () => {});
+      p.on('error', (e) => { clearTimeout(timer); reject(e); });
+      p.on('close', (code) => { clearTimeout(timer); if (code === 0) resolve(Buffer.concat(chunks).toString('utf8')); else reject(new Error('whisper exit ' + code)); });
+    });
+    return out.replace(/\[[^\]]*\]/g, ' ').replace(/\s+/g, ' ').trim();
+  } finally {
+    fs.promises.unlink(file).catch(() => {});
+  }
+});
+
 // «Глаза» советника: снимок окна программы (то, что видит пользователь), JPEG не больше 1280 точек.
 ipcMain.handle('eyes:capture', async (event) => {
   const w = BrowserWindow.fromWebContents(event.sender);

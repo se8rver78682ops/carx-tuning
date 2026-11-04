@@ -15,3 +15,5 @@ fs.copyFileSync(path.join(NM, 'three', 'build', 'three.module.js'), path.join(OU
 fs.copyFileSync(path.join(NM, 'jszip', 'dist', 'jszip.min.js'), path.join(OUT, 'vendor', 'jszip.min.js'));
 fs.copyFileSync(path.join(SRC, 'vendor', 'anthropic-sdk.js'), path.join(OUT, 'vendor', 'anthropic-sdk.js'));
 console.log('web ready:', fs.readdirSync(OUT).join(', '));
+// Папка распознавания речи (Whisper) может быть пустой — тогда кнопка 🎤 на компьютере скажет, что распознавание недоступно.
+fs.mkdirSync(path.join(__dirname, 'whisper'), { recursive: true });

@@ -2,7 +2,9 @@ package app.bible.cosmos;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.speech.RecognizerIntent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.os.Handler;
@@ -59,6 +61,9 @@ public class MainActivity extends Activity {
     private static final int FILE_REQUEST = 42;
     /** Выбор папки с аудиозаписями глав (все MP3 из неё и вложенных папок). */
     private static final int FOLDER_REQUEST = 43;
+    /** Вопрос советнику голосом: распознавание речи Android. */
+    private static final int SPEECH_REQUEST = 44;
+    private String speechId = null;
     private static final String START_URL = "https://appassets.androidplatform.net/assets/index.html";
 
     private WebView web;
@@ -197,6 +202,7 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(ttsBridge, "AndroidTTS");
         web.addJavascriptInterface(shareBridge, "AndroidShare");
         web.addJavascriptInterface(eyesBridge, "AndroidEyes");
+        web.addJavascriptInterface(new EarsBridge(), "AndroidEars");
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl(START_URL);
     }
@@ -504,6 +510,35 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** «Уши» советника: window.AndroidEars.listen(id, 'ru-RU'); ответ — window.__heard(id, text). */
+    private class EarsBridge {
+        @JavascriptInterface
+        public void listen(String id, String lang) {
+            final String cb = id == null ? "" : id.replaceAll("[^A-Za-z0-9_-]", "");
+            final String tag = lang == null || lang.isEmpty() ? "ru-RU" : lang;
+            runOnUiThread(() -> {
+                Intent it = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                it.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                it.putExtra(RecognizerIntent.EXTRA_LANGUAGE, tag);
+                it.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, tag);
+                it.putExtra(RecognizerIntent.EXTRA_PROMPT, tag.startsWith("ro") ? "Întrebați sfătuitorul" : "Спросите советника");
+                it.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+                speechId = cb;
+                try {
+                    startActivityForResult(it, SPEECH_REQUEST);
+                } catch (ActivityNotFoundException e) {
+                    speechId = null;
+                    sendHeard(cb, null, "none");
+                }
+            });
+        }
+    }
+
+    private void sendHeard(String cb, String text, String err) {
+        final String js = "window.__heard && window.__heard('" + cb + "', " + (text == null ? "null" : JSONObject.quote(text)) + ", " + (err == null ? "null" : JSONObject.quote(err)) + ")";
+        runOnUiThread(() -> { if (web != null) web.evaluateJavascript(js, null); });
+    }
+
     private static void drawShot(View root, Bitmap bmp) {
         try { root.draw(new Canvas(bmp)); } catch (Exception ignored) { }
     }
@@ -558,6 +593,17 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SPEECH_REQUEST) {
+            String cb = speechId == null ? "" : speechId;
+            speechId = null;
+            String text = null;
+            if (resultCode == RESULT_OK && data != null) {
+                ArrayList<String> res = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                if (res != null && !res.isEmpty()) text = res.get(0);
+            }
+            sendHeard(cb, text, null);
+            return;
+        }
         if (requestCode == FOLDER_REQUEST && fileCallback != null) {
             Uri[] found = null;
             if (resultCode == RESULT_OK && data != null && data.getData() != null) {

@@ -392,6 +392,9 @@
   #aiPanel .ai-ref:hover, #aiPanel .ai-ref:focus-visible { color: #fff2c8; }
   #aiPanel .ai-form { display: flex; gap: 6px; align-items: flex-end; }
   #aiPanel .ai-form textarea { flex: 1; resize: none; }
+  #aiPanel .ai-mic { --lvl: 0; min-width: 44px; padding: 8px 10px; font-size: 18px; }
+  #aiPanel .ai-mic.on { background: #c0392b; border-color: #ff7a6b; color: #fff; box-shadow: 0 0 0 calc(2px + var(--lvl) * 10px) rgba(255, 90, 70, 0.35); }
+  #aiPanel .ai-mic.wait { opacity: 0.7; }
   @media (max-width: 720px) {
     #aiPanel { left: 8px; right: 8px; width: auto; top: calc(56px + env(safe-area-inset-top, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
   }

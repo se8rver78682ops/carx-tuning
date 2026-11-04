@@ -113,3 +113,11 @@ contextBridge.exposeInMainWorld('DesktopAudio', {
 contextBridge.exposeInMainWorld('DesktopEyes', {
   capture: () => ipcRenderer.invoke('eyes:capture'),
 });
+
+// «Уши» советника: распознавание речи Whisper на компьютере.
+let earsInfo = null;
+try { earsInfo = ipcRenderer.sendSync('ears:info'); } catch { earsInfo = null; }
+contextBridge.exposeInMainWorld('DesktopEars', {
+  ok: () => !!(earsInfo && earsInfo.ok),
+  hear: (wav, lang) => ipcRenderer.invoke('ears:hear', { wav, lang }),
+});

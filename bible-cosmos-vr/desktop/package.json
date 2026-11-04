@@ -62,7 +62,10 @@
         "dmg"
       ],
       "category": "public.app-category.education",
-      "icon": "icon.png"
+      "icon": "icon.png",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Вопросы советнику голосом"
+      }
     },
     "extraResources": [
       {
@@ -75,6 +78,13 @@
       {
         "from": "voices",
         "to": "voices",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "whisper",
+        "to": "whisper",
         "filter": [
           "**/*"
         ]

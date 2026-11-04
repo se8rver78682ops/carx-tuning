@@ -5459,7 +5459,7 @@ el.addEventListener('wheel', (e) => {
   camera.updateProjectionMatrix();
 }, { passive: false });
 addEventListener('keydown', (e) => {
-  if (e.target === ui.q) return;
+  if (e.target === ui.q || typing(e.target)) return;
   if (e.key === 'Escape' && quiet.on) exitQuiet();
   else if (e.key === 'Escape' && !ui.parallelPanel.hidden) ui.parallelPanel.hidden = true;
   else if (e.key === 'Escape' && !ui.mapPanel.hidden) closeMap();
@@ -5919,7 +5919,7 @@ const AI_TXT = {
     title: 'Советник', defName: 'Тарс', eyesOn: '👁 Видит экран', eyesOff: '👁 Не видит', ph: 'Спросите о стихе, главе, жизни или о программе…',
     send: 'Спросить', stop: 'Стоп', thinking: 'думает…', looking: 'смотрит на экран…', clear: 'Новый разговор', setup: 'Настройка',
     listen: '🔊', saw: 'видел экран', voiceOn: 'Отвечать голосом: вкл', voiceOff: 'Отвечать голосом: выкл',
-    intro: (n) => `Я ${n}, ваш советник. Я вижу, что у вас открыто в программе, и могу объяснить стих, главу, пророчество или подсказать, где что найти. Спрашивайте.`,
+    intro: (n) => `Я ${n}, ваш советник. Я вижу, что у вас открыто в программе, и могу объяснить стих, главу, пророчество или подсказать, где что найти. Спрашивайте — можно голосом: удерживайте пробел или боковую кнопку мыши.`,
     keyTitle: 'Подключение', keyLabel: 'Ключ Anthropic API', nameLabel: 'Имя советника', save: 'Сохранить',
     keyHelp: 'Советник работает через Claude (Anthropic). Нужен свой ключ: зайдите на console.anthropic.com → API Keys → Create Key, скопируйте ключ (начинается с sk-ant-) и вставьте сюда. Оплата по использованию, на сайте Anthropic. Ключ хранится только на этом устройстве и отправляется только в Anthropic. Нужен интернет.',
     keyBad: 'Ключ не подошёл. Проверьте его в настройке.', noNet: 'Нет связи с сервером. Проверьте интернет.',
@@ -5932,7 +5932,7 @@ const AI_TXT = {
     title: 'Sfătuitor', defName: 'Tars', eyesOn: '👁 Vede ecranul', eyesOff: '👁 Nu vede', ph: 'Întrebați despre un verset, un capitol, viață sau program…',
     send: 'Întreabă', stop: 'Stop', thinking: 'se gândește…', looking: 'se uită la ecran…', clear: 'Conversație nouă', setup: 'Setări',
     listen: '🔊', saw: 'a văzut ecranul', voiceOn: 'Răspuns cu voce: da', voiceOff: 'Răspuns cu voce: nu',
-    intro: (n) => `Sunt ${n}, sfătuitorul dumneavoastră. Văd ce aveți deschis în program și pot explica un verset, un capitol, o profeție sau vă pot arăta unde găsiți ceva. Întrebați.`,
+    intro: (n) => `Sunt ${n}, sfătuitorul dumneavoastră. Văd ce aveți deschis în program și pot explica un verset, un capitol, o profeție sau vă pot arăta unde găsiți ceva. Întrebați — și cu vocea: țineți apăsat Space sau butonul lateral al mouse-ului.`,
     keyTitle: 'Conectare', keyLabel: 'Cheia Anthropic API', nameLabel: 'Numele sfătuitorului', save: 'Salvează',
     keyHelp: 'Sfătuitorul funcționează prin Claude (Anthropic). Este nevoie de o cheie proprie: console.anthropic.com → API Keys → Create Key, copiați cheia (începe cu sk-ant-) și lipiți-o aici. Plata după utilizare, pe site-ul Anthropic. Cheia rămâne doar pe acest dispozitiv și se trimite doar la Anthropic. E nevoie de internet.',
     keyBad: 'Cheia nu a mers. Verificați-o în setări.', noNet: 'Nu există legătură cu serverul. Verificați internetul.',
@@ -6012,7 +6012,7 @@ function aiSystem() {
 - Меню «Ещё»: План чтения, Закладки, Заметки, Карта (библейские места с подробной картой, 24 путешествия: Авраам, Исход, Давид, Иисус, путешествия Павла и другие), Мой путь по связям, События (по времени), Аудио-Библия, Пророчества (71 пророчество в 5 группах: о Мессии; народы и города; Израиль и Иерусалим; последние дни; обещания о будущем — предсказание, исполнение, объяснение, дуги на небе, можно слушать), Уроки для жизни (9 ступеней: Библия как инструкция для человека), Созвездия тем, Стих дня, Музыка, Настройки (размер текста, голос, скорость, графика), Свой перевод, Жанры, Подсказки, и ты — Советник.
 - Программа работает в браузере, в шлеме VR, на телефоне Android и на компьютере (Windows, Linux, macOS).
 
-Твои глаза: к вопросу пользователя прикладывается снимок экрана программы (если он не выключил «глаза») и описание того, что открыто: вид, книга, глава с текстом, карточка стиха, открытые окна. Когда пользователь говорит «это», «здесь», «этот стих», «что я вижу» — опирайся на снимок и описание. Твоё собственное окно на снимке скрыто.
+Твои глаза: к вопросу пользователя прикладывается снимок экрана программы (если он не выключил «глаза») и описание того, что открыто: вид, книга, глава с текстом, карточка стиха, открытые окна. Когда пользователь говорит «это», «здесь», «этот стих», «что я вижу» — опирайся на снимок и описание. Твоё собственное окно на снимке скрыто. Пользователь часто задаёт вопросы голосом (речь распознаётся автоматически), поэтому возможны ошибки распознавания — понимай по смыслу. Твои ответы часто зачитываются вслух: пиши так, чтобы это хорошо звучало.
 
 Как отвечать:
 - Язык ответа — ${LANG === 'ro' ? 'румынский' : 'русский'}, если пользователь не пишет на другом языке.
@@ -6309,7 +6309,9 @@ function buildAiPanel() {
   const form = el2('form', 'ai-form');
   const q = el2('textarea', 'ai-q'); q.rows = 2;
   const send = el2('button', 'btn primary ai-send'); send.type = 'submit';
-  form.append(q, send);
+  const mic = el2('button', 'btn ai-mic', '🎤'); mic.type = 'button';
+  mic.addEventListener('click', earsToggle);
+  form.append(mic, q, send);
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (ai.busy) { if (ai.stream) ai.stream.abort(); return; }
@@ -6336,6 +6338,7 @@ function aiTexts() {
   p.querySelector('.ai-clear').title = A.clear;
   p.querySelector('.ai-gear').title = A.setup;
   aiControls();
+  earsUi();
 }
 function openAi(question) {
   const p = buildAiPanel();
@@ -6353,6 +6356,183 @@ function closeAi() {
   p.hidden = true;
   document.body.classList.remove('ai-open');
 }
+
+
+/* ---------- Вопрос советнику голосом ---------- */
+// Компьютер: запись с микрофона → Whisper на этом компьютере. Телефон: распознавание Android. Браузер: распознавание браузера.
+// Удерживать пробел или боковую кнопку мыши (Mouse 5) — говорить, отпустить — вопрос уходит. Короткий щелчок Mouse 5 или 🎤 —
+// слушать, пока человек не замолчит.
+const EARS_TXT = {
+  ru: { mic: '🎤', listen: 'Слушаю… говорите', hear: 'Распознаю…', none: 'Распознавание речи здесь недоступно — напишите вопрос.', noMic: 'Нет доступа к микрофону. Разрешите микрофон для программы (Windows: Параметры → Конфиденциальность → Микрофон).', empty: 'Не расслышал. Попробуйте ещё раз.', fail: 'Не удалось распознать речь.', hint: 'Говорить: удерживайте пробел или боковую кнопку мыши (Mouse 5), или нажмите 🎤' },
+  ro: { mic: '🎤', listen: 'Ascult… vorbiți', hear: 'Recunosc…', none: 'Recunoașterea vorbirii nu este disponibilă aici — scrieți întrebarea.', noMic: 'Nu există acces la microfon. Permiteți microfonul pentru program.', empty: 'Nu am auzit. Încercați din nou.', fail: 'Vorbirea nu a putut fi recunoscută.', hint: 'Vorbiți: țineți apăsat Space sau butonul lateral al mouse-ului (Mouse 5), sau apăsați 🎤' },
+};
+const ET = () => EARS_TXT[LANG] || EARS_TXT.ru;
+const ears = { on: false, mode: '', stage: '', rec: null, stream: null, chunks: [], ctx: null, timer: 0, t0: 0, loud: 0, heard: false, sr: null, cancel: false };
+const earsKind = () => {
+  if (window.DesktopEars && window.DesktopEars.ok()) return 'desktop';
+  if (window.AndroidEars) return 'android';
+  if (!window.DesktopEars && (window.SpeechRecognition || window.webkitSpeechRecognition)) return 'web';
+  return 'none';
+};
+function earsUi() {
+  const p = aiPanel(); if (!p) return;
+  const b = p.querySelector('.ai-mic'), q = p.querySelector('.ai-q');
+  if (!b) return;
+  b.classList.toggle('on', ears.stage === 'listen');
+  b.classList.toggle('wait', ears.stage === 'hear');
+  b.textContent = ears.stage === 'listen' ? '■' : ears.stage === 'hear' ? '…' : ET().mic;
+  b.title = ET().hint;
+  q.placeholder = ears.stage === 'listen' ? ET().listen : ears.stage === 'hear' ? ET().hear : AT().ph;
+}
+function earsDone(text) {
+  ears.on = false; ears.stage = ''; earsUi();
+  text = String(text || '').trim();
+  if (!text || /^[\s.,!?…-]*$/.test(text)) { if (!ears.cancel) toast(ET().empty, 3000); return; }
+  aiAsk(text);
+}
+function earsStop(cancel) {
+  if (!ears.on) return;
+  ears.cancel = !!cancel;
+  clearInterval(ears.timer);
+  if (ears.sr) { try { cancel ? ears.sr.abort() : ears.sr.stop(); } catch { /* уже остановлено */ } return; }
+  if (ears.rec && ears.rec.state !== 'inactive') { ears.rec.stop(); return; }
+  if (cancel) { ears.on = false; ears.stage = ''; earsUi(); }
+}
+// Запись → WAV 16 кГц, моно (так любит Whisper).
+async function toWav16(blob) {
+  const buf = await blob.arrayBuffer();
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  let audio;
+  try { audio = await ctx.decodeAudioData(buf); } finally { ctx.close(); }
+  const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(audio.duration * 16000)), 16000);
+  const src = off.createBufferSource(); src.buffer = audio; src.connect(off.destination); src.start();
+  const pcm = (await off.startRendering()).getChannelData(0);
+  const out = new DataView(new ArrayBuffer(44 + pcm.length * 2));
+  const str = (o, s) => { for (let i = 0; i < s.length; i++) out.setUint8(o + i, s.charCodeAt(i)); };
+  str(0, 'RIFF'); out.setUint32(4, 36 + pcm.length * 2, true); str(8, 'WAVE'); str(12, 'fmt ');
+  out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 1, true); out.setUint32(24, 16000, true);
+  out.setUint32(28, 32000, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true); str(36, 'data'); out.setUint32(40, pcm.length * 2, true);
+  for (let i = 0; i < pcm.length; i++) out.setInt16(44 + i * 2, Math.max(-1, Math.min(1, pcm[i])) * 0x7fff, true);
+  return { wav: out.buffer, sec: audio.duration };
+}
+async function earsStart(mode) {
+  if (ears.on || ai.busy) return;
+  if (!aiPanel() || aiPanel().hidden) openAi();
+  if (!ai.key) { aiShowSetup(true); return; }
+  const kind = earsKind();
+  if (kind === 'none') { toast(ET().none, 6000); return; }
+  stopReading(); stopNarration();
+  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch { /* нет синтезатора */ }
+  Object.assign(ears, { on: true, mode, stage: 'listen', cancel: false, heard: false, t0: performance.now(), loud: performance.now(), chunks: [], sr: null, rec: null });
+  earsUi();
+  if (kind === 'android') {
+    const id = 'h' + Date.now();
+    window.__heard = (rid, text) => { if (rid === id) earsDone(text); };
+    window.AndroidEars.listen(id, T().speech);
+    return;
+  }
+  if (kind === 'web') {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const sr = new SR();
+    sr.lang = T().speech; sr.interimResults = false; sr.maxAlternatives = 1; sr.continuous = mode === 'hold';
+    let text = '';
+    sr.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) text += ' ' + e.results[i][0].transcript; };
+    sr.onerror = (e) => { if (e.error === 'not-allowed') toast(ET().noMic, 8000); };
+    sr.onend = () => { ears.sr = null; earsDone(ears.cancel ? '' : text); };
+    ears.sr = sr;
+    try { sr.start(); } catch { ears.sr = null; earsDone(''); }
+    return;
+  }
+  // компьютер: запись и Whisper
+  try {
+    ears.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+  } catch {
+    ears.on = false; ears.stage = ''; earsUi(); toast(ET().noMic, 9000); return;
+  }
+  if (!ears.on) { ears.stream.getTracks().forEach((t) => t.stop()); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  ears.ctx = new AC();
+  const an = ears.ctx.createAnalyser(); an.fftSize = 1024;
+  ears.ctx.createMediaStreamSource(ears.stream).connect(an);
+  const data = new Float32Array(an.fftSize);
+  const rec = new MediaRecorder(ears.stream);
+  ears.rec = rec;
+  rec.ondataavailable = (e) => { if (e.data && e.data.size) ears.chunks.push(e.data); };
+  rec.onstop = async () => {
+    clearInterval(ears.timer);
+    ears.stream.getTracks().forEach((t) => t.stop());
+    try { ears.ctx.close(); } catch { /* закрыт */ }
+    const heard = ears.heard;
+    if (ears.cancel || !heard) { earsDone(''); return; }
+    ears.stage = 'hear'; earsUi();
+    try {
+      const { wav, sec } = await toWav16(new Blob(ears.chunks, { type: rec.mimeType || 'audio/webm' }));
+      if (sec < 0.4) { earsDone(''); return; }
+      earsDone(await window.DesktopEars.hear(wav, LANG));
+    } catch (err) {
+      console.warn('ears', err);
+      ears.on = false; ears.stage = ''; earsUi(); toast(ET().fail, 5000);
+    }
+  };
+  rec.start(250);
+  // уровень звука: начало речи и конец (пауза 1,5 с) для режима «щелчок»
+  ears.timer = setInterval(() => {
+    an.getFloatTimeDomainData(data);
+    let s = 0; for (let i = 0; i < data.length; i++) s += data[i] * data[i];
+    const rms = Math.sqrt(s / data.length), now = performance.now();
+    const b = aiPanel() && aiPanel().querySelector('.ai-mic');
+    if (b) b.style.setProperty('--lvl', String(Math.min(1, rms * 12)));
+    if (rms > 0.025) { ears.heard = true; ears.loud = now; }
+    if (now - ears.t0 > 60000) earsStop(false);
+    else if (ears.mode === 'tap' && ears.heard && now - ears.loud > 1500) earsStop(false);
+    else if (ears.mode === 'tap' && !ears.heard && now - ears.t0 > 8000) earsStop(true);
+  }, 100);
+}
+function earsToggle() { if (ears.on) earsStop(false); else earsStart('tap'); }
+
+// Пробел: удерживать — говорить; короткое нажатие в главе — как раньше, «Слушать главу».
+// Mouse 5: удерживать — говорить; короткий щелчок — слушать до паузы.
+const typing = (el) => !!(el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));
+const ptt = { space: 0, spaceTimer: 0, spaceHeld: false, mouse: 0, mouseHeld: false, mouseTimer: 0 };
+addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' || typing(e.target) || renderer.xr.isPresenting) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if (e.repeat || ptt.space) return;
+  if (ears.on) { earsStop(false); ptt.space = -1; return; }
+  ptt.space = performance.now(); ptt.spaceHeld = false;
+  ptt.spaceTimer = setTimeout(() => { ptt.spaceHeld = true; earsStart('hold'); }, 280);
+}, true);
+addEventListener('keyup', (e) => {
+  if (e.code !== 'Space' || !ptt.space) return;
+  e.preventDefault();
+  clearTimeout(ptt.spaceTimer);
+  const held = ptt.spaceHeld, was = ptt.space;
+  ptt.space = 0; ptt.spaceHeld = false;
+  if (was === -1) return;
+  if (held) earsStop(false);
+  else if (aiPanel() && !aiPanel().hidden) earsStart('tap');
+  else if (state.mode === 'chapter') toggleListen();
+  else earsStart('tap');
+}, true);
+addEventListener('mousedown', (e) => {
+  if (e.button !== 4) return;
+  e.preventDefault();
+  if (ears.on) { earsStop(false); ptt.mouse = -1; return; }
+  ptt.mouse = performance.now(); ptt.mouseHeld = false;
+  ptt.mouseTimer = setTimeout(() => { ptt.mouseHeld = true; earsStart('hold'); }, 280);
+}, true);
+addEventListener('mouseup', (e) => {
+  if (e.button !== 4) return;
+  e.preventDefault();
+  clearTimeout(ptt.mouseTimer);
+  const held = ptt.mouseHeld, was = ptt.mouse;
+  ptt.mouse = 0; ptt.mouseHeld = false;
+  if (was === -1 || !was) return;
+  if (held) earsStop(false); else earsStart('tap');
+}, true);
+// боковые кнопки мыши не листают «вперёд/назад»
+addEventListener('auxclick', (e) => { if (e.button === 3 || e.button === 4) e.preventDefault(); }, true);
 
 document.getElementById('aiBtn').addEventListener('click', () => openAi());
 
@@ -6415,7 +6595,7 @@ window.__androidBack = () => {
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
   get look() { return look; }, pickAt(x, y) { const v = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); raycaster.setFromCamera(v, camera); const h = pick(raycaster.ray.clone()); return h && { type: h.type, vi: h.vi, bi: h.bi, ci: h.ci }; }, get busy() { return busy; },
-  ai, aiScene, aiSystem, aiLook, openAi, aiAsk, aiApiMessages,   get mapState() { return mapState; }, ROUTES, PLACE, fromRef, setLang, openProphecies, aplayer, chapterTimes, hasAudio, get audioIndex() { return audioIndex; }, showAudioPanel, get PROPH() { return PROPH; }, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  ai, ears, earsStart, earsStop, toWav16, aiScene, aiSystem, aiLook, openAi, aiAsk, aiApiMessages,   get mapState() { return mapState; }, ROUTES, PLACE, fromRef, setLang, openProphecies, aplayer, chapterTimes, hasAudio, get audioIndex() { return audioIndex; }, showAudioPanel, get PROPH() { return PROPH; }, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
   buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },
