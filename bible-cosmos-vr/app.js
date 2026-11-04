@@ -146,8 +146,8 @@ const I18N = {
     footnotes: 'Сноски издания', peopleInVerse: 'Люди в стихе', terms: 'Понятия', measures: 'Меры и деньги', parallels: 'Параллельные места',
     compare: 'Сравнить', quoteFrom: 'Цитата из', quoteTo: 'Цитируется в', fulfillment: 'исполнение пророчества', bloom: 'Свечение звёзд',
     notes: 'Заметки', noNotes: 'Заметок пока нет. Откройте стих и напишите мысль в поле «Моя заметка».', notePh: 'Моя заметка к этому стиху…', noteTitle: 'Моя заметка',
-    places: 'Места в этом стихе', map: 'Карта', mapViews: { region: 'Весь регион', israel: 'Земля Израиля' }, mapNoRoute: 'Маршрут не выбран',
-    mapReadRoute: 'Читать:', mapHint: 'Двумя пальцами или колёсиком — увеличить, пальцем — двигать, двойное касание — крупнее. Нажмите на место, чтобы увидеть стихи о нём.', zoomIn: 'Увеличить', zoomOut: 'Уменьшить', zoomFit: 'Показать всё', mapVerses: (n) => `стихов: ${n}`,
+    places: 'Места в этом стихе', map: 'Карта', mapViews: { region: 'Весь регион', israel: 'Земля Израиля' }, mapNoRoute: 'Путешествие не выбрано',
+    mapReadRoute: 'Читать:', mapAllRoutes: 'Все путешествия', mapApprox: 'Пути показаны приблизительно: точные дороги древности известны не везде.', mapHint: 'Двумя пальцами или колёсиком — увеличить, пальцем — двигать, двойное касание — крупнее. Нажмите на место, чтобы увидеть стихи о нём.', zoomIn: 'Увеличить', zoomOut: 'Уменьшить', zoomFit: 'Показать всё', mapVerses: (n) => `стихов: ${n}`,
     events: 'События', eventsNote: 'Годы по традиционной хронологии, приблизительные; у историков есть и другие датировки.', inBeginning: 'В начале',
     plan: 'План чтения', planNote: 'Выберите план: каждый день программа предложит главы и отметит прочитанное.',
     plans: { year: 'Библия за год', nt90: 'Новый Завет за 3 месяца', gospels30: 'Евангелия за месяц', psalms30: 'Псалмы за месяц', prov31: 'Притчи за месяц' },
@@ -261,8 +261,8 @@ const I18N = {
     footnotes: 'Notele ediției', peopleInVerse: 'Persoane în verset', terms: 'Noțiuni', measures: 'Măsuri și bani', parallels: 'Pasaje paralele',
     compare: 'Compară', quoteFrom: 'Citat din', quoteTo: 'Citat în', fulfillment: 'împlinirea unei profeții', bloom: 'Strălucirea stelelor',
     notes: 'Note', noNotes: 'Încă nu aveți note. Deschideți un verset și scrieți un gând în câmpul „Nota mea”.', notePh: 'Nota mea la acest verset…', noteTitle: 'Nota mea',
-    places: 'Locuri în acest verset', map: 'Hartă', mapViews: { region: 'Toată regiunea', israel: 'Țara lui Israel' }, mapNoRoute: 'Fără traseu',
-    mapReadRoute: 'Citește:', mapHint: 'Cu două degete sau rotița — mărire, cu un deget — mutare, dublă atingere — mai aproape. Atingeți un loc pentru a vedea versetele despre el.', zoomIn: 'Mărește', zoomOut: 'Micșorează', zoomFit: 'Arată tot', mapVerses: (n) => `versete: ${n}`,
+    places: 'Locuri în acest verset', map: 'Hartă', mapViews: { region: 'Toată regiunea', israel: 'Țara lui Israel' }, mapNoRoute: 'Nicio călătorie',
+    mapReadRoute: 'Citește:', mapAllRoutes: 'Toate călătoriile', mapApprox: 'Traseele sunt aproximative: drumurile exacte din antichitate nu se cunosc peste tot.', mapHint: 'Cu două degete sau rotița — mărire, cu un deget — mutare, dublă atingere — mai aproape. Atingeți un loc pentru a vedea versetele despre el.', zoomIn: 'Mărește', zoomOut: 'Micșorează', zoomFit: 'Arată tot', mapVerses: (n) => `versete: ${n}`,
     events: 'Evenimente', eventsNote: 'Anii sunt după cronologia tradițională, aproximativi; istoricii au și alte datări.', inBeginning: 'La început',
     plan: 'Plan de citire', planNote: 'Alegeți un plan: în fiecare zi programul propune capitole și marchează ce ați citit.',
     plans: { year: 'Biblia într-un an', nt90: 'Noul Testament în 3 luni', gospels30: 'Evangheliile într-o lună', psalms30: 'Psalmii într-o lună', prov31: 'Proverbele într-o lună' },
@@ -2895,6 +2895,21 @@ const PLACES = [
   ['patmos', 37.31, 26.55, 'Патмос', 'Patmos', ['Патмос'], ['Patmos']],
   ['crete', 35.2, 24.9, 'Крит', 'Creta', ['Крит'], ['Creta']],
   ['malta', 35.9, 14.42, 'Мальта', 'Malta', ['Мальт', 'Мелит'], ['Malta']],
+  ['shechem', 32.213, 35.282, 'Шехем', 'Sihem', ['Шехем', 'Сихем'], ['Sihem']],
+  ['dothan', 32.42, 35.24, 'Дотан', 'Dotan', ['Дотан', 'Дофан'], ['Dotan']],
+  ['ai', 31.917, 35.262, 'Гай', 'Ai', ['Гай(?:а|е|ем|ю)?(?![а-яё])'], ['Ai(?=[,.;:!?)]| și | din | de | a )']],
+  ['gibeon', 31.847, 35.183, 'Гаваон', 'Gabaon', ['Гаваон'], ['Gabaon']],
+  ['hazor', 33.017, 35.568, 'Хацор', 'Hațor', ['Хацор', 'Асор'], ['Hațor']],
+  ['gath', 31.7, 34.848, 'Гат', 'Gat', ['Гат(?:а|е|у|ом)?(?![а-яё-])'], ['Gat(?![a-zăâîșț-])']],
+  ['adullam', 31.65, 34.96, 'Адуллам', 'Adulam', ['Адуллам'], ['Adulam']],
+  ['engedi', 31.461, 35.389, 'Эн-Гади', 'En-Ghedi', ['Эн-Гади', 'Эн-Геди'], ['En-Ghedi']],
+  ['ziklag', 31.38, 34.78, 'Циклаг', 'Țiclag', ['Циклаг', 'Секелаг'], ['Țiclag']],
+  ['jezreel', 32.557, 35.33, 'Изреел', 'Izreel', ['Изреел', 'Изрееле', 'Изреэл'], ['Izreel']],
+  ['zarephath', 33.46, 35.3, 'Сарепта', 'Sarepta', ['Сарепт', 'Царефат'], ['Sarepta', 'Țarefat']],
+  ['cana', 32.747, 35.339, 'Кана', 'Cana', ['Кан(?:а|е|у|ы)(?![а-яё])'], ['Cana(?![a-zăâîșț])']],
+  ['bethsaida', 32.91, 35.63, 'Вифсаида', 'Betsaida', ['Вифсаид'], ['Betsaida']],
+  ['caesarea_philippi', 33.248, 35.694, 'Кесария Филиппова', 'Cezareea lui Filip', ['Кесари[а-яё]* Филиппов'], ['Cezareea lui Filip']],
+  ['azotus', 31.8, 34.65, 'Ашдод', 'Asdod', ['Ашдод', 'Азот'], ['Asdod', 'Așdod']],
   ['rome', 41.9, 12.5, 'Рим', 'Roma', ['Рим(?!лян)(?:а|е|у|ом)?(?![а-яё])'], ['Roma(?!ni)']],
 ];
 const PLACE = Object.fromEntries(PLACES.map((p) => [p[0], { id: p[0], lat: p[1], lon: p[2], ru: p[3], ro: p[4], stems: { ru: p[5], ro: p[6] } }]));
@@ -2908,28 +2923,80 @@ function placeRegex(id) {
   }
   return placeRe[k];
 }
-function placesIn(text) { return Object.keys(PLACE).filter((id) => placeRegex(id).test(text)); }
+// В тексте «Нового мира» внутри имён стоят знаки ударения (Сихе́м) — при поиске они не учитываются.
+const noAcc = (t) => String(t).replace(/\u0301/g, '');
+function placesIn(text) { const t = noAcc(text); return Object.keys(PLACE).filter((id) => placeRegex(id).test(t)); }
 const placeVersesCache = {};
 function versesAbout(id) {
   const k = id + LANG + BOOKS.length;
   if (!placeVersesCache[k]) {
     const re = placeRegex(id);
     const res = [];
-    BOOKS.forEach((b) => b.chapters.forEach((c, ci) => c.forEach((v, vi) => { if (re.test(v)) res.push({ bi: b.i, ci, vi }); })));
+    BOOKS.forEach((b) => b.chapters.forEach((c, ci) => c.forEach((v, vi) => { if (re.test(noAcc(v))) res.push({ bi: b.i, ci, vi }); })));
     placeVersesCache[k] = res;
   }
   return placeVersesCache[k];
 }
 
-// Маршруты: точки — места или [широта, долгота] промежуточных остановок.
+// Маршруты: точки — места или [широта, долгота] промежуточных остановок. Пути показаны приблизительно.
+// era: группа в списке; d — коротко о пути (RU/RO).
 const ROUTES = [
-  { id: 'abraham', ru: 'Путь Авраама', ro: 'Drumul lui Avraam', pts: ['ur', 'haran', [32.21, 35.28], 'bethel', 'egypt', 'bethel', 'hebron'], ref: 'Gen.12.1' },
-  { id: 'exodus', ru: 'Исход из Египта', ro: 'Exodul din Egipt', pts: ['rameses', [30.0, 32.55], [29.2, 33.0], 'sinai', 'kadesh', [30.4, 35.6], 'nebo', 'jericho'], ref: 'Exod.12.41' },
-  { id: 'paul1', ru: 'Павел: 1-е путешествие', ro: 'Pavel: prima călătorie', pts: ['antioch', [36.12, 35.93], 'paphos', [36.96, 30.85], [38.3, 31.19], 'iconium', 'lystra', 'derbe', 'lystra', 'iconium', [36.96, 30.85], 'antioch'], ref: 'Acts.13.4' },
-  { id: 'paul2', ru: 'Павел: 2-е путешествие', ro: 'Pavel: a doua călătorie', pts: ['antioch', 'tarsus', 'derbe', 'lystra', 'iconium', 'troas', 'philippi', 'thessalonica', 'berea', 'athens', 'corinth', 'ephesus', 'caesarea', 'jerusalem', 'antioch'], ref: 'Acts.15.40' },
-  { id: 'paul3', ru: 'Павел: 3-е путешествие', ro: 'Pavel: a treia călătorie', pts: ['antioch', [39.0, 32.5], 'ephesus', 'troas', 'philippi', 'thessalonica', 'corinth', 'philippi', 'troas', 'miletus', [36.43, 28.22], 'tyre', 'caesarea', 'jerusalem'], ref: 'Acts.18.23' },
-  { id: 'rome', ru: 'Павел плывёт в Рим', ro: 'Pavel navighează spre Roma', pts: ['caesarea', 'sidon', [36.26, 29.98], [34.93, 24.8], 'malta', [37.07, 15.29], [40.82, 14.12], 'rome'], ref: 'Acts.27.1' },
+  { id: 'abraham', era: 'patriarchs', ru: 'Путь Авраама', ro: 'Drumul lui Avraam', pts: ['ur', 'haran', 'shechem', 'bethel', 'egypt', 'bethel', 'hebron'], ref: 'Gen.12.1',
+    dru: 'Из Ура халдейского через Харран в Ханаан, в голод — в Египет и обратно; Авраам поселяется у Хеврона.', dro: 'Din Urul caldeenilor, prin Haran, în Canaan; în timpul foametei în Egipt și înapoi; Avraam se stabilește lângă Hebron.' },
+  { id: 'jacob', era: 'patriarchs', ru: 'Иаков: в Харран и обратно', ro: 'Iacob: la Haran și înapoi', pts: ['beersheba', 'bethel', 'damascus', 'haran', 'damascus', [32.18, 35.7], 'shechem', 'bethel', 'bethlehem', 'hebron'], ref: 'Gen.28.10',
+    dru: 'Иаков уходит от Исава в Харран, видит лестницу в Вефиле, 20 лет живёт у Лавана и возвращается с семьёй.', dro: 'Iacob fuge de Esau la Haran, vede scara la Betel, trăiește 20 de ani la Laban și se întoarce cu familia.' },
+  { id: 'joseph', era: 'patriarchs', ru: 'Иосиф продан в Египет', ro: 'Iosif vândut în Egipt', pts: ['hebron', 'shechem', 'dothan', 'gaza', [31.05, 32.6], 'egypt'], ref: 'Gen.37.14',
+    dru: 'Иосиф ищет братьев у Шехема, находит их в Дотане; они продают его купцам, идущим в Египет.', dro: 'Iosif își caută frații lângă Sihem, îi găsește la Dotan; ei îl vând unor negustori care merg în Egipt.' },
+  { id: 'jacobEgypt', era: 'patriarchs', ru: 'Иаков переселяется в Египет', ro: 'Iacob se mută în Egipt', pts: ['hebron', 'beersheba', [30.9, 33.2], [30.75, 32.3], 'rameses'], ref: 'Gen.46.1',
+    dru: 'Иаков с семьёй (70 душ) идёт к Иосифу и поселяется в земле Гошен.', dro: 'Iacob cu familia (70 de suflete) merge la Iosif și se stabilește în ținutul Gosen.' },
+  { id: 'exodus', era: 'exodus', ru: 'Исход из Египта', ro: 'Exodul din Egipt', pts: ['rameses', [30.0, 32.55], [29.2, 33.0], 'sinai', 'kadesh', [30.4, 35.6], 'nebo', 'jericho'], ref: 'Exod.12.41',
+    dru: 'Израиль выходит из Египта, переходит Красное море, получает Закон у Синая, 40 лет в пустыне и входит в Ханаан у Иерихона.', dro: 'Israel iese din Egipt, trece Marea Roșie, primește Legea la Sinai, 40 de ani în pustiu și intră în Canaan la Ierihon.' },
+  { id: 'joshua', era: 'exodus', ru: 'Иисус Навин: завоевание Ханаана', ro: 'Iosua: cucerirea Canaanului', pts: [[31.86, 35.5], 'jericho', 'ai', 'gibeon', [31.56, 34.85], 'hebron', [31.86, 35.5], 'hazor'], ref: 'Josh.6.2',
+    dru: 'От Гилгала — Иерихон, Гай и Гаваон, поход на юг до Хеврона, затем на север к Хацору.', dro: 'De la Ghilgal — Ierihon, Ai și Gabaon, campania spre sud până la Hebron, apoi spre nord la Hațor.' },
+  { id: 'ruth', era: 'judges', ru: 'Руфь и Ноеминь', ro: 'Rut și Naomi', pts: ['bethlehem', [31.78, 35.55], 'moab', [31.78, 35.55], 'bethlehem'], ref: 'Ruth.1.1',
+    dru: 'Семья Ноемини уходит в Моав от голода; овдовев, Ноеминь возвращается в Вифлеем вместе с верной Руфью.', dro: 'Familia Naomii pleacă în Moab din cauza foametei; rămasă văduvă, Naomi se întoarce la Betleem cu loiala Rut.' },
+  { id: 'david', era: 'kings', ru: 'Давид скрывается от Саула', ro: 'David fuge de Saul', pts: [[31.82, 35.23], 'gath', 'adullam', [31.42, 35.13], 'engedi', [31.42, 35.13], 'gath', 'ziklag'], ref: '1Sam.21.10',
+    dru: 'Давид бежит к Ахишу в Гат, прячется в пещере Адуллам, в пустыне Зиф и у Эн-Гади, затем живёт в Циклаге.', dro: 'David fuge la Achiș în Gat, se ascunde în peștera Adulam, în pustiul Zif și la En-Ghedi, apoi locuiește la Țiclag.' },
+  { id: 'elijah', era: 'kings', ru: 'Пророк Илия', ro: 'Profetul Ilie', pts: ['zarephath', 'carmel', 'jezreel', 'beersheba', 'sinai'], ref: '1Kgs.17.9',
+    dru: 'Илия у вдовы в Сарепте, испытание на Кармиле, бегство от Иезавели через Беэр-Шебу к горе Хорив.', dro: 'Ilie la văduva din Sarepta, încercarea de pe Carmel, fuga de Izabela prin Beer-Șeba la muntele Horeb.' },
+  { id: 'jonah', era: 'kings', ru: 'Пророк Иона', ro: 'Profetul Iona', pts: ['joppa', [33.3, 31.6], [32.6, 34.6], 'damascus', [35.9, 39.6], 'nineveh'], ref: 'Jonah.1.3',
+    dru: 'Иона садится на корабль в Иоппии, чтобы бежать в Таршиш; после бури и большой рыбы он идёт в Ниневию.', dro: 'Iona se îmbarcă la Iope ca să fugă la Tarsis; după furtună și peștele cel mare, merge la Ninive.' },
+  { id: 'exile', era: 'exile', ru: 'Вавилонский плен', ro: 'Exilul în Babilon', pts: ['jerusalem', 'damascus', [34.45, 36.55], [36.2, 37.15], [36.83, 38.01], [35.0, 40.5], 'babylon'], ref: '2Kgs.25.11',
+    dru: 'В 607 году до н. э. Иерусалим разрушен, жителей уводят через Ривлу и вдоль Евфрата в Вавилон.', dro: 'În 607 î.e.n. Ierusalimul este distrus, iar locuitorii sunt duși prin Ribla și de-a lungul Eufratului în Babilon.' },
+  { id: 'return', era: 'exile', ru: 'Возвращение из плена', ro: 'Întoarcerea din exil', pts: ['babylon', [35.0, 40.5], [36.83, 38.01], [36.2, 37.15], 'damascus', 'jerusalem'], ref: 'Ezra.1.3',
+    dru: 'По указу Кира иудеи возвращаются с Зоровавелем, позже — с Ездрой, чтобы восстановить храм.', dro: 'Prin decretul lui Cirus, iudeii se întorc cu Zorobabel, mai târziu cu Ezra, ca să reconstruiască templul.' },
+  { id: 'nehemiah', era: 'exile', ru: 'Неемия: из Суз в Иерусалим', ro: 'Neemia: de la Susa la Ierusalim', pts: ['susa', 'babylon', [35.0, 40.5], [36.83, 38.01], [36.2, 37.15], 'damascus', 'jerusalem'], ref: 'Neh.2.11',
+    dru: 'Виночерпий царя Артаксеркса приходит восстановить стены Иерусалима.', dro: 'Paharnicul regelui Artaxerxe vine să reconstruiască zidurile Ierusalimului.' },
+  { id: 'nativity', era: 'jesus', ru: 'Рождение Иисуса и бегство в Египет', ro: 'Nașterea lui Isus și fuga în Egipt', pts: ['nazareth', 'samaria', 'jerusalem', 'bethlehem', 'gaza', [30.9, 32.3], [30.6, 31.5], [30.9, 32.3], 'gaza', 'nazareth'], ref: 'Matt.2.13',
+    dru: 'Иосиф и Мария идут из Назарета в Вифлеем, бегут от Ирода в Египет и после его смерти возвращаются в Назарет.', dro: 'Iosif și Maria merg din Nazaret la Betleem, fug de Irod în Egipt și, după moartea lui, se întorc la Nazaret.' },
+  { id: 'galilee', era: 'jesus', ru: 'Иисус в Галилее', ro: 'Isus în Galileea', pts: ['nazareth', 'cana', 'capernaum', 'bethsaida', 'caesarea_philippi', 'capernaum'], ref: 'Matt.4.13',
+    dru: 'Из Назарета в Кану, затем Капернаум становится его городом; Вифсаида и Кесария Филиппова.', dro: 'Din Nazaret la Cana, apoi Capernaum devine orașul lui; Betsaida și Cezareea lui Filip.' },
+  { id: 'samaritan', era: 'jesus', ru: 'Через Самарию в Галилею', ro: 'Prin Samaria în Galileea', pts: ['jerusalem', 'bethel', 'shechem', 'samaria', 'cana'], ref: 'John.4.3',
+    dru: 'По пути в Галилею Иисус говорит с самаритянкой у колодца Иакова близ Сихаря.', dro: 'În drum spre Galileea, Isus vorbește cu samariteanca la fântâna lui Iacob, lângă Sihar.' },
+  { id: 'lastJourney', era: 'jesus', ru: 'Последний путь в Иерусалим', ro: 'Ultimul drum spre Ierusalim', pts: ['capernaum', [32.6, 35.57], 'jordan', 'jericho', 'bethany', 'jerusalem'], ref: 'Luke.19.1',
+    dru: 'Вдоль Иордана, через Иерихон (Закхей) и Вифанию (Лазарь) — в Иерусалим на последнюю Пасху.', dro: 'De-a lungul Iordanului, prin Ierihon (Zacheu) și Betania (Lazăr) — la Ierusalim pentru ultimul Paște.' },
+  { id: 'philip', era: 'apostles', ru: 'Евангелист Филипп', ro: 'Evanghelizatorul Filip', pts: ['jerusalem', 'samaria', 'jerusalem', [31.6, 34.85], 'azotus', 'joppa', 'caesarea'], ref: 'Acts.8.5',
+    dru: 'Филипп проповедует в Самарии, крестит эфиопского вельможу на дороге в Газу, из Ашдода доходит до Кесарии.', dro: 'Filip predică în Samaria, îl botează pe eunucul etiopian pe drumul spre Gaza, iar din Asdod ajunge la Cezareea.' },
+  { id: 'saul', era: 'apostles', ru: 'Савл идёт в Дамаск', ro: 'Saul merge la Damasc', pts: ['jerusalem', 'samaria', [32.7, 35.62], 'damascus'], ref: 'Acts.9.3',
+    dru: 'По дороге в Дамаск Савлу является Иисус, и гонитель становится апостолом.', dro: 'Pe drumul spre Damasc, lui Saul i se arată Isus, iar persecutorul devine apostol.' },
+  { id: 'peter', era: 'apostles', ru: 'Пётр: Иоппия — Кесария', ro: 'Petru: Iope — Cezareea', pts: ['jerusalem', [31.95, 34.9], 'joppa', 'caesarea'], ref: 'Acts.10.23',
+    dru: 'Через Лидду в Иоппию, где Пётр видит видение, затем в Кесарию к Корнилию — первому необрезанному христианину.', dro: 'Prin Lida la Iope, unde Petru are viziunea, apoi la Cezareea la Corneliu — primul creștin netăiat împrejur.' },
+  { id: 'paul1', era: 'apostles', ru: 'Павел: 1-е путешествие', ro: 'Pavel: prima călătorie', pts: ['antioch', [36.12, 35.93], 'paphos', [36.96, 30.85], [38.3, 31.19], 'iconium', 'lystra', 'derbe', 'lystra', 'iconium', [36.96, 30.85], 'antioch'], ref: 'Acts.13.4',
+    dru: 'С Варнавой: Кипр, Антиохия Писидийская, Иконий, Листра и Дервия.', dro: 'Cu Barnaba: Cipru, Antiohia Pisidiei, Iconia, Listra și Derbe.' },
+  { id: 'paul2', era: 'apostles', ru: 'Павел: 2-е путешествие', ro: 'Pavel: a doua călătorie', pts: ['antioch', 'tarsus', 'derbe', 'lystra', 'iconium', 'troas', 'philippi', 'thessalonica', 'berea', 'athens', 'corinth', 'ephesus', 'caesarea', 'jerusalem', 'antioch'], ref: 'Acts.15.40',
+    dru: 'С Силой: из Троады весть впервые приходит в Европу — Филиппы, Фессалоника, Верия, Афины, Коринф.', dro: 'Cu Sila: din Troa vestea ajunge pentru prima dată în Europa — Filipi, Tesalonic, Bereea, Atena, Corint.' },
+  { id: 'paul3', era: 'apostles', ru: 'Павел: 3-е путешествие', ro: 'Pavel: a treia călătorie', pts: ['antioch', [39.0, 32.5], 'ephesus', 'troas', 'philippi', 'thessalonica', 'corinth', 'philippi', 'troas', 'miletus', [36.43, 28.22], 'tyre', 'caesarea', 'jerusalem'], ref: 'Acts.18.23',
+    dru: 'Около трёх лет в Эфесе, снова Македония и Греция, прощание со старейшинами в Милете.', dro: 'Aproape trei ani la Efes, din nou Macedonia și Grecia, despărțirea de bătrâni la Milet.' },
+  { id: 'rome', era: 'apostles', ru: 'Павел плывёт в Рим', ro: 'Pavel navighează spre Roma', pts: ['caesarea', 'sidon', [36.26, 29.98], [34.93, 24.8], 'malta', [37.07, 15.29], [40.82, 14.12], 'rome'], ref: 'Acts.27.1',
+    dru: 'Узником — в Рим: буря у Крита, кораблекрушение у Мальты, затем Путеолы и Рим.', dro: 'Ca prizonier — la Roma: furtuna lângă Creta, naufragiul la Malta, apoi Puteoli și Roma.' },
 ];
+const ROUTE_ERAS = {
+  patriarchs: { ru: 'Патриархи', ro: 'Patriarhii' }, exodus: { ru: 'Исход и Ханаан', ro: 'Exodul și Canaanul' }, judges: { ru: 'Судьи', ro: 'Judecătorii' },
+  kings: { ru: 'Цари и пророки', ro: 'Regi și profeți' }, exile: { ru: 'Плен и возвращение', ro: 'Exilul și întoarcerea' },
+  jesus: { ru: 'Иисус', ro: 'Isus' }, apostles: { ru: 'Апостолы', ro: 'Apostolii' },
+};
+// Свой цвет каждому пути (для режима «Все путешествия»)
+ROUTES.forEach((r, i) => { r.color = `hsl(${Math.round((i * 360) / ROUTES.length + 20) % 360}, 80%, 66%)`; });
 const VIEWS = { region: [10, 26, 50, 42.5], israel: [33.9, 29.3, 36.7, 33.7] };
 let MAPDATA = null;
 async function loadMap() {
@@ -3009,24 +3076,30 @@ function drawMap(cv, st) {
       g.stroke();
     }
   }
-  // Маршрут
-  const route = st.route && ROUTES.find((r) => r.id === st.route);
-  if (route) {
-    const pts = route.pts.map(ptOf).map(([la, lo]) => P(la, lo));
-    g.strokeStyle = '#f3c35b'; g.lineWidth = 2.6 * dpr; g.setLineDash([8 * dpr, 6 * dpr]);
+  // Маршрут (или все маршруты, каждый своим цветом)
+  const all = st.route === 'all';
+  const route = !all && st.route && ROUTES.find((r) => r.id === st.route);
+  const drawRoute = (rt, color, lw, arrow) => {
+    const pts = rt.pts.map(ptOf).map(([la, lo]) => P(la, lo));
+    g.strokeStyle = color; g.lineWidth = lw * dpr; g.setLineDash([8 * dpr, 6 * dpr]);
     g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke();
     g.setLineDash([]);
     for (let i = 1; i < pts.length; i++) {
       const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
-      const a = Math.atan2(y1 - y0, x1 - x0), mx = (x0 + x1) / 2, my = (y0 + y1) / 2, L = 8 * dpr;
-      g.fillStyle = '#f3c35b';
+      if (Math.hypot(x1 - x0, y1 - y0) < arrow * 3) continue;
+      const a = Math.atan2(y1 - y0, x1 - x0), mx = (x0 + x1) / 2, my = (y0 + y1) / 2, L = arrow;
+      g.fillStyle = color;
       g.beginPath(); g.moveTo(mx + Math.cos(a) * L, my + Math.sin(a) * L);
       g.lineTo(mx + Math.cos(a + 2.5) * L, my + Math.sin(a + 2.5) * L); g.lineTo(mx + Math.cos(a - 2.5) * L, my + Math.sin(a - 2.5) * L);
       g.fill();
     }
-  }
+    // начало пути — кружок
+    g.fillStyle = color; g.beginPath(); g.arc(pts[0][0], pts[0][1], lw * 1.8 * dpr, 0, Math.PI * 2); g.fill();
+  };
+  if (all) ROUTES.forEach((rt) => drawRoute(rt, rt.color, 1.8, 6 * dpr));
+  else if (route) drawRoute(route, '#f3c35b', 2.6, 8 * dpr);
   // Места
-  const inRoute = new Set(route ? route.pts.filter((p) => typeof p === 'string') : []);
+  const inRoute = new Set((all ? ROUTES : route ? [route] : []).flatMap((rt) => rt.pts.filter((p) => typeof p === 'string')));
   const labels = [];
   st.hits = [];
   const fs = Math.round(13 * dpr * Math.min(1.35, 1 + Math.log2(cam.z) * 0.07));
@@ -3097,9 +3170,10 @@ function camToPlace(id, W, H) {
   return clampCam({ lon: p.lon, lat: p.lat, z: inIsrael ? base.z * 1.6 : Math.max(base.z, 4) });
 }
 function camToRoute(route, W, H) {
+  if (!route) return clampCam(camForView('region', W, H));
   const pts = route.pts.map(ptOf);
   const la = pts.map((p) => p[0]), lo = pts.map((p) => p[1]);
-  return clampCam(camForBox([Math.min(...lo) - 0.6, Math.min(...la) - 0.6, Math.max(...lo) + 0.6, Math.max(...la) + 0.6], W, H, 1.08));
+  return clampCam(camForBox([Math.min(...lo) - 0.6, Math.min(...la) - 0.6, Math.max(...lo) + 0.6, Math.max(...la) + 0.6], W, H, 1.25));
 }
 
 async function openMap(opts = {}) {
@@ -3124,9 +3198,14 @@ function renderMapPanel() {
   }
   const sel = el2('select'); sel.id = 'mapRoute';
   sel.append(Object.assign(document.createElement('option'), { value: '', textContent: L.mapNoRoute }));
-  for (const r of ROUTES) sel.append(Object.assign(document.createElement('option'), { value: r.id, textContent: r[LANG] || r.ru }));
+  sel.append(Object.assign(document.createElement('option'), { value: 'all', textContent: `★ ${L.mapAllRoutes} (${ROUTES.length})` }));
+  for (const [era, nm] of Object.entries(ROUTE_ERAS)) {
+    const og = document.createElement('optgroup'); og.label = nm[LANG] || nm.ru;
+    for (const r of ROUTES.filter((x) => x.era === era)) og.append(Object.assign(document.createElement('option'), { value: r.id, textContent: r[LANG] || r.ru }));
+    sel.append(og);
+  }
   sel.value = mapState.route || '';
-  sel.addEventListener('change', () => { mapState.route = sel.value || null; if (mapState.route) { mapState.view = 'region'; mapState.routeFit = true; } renderMapPanel(); });
+  sel.addEventListener('change', () => { mapState.route = sel.value || null; mapState.place = null; if (mapState.route) { mapState.view = 'region'; mapState.routeFit = true; } renderMapPanel(); });
   bar.append(sel);
   box.append(bar);
   const wrap = el2('div', 'map-wrap');
@@ -3217,12 +3296,42 @@ function renderMapPanel() {
   zout.addEventListener('click', () => zoomAt(cv.width / 2, cv.height / 2, mapState.cam.z / 1.6));
   zfit.addEventListener('click', () => { mapState.view = 'region'; mapState.cam = null; renderMapPanel(); });
   const route = mapState.route && ROUTES.find((r) => r.id === mapState.route);
+  const routeBox = el2('div', 'map-route');
   if (route) {
     const r = fromRef(route.ref);
     const go2 = el2('button', 'btn primary', `${L.mapReadRoute} ${r ? refOf(r.bi, r.ci, r.vi) : ''}`);
     go2.type = 'button'; go2.addEventListener('click', () => { closeMap(); if (r) jumpTo(r); });
     bar.append(go2);
+    // Описание пути и его остановки
+    routeBox.append(el2('h3', '', route[LANG] || route.ru), el2('p', 'route-d', LANG === 'ro' ? route.dro : route.dru));
+    const stops = el2('div', 'chips');
+    const seen = new Set();
+    route.pts.filter((p) => typeof p === 'string').forEach((id, i, arr) => {
+      if (seen.has(id) && i !== arr.length - 1) return;
+      seen.add(id);
+      const c = el2('button', 'chip', `${stops.childNodes.length ? '→ ' : ''}${placeName(id)}`); c.type = 'button';
+      c.addEventListener('click', () => { mapState.place = id; mapState.cam = camToPlace(id, cv.width, cv.height); drawMap(cv, mapState); renderPlaceInfo(info); });
+      stops.append(c);
+    });
+    routeBox.append(stops, el2('p', 'muted small', L.mapApprox));
+  } else if (mapState.route === 'all') {
+    // Все пути: цветная легенда, нажатие выбирает путь
+    routeBox.append(el2('h3', '', `${L.mapAllRoutes} · ${ROUTES.length}`));
+    for (const [era, nm] of Object.entries(ROUTE_ERAS)) {
+      routeBox.append(el2('div', 'route-era', nm[LANG] || nm.ru));
+      const row = el2('div', 'route-legend');
+      for (const rt of ROUTES.filter((x) => x.era === era)) {
+        const b = el2('button', 'route-key'); b.type = 'button';
+        const dot = el2('span', 'dot'); dot.style.background = rt.color;
+        b.append(dot, document.createTextNode(rt[LANG] || rt.ru));
+        b.addEventListener('click', () => { mapState.route = rt.id; mapState.routeFit = true; renderMapPanel(); });
+        row.append(b);
+      }
+      routeBox.append(row);
+    }
+    routeBox.append(el2('p', 'muted small', L.mapApprox));
   }
+  if (routeBox.childNodes.length) box.insertBefore(routeBox, info);
   if (mapState.place) renderPlaceInfo(info); else info.append(el2('p', 'muted small', L.mapHint));
 }
 function renderPlaceInfo(info) {
@@ -3262,7 +3371,7 @@ function buildVrMap() {
   plane.renderOrder = 34;
   plane.position.set(0, H / 2, 0);
   grp.add(plane);
-  const idx = mapState.route ? ROUTES.findIndex((r) => r.id === mapState.route) : -1;
+  const idx = mapState.route && mapState.route !== 'all' ? ROUTES.findIndex((r) => r.id === mapState.route) : -1;
   const nextRoute = ROUTES[(idx + 1) % ROUTES.length];
   const acts = [
     [`⇄ ${nextRoute[LANG] || nextRoute.ru}`, () => { mapState.route = nextRoute.id; mapState.view = 'region'; mapState.cam = camToRoute(nextRoute, 1600, 1000); buildVrMap(); }],
@@ -3901,7 +4010,8 @@ function figureRegex(f) {
 function figuresIn(bi, text) {
   if (!FIGURES) return [];
   const code = BOOKS[bi].code;
-  return FIGURES.figures.filter((f) => (!f.books || f.books.includes(code)) && figureRegex(f) && figureRegex(f).test(text));
+  const t = noAcc(text);
+  return FIGURES.figures.filter((f) => (!f.books || f.books.includes(code)) && figureRegex(f) && figureRegex(f).test(t));
 }
 const chapterFigCache = {};
 function figuresInChapter(bi, ci) {
@@ -3913,7 +4023,7 @@ function showFigure(f) {
   const L = T();
   const re = figureRegex(f);
   const res = [];
-  if (re) BOOKS.forEach((b) => { if (f.books && !f.books.includes(b.code)) return; b.chapters.forEach((c, ci) => c.forEach((v, vi) => { if (res.length < 300 && re.test(v)) res.push({ bi: b.i, ci, vi }); })); });
+  if (re) BOOKS.forEach((b) => { if (f.books && !f.books.includes(b.code)) return; b.chapters.forEach((c, ci) => c.forEach((v, vi) => { if (res.length < 300 && re.test(noAcc(v))) res.push({ bi: b.i, ci, vi }); })); });
   const name = LANG === 'ro' ? f.ro : f.ru;
   openList('person', name, `${LANG === 'ro' ? f.bio_ro : f.bio_ru} ${L.mentions(res.length)}`, res.slice(0, 150));
 }
@@ -3928,7 +4038,7 @@ function termsIn(text) {
       const st = (LANG === 'ro' ? t.re_ro : t.re_ru) || [];
       try { termRe[k] = st.length ? new RegExp(`(?:^|[^\\p{L}])(?:${st.join('|')})`, 'iu') : null; } catch { termRe[k] = null; }
     }
-    return termRe[k] && termRe[k].test(text);
+    return termRe[k] && termRe[k].test(noAcc(text));
   }).slice(0, 6);
 }
 
@@ -3958,7 +4068,7 @@ function measuresIn(text) {
   return MEASURES.filter((m, i) => {
     const k = i + LANG;
     if (!measRe[k]) measRe[k] = new RegExp(`(?:^|[^\\p{L}])(?:${LANG === 'ro' ? m.re_ro : m.re_ru})`, 'iu');
-    return measRe[k].test(text);
+    return measRe[k].test(noAcc(text));
   }).map((m) => pick2(m));
 }
 
@@ -5333,7 +5443,7 @@ window.__androidBack = () => {
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
   get look() { return look; }, pickAt(x, y) { const v = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); raycaster.setFromCamera(v, camera); const h = pick(raycaster.ray.clone()); return h && { type: h.type, vi: h.vi, bi: h.bi, ci: h.ci }; }, get busy() { return busy; },
-  get mapState() { return mapState; }, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  get mapState() { return mapState; }, ROUTES, PLACE, fromRef, setLang, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
   buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },
