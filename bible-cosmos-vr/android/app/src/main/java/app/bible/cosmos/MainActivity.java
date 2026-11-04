@@ -10,7 +10,9 @@ import android.os.Build;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.provider.DocumentsContract;
 import android.provider.Settings;
+import android.database.Cursor;
 import android.webkit.RenderProcessGoneDetail;
 import android.view.ViewGroup;
 import android.speech.tts.TextToSpeech;
@@ -38,6 +40,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -48,6 +51,8 @@ import java.util.Set;
  */
 public class MainActivity extends Activity {
     private static final int FILE_REQUEST = 42;
+    /** Выбор папки с аудиозаписями глав (все MP3 из неё и вложенных папок). */
+    private static final int FOLDER_REQUEST = 43;
     private static final String START_URL = "https://appassets.androidplatform.net/assets/index.html";
 
     private WebView web;
@@ -63,8 +68,11 @@ public class MainActivity extends Activity {
     private TtsBridge ttsBridge;
     private ShareBridge shareBridge;
 
+    /** Звучит запись главы (Аудио-Библия) — тоже продолжается в фоне. */
+    private volatile boolean audioActive = false;
+
     private boolean speechActive() {
-        return listActive || soloActive || (tts != null && tts.isSpeaking());
+        return listActive || soloActive || audioActive || (tts != null && tts.isSpeaking());
     }
 
     private void endSpeechSession() {
@@ -82,6 +90,7 @@ public class MainActivity extends Activity {
         if (a == null) return;
         a.runOnUiThread(() -> {
             if (a.tts != null) a.tts.stop();
+            a.audioActive = false;
             a.endSpeechSession();
             if (a.web != null) a.web.evaluateJavascript("window.__ttsStopped && window.__ttsStopped()", null);
         });
@@ -153,6 +162,15 @@ public class MainActivity extends Activity {
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
+                // «Выбрать папку с записями»: системный выбор папки, программа получает все MP3 из неё сразу.
+                if (Arrays.asList(params.getAcceptTypes()).contains("application/x-bible-audio-folder")) {
+                    try {
+                        startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), FOLDER_REQUEST);
+                        return true;
+                    } catch (Exception e) {
+                        // нет выбора папки — обычный выбор файлов ниже
+                    }
+                }
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("*/*");
@@ -360,6 +378,22 @@ public class MainActivity extends Activity {
 
         private String stopLabel = "Stop";
 
+        /** Запись главы (Аудио-Библия) начала или закончила звучать. */
+        @JavascriptInterface
+        public void audioSession(boolean playing, String title, String stop) {
+            audioActive = playing;
+            if (stop != null && !stop.isEmpty()) stopLabel = stop;
+            if (playing) {
+                final String t = title == null || title.isEmpty() ? getString(R.string.app_name) : title;
+                runOnUiThread(() -> {
+                    askNotificationPermission();
+                    ReadingService.start(MainActivity.this, t, stopLabel);
+                });
+            } else if (!listActive && !soloActive) {
+                runOnUiThread(() -> ReadingService.stop(MainActivity.this));
+            }
+        }
+
         @JavascriptInterface
         public void setStopLabel(String label) {
             if (label != null && !label.isEmpty()) stopLabel = label;
@@ -459,6 +493,18 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FOLDER_REQUEST && fileCallback != null) {
+            Uri[] found = null;
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                Uri tree = data.getData();
+                List<Uri> out = new ArrayList<>();
+                collectMp3(tree, DocumentsContract.getTreeDocumentId(tree), out, 0);
+                found = out.toArray(new Uri[0]);
+            }
+            fileCallback.onReceiveValue(found);
+            fileCallback = null;
+            return;
+        }
         if (requestCode != FILE_REQUEST || fileCallback == null) return;
         Uri[] result = null;
         if (resultCode == RESULT_OK && data != null) {
@@ -472,6 +518,25 @@ public class MainActivity extends Activity {
         }
         fileCallback.onReceiveValue(result);
         fileCallback = null;
+    }
+
+    /** Все файлы .mp3 в папке и во вложенных папках (до трёх уровней). */
+    private void collectMp3(Uri tree, String docId, List<Uri> out, int depth) {
+        Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, docId);
+        String[] cols = { DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_MIME_TYPE };
+        try (Cursor c = getContentResolver().query(children, cols, null, null, null)) {
+            if (c == null) return;
+            while (c.moveToNext()) {
+                String id = c.getString(0), name = c.getString(1), mime = c.getString(2);
+                if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
+                    if (depth < 3) collectMp3(tree, id, out, depth + 1);
+                } else if (name != null && name.toLowerCase(Locale.ROOT).endsWith(".mp3")) {
+                    out.add(DocumentsContract.buildDocumentUriUsingTree(tree, id));
+                }
+            }
+        } catch (Exception ignored) {
+            // папка недоступна — пропускаем
+        }
     }
 
     @Override

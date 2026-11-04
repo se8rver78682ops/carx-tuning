@@ -146,6 +146,15 @@ const I18N = {
     prophAlso: 'Смотрите также', prophHistory: 'подтверждено историей', prophBack: '◀ К пророчествам', prophSkyNote: 'Дуги на небе ведут от пророчества к его исполнению.',
     neuralFail: 'Нейросетевой голос не запустился — читаю голосом системы.',
     ttsSilent: (why, n) => (n ? `Голос системы не отвечает (${why}).` : 'На этом устройстве не найден ни один голос для чтения.') + (location.protocol === 'app:' ? ' В Windows: Параметры → Время и язык → Речь → «Добавить голоса» → Русский, затем перезапустите программу.' : ' Проверьте звук и голоса в настройках системы или откройте программу в браузере Microsoft Edge.'),
+    audioTitle: 'Аудио-Библия', audioPickFolder: '📁 Выбрать папку с записями', audioPickFiles: 'Выбрать файлы',
+    audioStatus: (h, t) => (h ? `Записей глав на этом устройстве: ${h} из ${t}. Кнопка «Слушать» включает живой голос чтеца, подсветка идёт за ним.` : 'Загрузите записи глав (файлы MP3 «Перевода нового мира», например nwt_01_Ge_U_01.mp3) — тогда «Слушать» будет включать живой голос чтеца.'),
+    audioUse: 'Слушать записи, когда они есть', audioMissing: (n) => `Без записи: ${n} глав`, audioWhole: 'вся книга',
+    audioDelete: 'Удалить записи с устройства', audioDeleteQ: 'Удалить все записи с этого устройства? Сами файлы в папке останутся.',
+    audioNote: 'Записи хранятся только на этом устройстве. Где записи нет, читает голос устройства.',
+    audioNone: 'Не найдено файлов записей. Нужны MP3 с именами вида nwt_01_Ge_U_01.mp3.',
+    audioSaving: (d, n) => `Сохраняю записи: ${d} из ${n}…`,
+    audioSaved: (n, l, sk) => `Готово: сохранено записей — ${n} (${l}).${sk ? ` Пропущено других файлов: ${sk}.` : ''}`,
+    audioAligning: 'Ищу начало стиха в записи…', audioFull: 'Не хватает места на устройстве для всех записей.',
     welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
     showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
@@ -267,6 +276,15 @@ const I18N = {
     prophAlso: 'Vedeți și', prophHistory: 'confirmată de istorie', prophBack: '◀ La profeții', prophSkyNote: 'Arcele de pe cer duc de la profeție la împlinirea ei.',
     neuralFail: 'Vocea neuronală nu a pornit — citesc cu vocea sistemului.',
     ttsSilent: (why, n) => (n ? `Vocea sistemului nu răspunde (${why}).` : 'Pe acest dispozitiv nu s-a găsit nicio voce pentru citire.') + (location.protocol === 'app:' ? ' În Windows: Setări → Oră și limbă → Vorbire → „Adăugați voci” → Română, apoi reporniți programul.' : ' Verificați sunetul și vocile în setările sistemului sau deschideți programul în Microsoft Edge.'),
+    audioTitle: 'Biblia audio', audioPickFolder: '📁 Alegeți dosarul cu înregistrări', audioPickFiles: 'Alegeți fișiere',
+    audioStatus: (h, t) => (h ? `Înregistrări de capitole pe acest dispozitiv: ${h} din ${t}. Butonul „Ascultă” pornește vocea cititorului, iar evidențierea o urmează.` : 'Încărcați înregistrările capitolelor (fișiere MP3 ale „Traducerii lumii noi”, de exemplu nwt_01_Ge_M_01.mp3) — atunci „Ascultă” va porni vocea cititorului.'),
+    audioUse: 'Ascultă înregistrările, când există', audioMissing: (n) => `Fără înregistrare: ${n} capitole`, audioWhole: 'toată cartea',
+    audioDelete: 'Șterge înregistrările de pe dispozitiv', audioDeleteQ: 'Ștergeți toate înregistrările de pe acest dispozitiv? Fișierele din dosar rămân.',
+    audioNote: 'Înregistrările se păstrează doar pe acest dispozitiv. Unde nu există înregistrare, citește vocea dispozitivului.',
+    audioNone: 'Nu s-au găsit înregistrări. Sunt necesare fișiere MP3 cu nume ca nwt_01_Ge_M_01.mp3.',
+    audioSaving: (d, n) => `Salvez înregistrările: ${d} din ${n}…`,
+    audioSaved: (n, l, sk) => `Gata: înregistrări salvate — ${n} (${l}).${sk ? ` Alte fișiere omise: ${sk}.` : ''}`,
+    audioAligning: 'Caut începutul versetului în înregistrare…', audioFull: 'Nu este destul spațiu pe dispozitiv pentru toate înregistrările.',
     welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
     showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
@@ -311,7 +329,7 @@ const $ = (id) => document.getElementById(id);
 const ui = {
   stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
   loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
-  q: $('q'), prophPanel: $('prophPanel'), prophBtn: $('prophBtn'), reader: $('reader'), readerBtn: $('readerBtn'), lessonsBtn: $('lessonsBtn'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
+  q: $('q'), audioBtn: $('audioBtn'), audioDir: $('audioDir'), audioFiles: $('audioFiles'), prophPanel: $('prophPanel'), prophBtn: $('prophBtn'), reader: $('reader'), readerBtn: $('readerBtn'), lessonsBtn: $('lessonsBtn'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
   legendToggle: $('legendToggle'), home: $('home'), chapterInfo: $('chapterInfo'), parallelPanel: $('parallelPanel'), trailBtn: $('trailBtn'), notesBtn: $('notesBtn'), mapBtn: $('mapBtn'), eventsBtn: $('eventsBtn'), planBtn: $('planBtn'), musicBtn: $('musicBtn'), mapPanel: $('mapPanel'), quiet: $('quietBtn'), quietExit: $('quietExit'), welcome: $('welcome'), welcomeBtn: $('welcomeBtn'), listPanel: $('listPanel'), votd: $('votd'), continueBtn: $('continueBtn'), settingsPanel: $('settingsPanel'), bmBtn: $('bmBtn'), topicsBtn: $('topicsBtn'), votdBtn: $('votdBtn'), settingsBtn: $('settingsBtn'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
 };
 
@@ -1484,6 +1502,8 @@ async function readFrom(vi, at) {
   const r = { bi, ci, vi };
   tts.reading = r;
   hideToast();
+  // Есть запись этой главы — звучит живой голос чтеца, подсветка идёт по времени записи.
+  if (hasAudio(bi, ci)) { stopAudio(true); audioReadFrom(vi, bi, ci); updateListenButton(); return; }
   startMediaSession();
   if (nativeQueue()) {
     const token = ++tts.token;
@@ -1530,6 +1550,7 @@ function stopReading() {
   tts.token++;
   if (hasTts) speechSynthesis.cancel();
   if (window.AndroidTTS) window.AndroidTTS.stop();
+  stopAudio();
   endMediaSession();
   readFrame.visible = false;
   if (was) updateListenButton();
@@ -4162,6 +4183,257 @@ function listenProph(group, i, chain) {
   if (!ok) narration.on = false;
 }
 
+/* ---------- Аудио-Библия: записи глав с устройства пользователя ---------- */
+// Файлы вида nwt_01_Ge_U_01.mp3 (книга 01, язык U — русский, M — румынский, глава 01).
+// Записи хранятся только на этом устройстве (отдельная база IndexedDB), в программу не встраиваются.
+const AUDIO_LANGS = { U: 'ru', M: 'ro' };
+const ALIGN_VERSION = 1;
+const adb = {
+  dbp: null,
+  open() {
+    this.dbp = this.dbp || new Promise((res, rej) => {
+      const r = indexedDB.open('bible-audio', 1);
+      r.onupgradeneeded = () => { const db = r.result; db.createObjectStore('files'); db.createObjectStore('times'); };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    return this.dbp;
+  },
+  async req(store, mode, fn) {
+    try {
+      const db = await this.open();
+      return await new Promise((res) => {
+        const tx = db.transaction(store, mode);
+        const q = fn(tx.objectStore(store));
+        q.onsuccess = () => res(q.result ?? null);
+        q.onerror = () => res(null);
+      });
+    } catch { return null; }
+  },
+  get(store, k) { return this.req(store, 'readonly', (s) => s.get(k)); },
+  set(store, k, v) { return this.req(store, 'readwrite', (s) => s.put(v, k)); },
+  keys(store) { return this.req(store, 'readonly', (s) => s.getAllKeys()); },
+  clear(store) { return this.req(store, 'readwrite', (s) => s.clear()); },
+};
+const audioIndex = { ru: new Set(), ro: new Set() };
+const audioKey = (lang, bookNum, ch) => `${lang}:${bookNum}:${ch}`;
+async function loadAudioIndex() {
+  const keys = (await adb.keys('files')) || [];
+  audioIndex.ru = new Set(); audioIndex.ro = new Set();
+  for (const k of keys) { const [l, b, c] = String(k).split(':'); if (audioIndex[l]) audioIndex[l].add(`${b}:${c}`); }
+}
+// Номер книги 1–66 по коду книги (Gen → 1 … Rev → 66)
+const bookNumOf = (bi) => (BOOKS[bi] && BOOKS[bi].code ? CODE_NUM[BOOKS[bi].code] : null);
+function hasAudio(bi, ci) {
+  const n = bookNumOf(bi);
+  return !!n && settings.useAudio !== false && audioIndex[LANG] && audioIndex[LANG].has(`${n}:${ci + 1}`);
+}
+function parseAudioName(name) {
+  const m = String(name).match(/nwt_(\d{1,2})_[^_\/\\]+_([A-Z]{1,3})(?:_(\d{1,3}))?\.mp3$/i);
+  if (!m) return null;
+  const lang = AUDIO_LANGS[m[2].toUpperCase()];
+  const book = +m[1], ch = m[3] ? +m[3] : 1;
+  if (!lang || book < 1 || book > 66 || ch < 1) return null;
+  return { lang, book, ch };
+}
+async function importAudio(files) {
+  const L = T();
+  const list = [...files].map((f) => ({ f, p: parseAudioName(f.name) })).filter((x) => x.p);
+  const skipped = files.length - list.length;
+  if (!list.length) { toast(L.audioNone, 9000); return; }
+  let done = 0, failed = 0;
+  for (const { f, p } of list) {
+    const ok = await adb.set('files', audioKey(p.lang, p.book, p.ch), f);
+    if (ok === null && ++failed >= 3) { toast(L.audioFull, 12000); break; }
+    done++;
+    if (done % 20 === 0 || done === list.length) toast(L.audioSaving(done, list.length), 4000);
+  }
+  await loadAudioIndex();
+  const langs = [...new Set(list.map((x) => x.p.lang))];
+  toast(L.audioSaved(list.length, langs.map((l) => l.toUpperCase()).join(', '), skipped), 10000);
+  if (ui.listPanel.dataset.kind === 'audio') showAudioPanel();
+  if (state.mode === 'chapter') updateListenButton();
+}
+
+// Панель «Аудио-Библия»: сколько записей, какие главы без записи, загрузка и удаление
+function missingChapters(lang) {
+  const set = audioIndex[lang], out = [];
+  BOOKS.forEach((b, bi) => {
+    const n = bookNumOf(bi); if (!n) return;
+    const miss = [];
+    b.chapters.forEach((_, ci) => { if (!set.has(`${n}:${ci + 1}`)) miss.push(ci + 1); });
+    if (miss.length) out.push({ bi, miss, all: miss.length === b.chapters.length });
+  });
+  return out;
+}
+function showAudioPanel() {
+  const L = T();
+  const total = BOOKS.reduce((a, b) => a + b.chapters.length, 0);
+  const have = audioIndex[LANG].size;
+  const box = el2('div', 'audio-box');
+  box.append(el2('p', 'lesson-text', L.audioStatus(have, total)));
+  const acts = el2('div', 'actions wrap');
+  const dirBtn = el2('button', 'btn primary', L.audioPickFolder); dirBtn.type = 'button';
+  dirBtn.addEventListener('click', () => { ui.audioDir.value = ''; ui.audioDir.click(); });
+  const fBtn = el2('button', 'btn', L.audioPickFiles); fBtn.type = 'button';
+  fBtn.addEventListener('click', () => { ui.audioFiles.value = ''; ui.audioFiles.click(); });
+  acts.append(dirBtn, fBtn);
+  box.append(acts);
+  const useRow = el2('label', 'set-row');
+  const use = el2('input'); use.type = 'checkbox'; use.checked = settings.useAudio !== false;
+  use.addEventListener('change', () => { settings.useAudio = use.checked; saveSettings(); updateListenButton(); });
+  useRow.append(use, el2('span', '', L.audioUse));
+  box.append(useRow);
+  if (have) {
+    const miss = missingChapters(LANG);
+    if (miss.length) {
+      box.append(el2('h3', '', L.audioMissing(total - have)));
+      const p = el2('p', 'muted small');
+      p.textContent = miss.map((m) => `${BOOKS[m.bi].short} ${m.all ? L.audioWhole : m.miss.join(', ')}`).join('; ');
+      box.append(p);
+    }
+    const del = el2('button', 'btn danger', L.audioDelete); del.type = 'button';
+    del.addEventListener('click', async () => {
+      if (!confirm(L.audioDeleteQ)) return;
+      stopReading(); await adb.clear('files'); await adb.clear('times'); await loadAudioIndex(); showAudioPanel();
+    });
+    box.append(el2('div', 'actions'));
+    box.lastChild.append(del);
+  }
+  box.append(el2('p', 'muted small', L.audioNote));
+  openList('audio', L.audioTitle, '', [], box);
+}
+
+// Поиск начала каждого стиха в записи: паузы чтеца + длина стихов (стихи читаются примерно с одной скоростью).
+async function decodeMono(blob) {
+  const SR = 8000;
+  const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const ctx = new Ctx(1, SR, SR);
+  const ab = await ctx.decodeAudioData(await blob.arrayBuffer());
+  return { data: ab.getChannelData(0), sr: ab.sampleRate };
+}
+function alignVerses(data, sr, items) {
+  const FR = Math.round(sr * 0.02), db = [];
+  for (let i = 0; i + FR <= data.length; i += FR) {
+    let s = 0;
+    for (let j = i; j < i + FR; j++) s += data[j] * data[j];
+    db.push(10 * Math.log10(s / FR + 1e-10));
+  }
+  const srt = [...db].sort((a, b) => a - b);
+  const lo = srt[Math.floor(srt.length * 0.1)], hi = srt[Math.floor(srt.length * 0.9)];
+  const th = lo + (hi - lo) * 0.3;
+  const sil = [];
+  let st = -1;
+  for (let i = 0; i <= db.length; i++) {
+    const quiet = i < db.length && db[i] < th;
+    if (quiet && st < 0) st = i;
+    if (!quiet && st >= 0) { const L = (i - st) * 0.02; if (L >= 0.2) sil.push([((st + i) / 2) * 0.02, L]); st = -1; }
+  }
+  let a0 = db.findIndex((d) => d >= th); if (a0 < 0) a0 = 0;
+  let a1 = db.length - 1; while (a1 > 0 && db[a1] < th) a1--;
+  const s0 = a0 * 0.02, s1 = (a1 + 1) * 0.02, span = Math.max(1, s1 - s0);
+  const w = items.map((t) => t.length + 12), sumW = w.reduce((a, b) => a + b, 0), rate = sumW / span;
+  const pts = [s0], plen = [0];
+  for (const [t, L] of sil) if (t > s0 + 0.5 && t < s1 - 0.5) { pts.push(t); plen.push(L); }
+  pts.push(s1); plen.push(0);
+  const P = pts.length, M = items.length, INF = 1e18;
+  let prev = new Float64Array(P).fill(INF); prev[0] = 0;
+  const back = [];
+  for (let k = 1; k <= M; k++) {
+    const e = w[k - 1] / rate, cur = new Float64Array(P).fill(INF), bk = new Int32Array(P).fill(-1);
+    for (let c = 1; c < P; c++) {
+      for (let c2 = c - 1; c2 >= 0; c2--) {
+        const dur = pts[c] - pts[c2];
+        if (dur > e * 3 + 4) break;
+        if (prev[c2] >= INF) continue;
+        const v = prev[c2] + ((dur - e) / (0.22 * e + 0.8)) ** 2 - 1.2 * Math.min(plen[c], 1.6);
+        if (v < cur[c]) { cur[c] = v; bk[c] = c2; }
+      }
+    }
+    back.push(bk); prev = cur;
+  }
+  if (prev[P - 1] >= INF) {
+    // запасной вариант: по длине стихов
+    const out = []; let acc = 0;
+    for (let k = 0; k < M; k++) { out.push(s0 + (span * acc) / sumW); acc += w[k]; }
+    return out;
+  }
+  const path = [P - 1];
+  let c = P - 1;
+  for (let k = M - 1; k >= 0; k--) { c = back[k][c]; path.push(c); }
+  path.reverse();
+  return path.slice(0, M).map((i) => pts[i]); // начало каждого элемента (заголовок, стих 1, стих 2, …)
+}
+async function chapterTimes(bi, ci, blob) {
+  const key = audioKey(LANG, bookNumOf(bi), ci + 1);
+  const cached = await adb.get('times', key);
+  const n = BOOKS[bi].chapters[ci].length;
+  if (cached && cached.v === ALIGN_VERSION && cached.t.length === n + 1) return cached.t;
+  let t;
+  try {
+    const { data, sr } = await decodeMono(blob);
+    const items = [plain(chapterHeading(bi, ci)), ...BOOKS[bi].chapters[ci].map((v) => plain(v))];
+    t = alignVerses(data, sr, items);
+  } catch (err) {
+    console.warn('align', err);
+    t = null;
+  }
+  if (t) await adb.set('times', key, { v: ALIGN_VERSION, t });
+  return t;
+}
+
+// Воспроизведение записи главы с нужного стиха; подсветка идёт за временем записи.
+const aplayer = { el: null, url: '', token: 0, times: null, bi: -1, ci: -1, vi: -1 };
+function audioEl() {
+  if (!aplayer.el) {
+    aplayer.el = new Audio();
+    aplayer.el.preload = 'auto';
+    aplayer.el.addEventListener('timeupdate', () => {
+      const t = aplayer.times, a = aplayer.el;
+      if (!t || !tts.reading || tts.reading.bi !== aplayer.bi || tts.reading.ci !== aplayer.ci) return;
+      let v = 0;
+      for (let i = 1; i < t.length; i++) if (a.currentTime + 0.15 >= t[i]) v = i - 1;
+      if (v !== aplayer.vi) { aplayer.vi = v; showReadingVerse(v); }
+    });
+  }
+  return aplayer.el;
+}
+async function audioReadFrom(vi, bi, ci) {
+  const my = ++aplayer.token;
+  const blob = await adb.get('files', audioKey(LANG, bookNumOf(bi), ci + 1));
+  if (my !== aplayer.token || !tts.reading) return;
+  if (!blob) { audioIndex[LANG].delete(`${bookNumOf(bi)}:${ci + 1}`); readFrom(vi, { bi, ci }); return; }
+  const a = audioEl();
+  if (aplayer.url) URL.revokeObjectURL(aplayer.url);
+  aplayer.url = URL.createObjectURL(blob);
+  a.src = aplayer.url;
+  aplayer.bi = bi; aplayer.ci = ci; aplayer.vi = -1;
+  aplayer.times = null;
+  a.playbackRate = Math.max(0.6, Math.min(1.6, (settings.rate || 0.92) / 0.92));
+  if (window.AndroidTTS && window.AndroidTTS.audioSession) window.AndroidTTS.audioSession(true, `${BOOKS[bi].name} ${ci + 1}`, T().stopReading);
+  a.onended = () => { if (my === aplayer.token && tts.reading) chapterDone(bi, ci); };
+  if (vi > 0) {
+    if (!aplayer.timesNote) { aplayer.timesNote = true; toast(T().audioAligning, 4000); }
+    aplayer.times = await chapterTimes(bi, ci, blob);
+    if (my !== aplayer.token || !tts.reading) return;
+    if (aplayer.times) a.currentTime = aplayer.times[vi + 1];
+  }
+  try { await a.play(); } catch (err) { console.warn('audio', err); }
+  showReadingVerse(vi);
+  if (!aplayer.times) chapterTimes(bi, ci, blob).then((t) => { if (my === aplayer.token) aplayer.times = t; });
+}
+// keepSession: при переходе к следующей главе служба «Чтение вслух» в APK не гасится (из фона её не запустить заново)
+function stopAudio(keepSession) {
+  aplayer.token++;
+  if (aplayer.el) { aplayer.el.pause(); aplayer.el.onended = null; }
+  if (!keepSession && window.AndroidTTS && window.AndroidTTS.audioSession) window.AndroidTTS.audioSession(false, '', '');
+}
+// Выбор папки или файлов
+ui.audioDir.addEventListener('change', () => importAudio(ui.audioDir.files));
+ui.audioFiles.addEventListener('change', () => importAudio(ui.audioFiles.files));
+ui.audioBtn.addEventListener('click', () => { loadAudioIndex().then(showAudioPanel); });
+loadAudioIndex();
+
 /* Пункты меню */
 ui.lessonsBtn.addEventListener('click', showLessons);
 ui.prophBtn.addEventListener('click', () => openProphecies());
@@ -5643,7 +5915,7 @@ window.__androidBack = () => {
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
   get look() { return look; }, pickAt(x, y) { const v = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); raycaster.setFromCamera(v, camera); const h = pick(raycaster.ray.clone()); return h && { type: h.type, vi: h.vi, bi: h.bi, ci: h.ci }; }, get busy() { return busy; },
-  get mapState() { return mapState; }, ROUTES, PLACE, fromRef, setLang, openProphecies, get PROPH() { return PROPH; }, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  get mapState() { return mapState; }, ROUTES, PLACE, fromRef, setLang, openProphecies, aplayer, chapterTimes, hasAudio, get audioIndex() { return audioIndex; }, showAudioPanel, get PROPH() { return PROPH; }, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
   buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },

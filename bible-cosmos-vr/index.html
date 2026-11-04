@@ -396,6 +396,8 @@
   .r-dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font: calc(var(--rpx, 21px) * 0.75)/1.45 var(--font-ui); }
   .r-dl dt { color: var(--dim); } .r-dl dd { margin: 0; color: var(--ink); }
 
+  #listPanel .audio-box { display: grid; gap: 10px; }
+  #listPanel .audio-box .set-row { display: flex; gap: 10px; align-items: center; font: 15px var(--font-ui); }
   #listPanel .lesson-text { font: 17px/1.55 var(--font-text); color: #f6e7c1; margin: 4px 0 10px; }
   #listPanel .lesson-main { font: italic 15px/1.5 var(--font-text); color: var(--dim); margin: 10px 0 0; }
   @media (max-width: 760px) {
@@ -458,6 +460,7 @@
         <button id="mapBtn" class="btn" type="button" data-i18n="map">Карта</button>
         <button id="trailBtn" class="btn" type="button" data-i18n="trail">Мой путь по связям</button>
         <button id="eventsBtn" class="btn" type="button" data-i18n="events">События</button>
+        <button id="audioBtn" class="btn" type="button" data-i18n="audioTitle">Аудио-Библия</button>
         <button id="prophBtn" class="btn" type="button" data-i18n="prophecies">Пророчества</button>
         <button id="lessonsBtn" class="btn" type="button" data-i18n="lessons">Уроки для жизни</button>
         <button id="topicsBtn" class="btn" type="button" data-i18n="topics">Созвездия тем</button>
@@ -470,6 +473,8 @@
       </div>
     </div>
     <input id="file" type="file" accept=".epub,application/epub+zip,.rtf,.zip,.json" multiple hidden>
+    <input id="audioDir" type="file" accept="audio/mpeg,.mp3,application/x-bible-audio-folder" webkitdirectory multiple hidden>
+    <input id="audioFiles" type="file" accept="audio/mpeg,.mp3" multiple hidden>
     <button id="vr" class="btn primary" type="button" disabled>Проверяем VR…</button>
   </div>
 </header>
