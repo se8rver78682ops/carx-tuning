@@ -52,7 +52,7 @@ const roDe = (n) => (n >= 20 && (n % 100 === 0 || n % 100 >= 20) ? 'de ' : '');
 const I18N = {
   ru: {
     htmlLang: 'ru', speech: 'ru-RU',
-    title: 'Библейский космос',
+    title: 'Библия',
     quote: '«Он знает число звёзд и всех их называет по имени» (Псалом 147:4)',
     galaxy: 'Галактика книг', galaxyShort: 'Галактика',
     chapter: (n) => `Глава ${n}`, psalm: (n) => `Псалом ${n}`,
@@ -90,7 +90,7 @@ const I18N = {
     noTts: 'Этот браузер не умеет читать вслух.',
     noVoice: 'На устройстве нет русского голоса. Его можно добавить в настройках системы, раздел «Речь».',
     xrGalaxy: '← Галактика', xrChapters: '← Главы', xrPrev: '◀ Глава', xrNext: 'Глава ▶', xrListen: '▶ Слушать', xrStop: '■ Стоп', xrRandom: '✦ Случайный стих',
-    introTitle: 'Библейский космос',
+    introTitle: 'Библия',
     intro: ['Каждая звезда — стих. Каждое скопление — книга.', 'Наведите луч на звезду, чтобы прочитать стих.', 'Курок: войти в книгу, затем в главу.', 'В главе курок по стиху открывает его связи.', 'B или Y: назад. Стик: поворот. Кнопки — внизу.'],
     loading: 'Открываем Библию…', lighting: 'Зажигаем звёзды…',
     loadFail: (m) => `Не удалось загрузить Библию: ${m}`, httpFail: (c) => `Файл данных не загрузился (HTTP ${c}).`,
@@ -159,7 +159,7 @@ const I18N = {
   },
   ro: {
     htmlLang: 'ro', speech: 'ro-RO',
-    title: 'Cosmosul biblic',
+    title: 'Biblia',
     quote: '„El socotește numărul stelelor și le dă nume la toate.” (Psalmul 147:4)',
     galaxy: 'Galaxia cărților', galaxyShort: 'Galaxia',
     chapter: (n) => `Capitolul ${n}`, psalm: (n) => `Psalmul ${n}`,
@@ -197,7 +197,7 @@ const I18N = {
     noTts: 'Acest browser nu poate citi cu voce tare.',
     noVoice: 'Pe dispozitiv nu există o voce românească. O puteți adăuga în setările sistemului, la „Vorbire”.',
     xrGalaxy: '← Galaxia', xrChapters: '← Capitole', xrPrev: '◀ Cap.', xrNext: 'Cap. ▶', xrListen: '▶ Ascultă', xrStop: '■ Stop', xrRandom: '✦ Verset aleatoriu',
-    introTitle: 'Cosmosul biblic',
+    introTitle: 'Biblia',
     intro: ['Fiecare stea este un verset. Fiecare roi este o carte.', 'Îndreptați raza spre o stea ca să citiți versetul.', 'Trăgaciul: intrați în carte, apoi în capitol.', 'În capitol, trăgaciul pe un verset arată legăturile.', 'B sau Y: înapoi. Stick: rotire. Butoanele sunt jos.'],
     loading: 'Se deschide Biblia…', lighting: 'Aprindem stelele…',
     loadFail: (m) => `Biblia nu s-a putut încărca: ${m}`, httpFail: (c) => `Fișierul de date nu s-a încărcat (HTTP ${c}).`,
