@@ -137,6 +137,7 @@ const I18N = {
     lessons: 'Уроки для жизни', lessonsNote: 'Библия как инструкция для человека: девять ступеней от замысла до цели. Нажмите на ступень — её стихи загорятся на небе.',
     lessonsListenAll: '▶ Слушать все уроки', lessonListen: '▶ Слушать урок', lessonsAll: '☰ Все уроки',
     lessonsMain: 'Главная мысль: человек счастлив, когда живёт в согласии с тем, как его задумал Создатель. Заповеди описывают этот замысел, истории показывают, что бывает при отступлении от него, а пророчества — что замысел исполнится.',
+    chaptersN: (n) => `Глав: ${n}`, readOf: (r, n) => (r ? `прочитано ${r} из ${n}` : 'ещё не читали'),
     welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
     showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
@@ -251,6 +252,7 @@ const I18N = {
     lessons: 'Lecții pentru viață', lessonsNote: 'Biblia ca manual pentru om: nouă trepte, de la scop până la țintă. Apăsați pe o treaptă — versetele ei se vor aprinde pe cer.',
     lessonsListenAll: '▶ Ascultă toate lecțiile', lessonListen: '▶ Ascultă lecția', lessonsAll: '☰ Toate lecțiile',
     lessonsMain: 'Ideea principală: omul este fericit când trăiește în armonie cu felul în care l-a gândit Creatorul. Poruncile descriu acest plan, istoriile arată ce se întâmplă când ne abatem de la el, iar profețiile — că planul se va împlini.',
+    chaptersN: (n) => `Capitole: ${n}`, readOf: (r, n) => (r ? `citite ${r} din ${n}` : 'încă necitite'),
     welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
     showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
@@ -617,8 +619,8 @@ function buildGalaxy() {
     core.scale.setScalar(r * 1.3);
     g.add(core);
 
-    const lh = THREE.MathUtils.clamp(arc * 0.15, 1.0, 2.2);
-    const label = makeLabel(timeline ? `${b.name} · ${fmtYear(bookYear(b))}` : b.name, { px: 72, weight: 500, color: '#' + base.clone().lerp(white, 0.35).getHexString(), height: lh });
+    const lh = MOBILE ? THREE.MathUtils.clamp(arc * 0.24, 1.5, 3.2) : THREE.MathUtils.clamp(arc * 0.19, 1.2, 2.7);
+    const label = makeLabel(timeline ? `${b.name} · ${fmtYear(bookYear(b))}` : b.name, { px: 96, weight: 600, color: '#' + base.clone().lerp(white, 0.55).getHexString(), height: lh });
     label.position.copy(center).addScaledVector(upFlat, -(r * 0.95 + lh * 0.7));
     g.add(label);
 
@@ -1954,6 +1956,7 @@ addEventListener('resize', placeDetail);
 
 function renderBookPanel() {
   const box = ui.bookInfo;
+  if (readerWanted()) { box.hidden = true; return; }
   const about = state.mode === 'book' && !renderer.xr.isPresenting && box.dataset.closed !== String(state.bi) ? (bookAbout(state.bi) || { rows: [], circ: '', fromEdition: true }) : null;
   if (!about) { box.hidden = true; return; }
   const L = T();
@@ -1973,8 +1976,10 @@ function renderBookPanel() {
   const nar = el2('button', 'btn primary narrate', narration.on ? L.narrateStop : L.narrate);
   nar.type = 'button';
   nar.addEventListener('click', () => toggleNarration(state.bi));
+  const txt = el2('button', 'btn', L.readerText); txt.type = 'button';
+  txt.addEventListener('click', () => { settings.reader = 'text'; saveSettings(); renderReader(true); renderBookPanel(); });
   box.append(el2('div', 'actions'));
-  box.lastChild.append(nar);
+  box.lastChild.append(nar, txt);
   if (!about.fromEdition) box.append(el2('p', 'muted small', L.datesNote));
   box.hidden = false;
   box.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
@@ -3375,7 +3380,7 @@ function exitQuiet() {
 // На телефоне он включён сразу (узкий экран), на компьютере — по кнопке «📖 Текст». Выбор запоминается.
 const reader = { el: null, built: '' };
 function readerWanted() {
-  if (renderer.xr.isPresenting || quiet.on || state.mode !== 'chapter') return false;
+  if (renderer.xr.isPresenting || quiet.on || (state.mode !== 'chapter' && state.mode !== 'book')) return false;
   if (settings.reader === 'text') return true;
   if (settings.reader === 'space') return false;
   return innerWidth < 760;
@@ -3387,6 +3392,7 @@ function renderReader(force) {
   document.body.classList.toggle('reading', on);
   updateReaderBtn();
   if (!on) { box.hidden = true; reader.built = ''; return; }
+  if (state.mode === 'book') { renderBookPage(force); return; }
   const bi = state.bi, ci = state.ci, b = BOOKS[bi], L = T();
   const key = `${LANG}:${bi}:${ci}:${BOOKS.length}`;
   box.hidden = false;
@@ -3458,6 +3464,70 @@ function renderReader(force) {
   box.append(foot);
   box.scrollTop = 0;
   markReaderVerse();
+}
+
+// Книга в режиме чтения: крупное название, справка, рассказ о писателе и большие кнопки глав.
+function renderBookPage(force) {
+  const box = ui.reader, bi = state.bi, b = BOOKS[bi], L = T();
+  const key = `book:${LANG}:${bi}:${BOOKS.length}`;
+  box.hidden = false;
+  box.style.setProperty('--rpx', `${readerSize()}px`);
+  if (reader.built === key && !force) return;
+  reader.built = key;
+  box.replaceChildren();
+  const head = el2('header', 'r-head');
+  head.append(el2('div', 'r-book', gName(b.g).toUpperCase()), el2('h2', 'r-ch', b.name));
+  const tools = el2('div', 'r-tools');
+  const sp = el2('button', 'btn', L.readerSpace); sp.type = 'button';
+  sp.addEventListener('click', () => { settings.reader = 'space'; saveSettings(); renderReader(true); renderBookPanel(); });
+  tools.append(sp);
+  head.append(tools);
+  box.append(head);
+  // Главы
+  const n = b.chapters.length;
+  const read = b.chapters.reduce((a, _, ci) => a + (isRead(bi, ci) ? 1 : 0), 0);
+  box.append(el2('h3', 'r-sec', `${L.chaptersN ? L.chaptersN(n) : n} · ${L.readOf ? L.readOf(read, n) : `${read}/${n}`}`));
+  const withSum = SUMMARIES && b.code && SUMMARIES[b.code];
+  if (withSum) {
+    const list = el2('div', 'r-chlist');
+    b.chapters.forEach((_, ci) => {
+      const btn = el2('button', `r-chrow${isRead(bi, ci) ? ' done' : ''}`); btn.type = 'button';
+      const sum = chapterSummary(bi, ci);
+      btn.append(el2('span', 'num', String(ci + 1)), el2('span', 'txt', sum ? sum.split(/(?<=[.!?])\s/)[0] : ''));
+      btn.addEventListener('click', () => go('chapter', { bi, ci }));
+      list.append(btn);
+    });
+    box.append(list);
+  } else {
+    const grid = el2('div', 'r-grid');
+    b.chapters.forEach((_, ci) => {
+      const btn = el2('button', `r-chbtn${isRead(bi, ci) ? ' done' : ''}`, String(ci + 1)); btn.type = 'button';
+      btn.setAttribute('aria-label', b.code === 'Ps' ? L.psalm(ci + 1) : L.chapter(ci + 1));
+      btn.addEventListener('click', () => go('chapter', { bi, ci }));
+      grid.append(btn);
+    });
+    box.append(grid);
+  }
+  // О книге
+  const about = bookAbout(bi);
+  const info = el2('div', 'r-info');
+  if (about) {
+    info.append(el2('h3', '', L.aboutBook(b.name)));
+    const dl = el2('dl', 'r-dl');
+    for (const [k, v] of about.rows) dl.append(el2('dt', '', k), el2('dd', '', v));
+    info.append(dl);
+    if (about.circ) info.append(el2('p', '', about.circ));
+  }
+  const person = personFor(bi);
+  if (person) {
+    info.append(el2('h3', '', L.whoWas(person.n)), el2('p', '', person.b));
+  }
+  const nar = el2('button', 'btn primary', narration.on ? L.narrateStop : L.narrate); nar.type = 'button';
+  nar.addEventListener('click', () => { toggleNarration(bi); nar.textContent = narration.on ? L.narrateStop : L.narrate; });
+  const acts = el2('div', 'actions'); acts.append(nar);
+  info.append(acts);
+  box.append(info);
+  box.scrollTop = 0;
 }
 // Подсветка выбранного и звучащего стиха; звучащий плавно прокручивается в центр.
 function markReaderVerse() {
@@ -4030,7 +4100,7 @@ const post = (() => {
 })();
 let readerFrame = 0;
 function renderFrame() {
-  if (state.mode === 'chapter' && ui.reader && !ui.reader.hidden && !renderer.xr.isPresenting) {
+  if ((state.mode === 'chapter' || state.mode === 'book') && ui.reader && !ui.reader.hidden && !renderer.xr.isPresenting) {
     if (!renderer.xr.isPresenting && perf.pr < prFloor()) { perf.pr = prFloor(); renderer.setPixelRatio(perf.pr); }
     perf.last = 0; perf.frames.length = 0;
     if ((readerFrame = (readerFrame + 1) % 4) !== 0) return;
@@ -4655,7 +4725,7 @@ function updateChrome() {
   renderChapterInfo();
   renderReader();
   placeReader();
-  if (state.mode === 'book') toast(T().toastBook, 6000, true);
+  if (state.mode === 'book' && !readerWanted()) toast(T().toastBook, 6000, true);
   if (state.mode === 'chapter' && !tts.reading && !readerWanted()) toast(T().toastChapter, 6000, true);
   updateListenButton();
   rebuildPanel();
@@ -5097,7 +5167,7 @@ window.__androidBack = () => {
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
   get look() { return look; }, pickAt(x, y) { const v = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); raycaster.setFromCamera(v, camera); const h = pick(raycaster.ray.clone()); return h && { type: h.type, vi: h.vi, bi: h.bi, ci: h.ci }; }, get busy() { return busy; },
-  tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
   buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },

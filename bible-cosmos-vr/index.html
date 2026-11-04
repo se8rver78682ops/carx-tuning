@@ -339,7 +339,21 @@
   .r-info { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
   .r-info p { margin: 0; font: calc(var(--rpx, 21px) * 0.8)/1.5 var(--font-text); color: var(--ink); }
   .r-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
-  body.reading #chapterInfo, body.reading #info { display: none !important; }
+  body.reading #chapterInfo, body.reading #info, body.reading #bookInfo { display: none !important; }
+  .r-sec { font: 600 12px var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin: 6px 0 12px; }
+  .r-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 8px; }
+  .r-chbtn { height: 54px; border-radius: 10px; border: 1px solid var(--line); background: rgba(20, 26, 50, 0.9); color: #f6e7c1;
+    font: 600 22px var(--font-title); cursor: pointer; }
+  .r-chbtn.done, .r-chrow.done .num { border-color: rgba(243, 195, 91, 0.6); box-shadow: inset 0 -3px 0 rgba(243, 195, 91, 0.7); }
+  .r-chlist { display: grid; gap: 8px; }
+  .r-chrow { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; text-align: left; padding: 8px 10px;
+    border-radius: 10px; border: 1px solid var(--line); background: rgba(20, 26, 50, 0.9); color: var(--ink); cursor: pointer; }
+  .r-chrow .num { display: grid; place-items: center; height: 46px; border-radius: 8px; border: 1px solid var(--line); font: 600 22px var(--font-title); color: #f6e7c1; }
+  .r-chrow .txt { font: calc(var(--rpx, 21px) * 0.78)/1.4 var(--font-text); }
+  .r-chbtn:active, .r-chrow:active { background: rgba(243, 195, 91, 0.18); }
+  .r-dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font: calc(var(--rpx, 21px) * 0.75)/1.45 var(--font-ui); }
+  .r-dl dt { color: var(--dim); } .r-dl dd { margin: 0; color: var(--ink); }
+
   #listPanel .lesson-text { font: 17px/1.55 var(--font-text); color: #f6e7c1; margin: 4px 0 10px; }
   #listPanel .lesson-main { font: italic 15px/1.5 var(--font-text); color: var(--dim); margin: 10px 0 0; }
   @media (max-width: 760px) {
