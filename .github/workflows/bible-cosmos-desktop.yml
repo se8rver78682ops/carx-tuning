@@ -35,6 +35,11 @@ jobs:
         working-directory: bible-cosmos-vr/desktop
         run: npm install --no-audit --no-fund
 
+      # Папки для нейросетевого голоса Piper: пока пустые, программа читает голосами системы.
+      - name: Voice folders
+        shell: bash
+        run: mkdir -p bible-cosmos-vr/desktop/piper bible-cosmos-vr/desktop/voices
+
       - name: Build
         working-directory: bible-cosmos-vr/desktop
         env:
