@@ -12,5 +12,7 @@ cp -r "$web/data" "$assets/data"
 tmp="$(mktemp -d)"
 (cd "$tmp" && npm pack three@0.160.0 --silent >/dev/null && tar -xzf three-0.160.0.tgz)
 cp "$tmp/package/build/three.module.js" "$assets/vendor/three.module.js"
+(cd "$tmp" && npm pack jszip@3.10.1 --silent >/dev/null && mkdir -p jz && tar -xzf jszip-3.10.1.tgz -C jz)
+cp "$tmp/jz/package/dist/jszip.min.js" "$assets/vendor/jszip.min.js"
 rm -rf "$tmp"
 echo "assets ready: $(du -sh "$assets" | cut -f1)"

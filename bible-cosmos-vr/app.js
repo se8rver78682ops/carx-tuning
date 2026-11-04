@@ -1,6 +1,8 @@
 // three.js грузится с запасного адреса, если основной недоступен.
+// В APK и в программе для компьютера библиотеки лежат рядом с программой и работают без интернета.
+const LOCAL_APP = location.hostname === 'appassets.androidplatform.net' || location.protocol === 'app:';
 const THREE_URLS = [
-  ...(location.hostname === 'appassets.androidplatform.net' ? ['./vendor/three.module.js'] : []),
+  ...(LOCAL_APP ? ['./vendor/three.module.js'] : []),
   'https://unpkg.com/three@0.160.0/build/three.module.js',
   'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
 ];
@@ -5321,13 +5323,16 @@ function parseUserFile(text) {
 let jszipPromise = null;
 function loadJSZip() {
   if (window.JSZip) return Promise.resolve(window.JSZip);
-  jszipPromise = jszipPromise || new Promise((res, rej) => {
+  const load = (src) => new Promise((res, rej) => {
     const sc = document.createElement('script');
-    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-    sc.onload = () => res(window.JSZip);
-    sc.onerror = () => rej(new Error('JSZip'));
+    sc.src = src;
+    sc.onload = () => (window.JSZip ? res(window.JSZip) : rej(new Error('JSZip')));
+    sc.onerror = () => { sc.remove(); rej(new Error('JSZip')); };
     document.head.appendChild(sc);
   });
+  const cdn = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+  jszipPromise = jszipPromise || (LOCAL_APP ? load('./vendor/jszip.min.js').catch(() => load(cdn)) : load(cdn));
+  jszipPromise.catch(() => { jszipPromise = null; });
   return jszipPromise;
 }
 const latin1 = (buf) => new TextDecoder('iso-8859-1').decode(buf);

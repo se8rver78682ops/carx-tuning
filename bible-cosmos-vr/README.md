@@ -269,6 +269,19 @@ APK на шлеме Quest работает только как плоское о
 В APK нет VR-режима: Android WebView не поддерживает WebXR. Для шлема (Meta Quest) открывайте ссылку
 в браузере шлема.
 
+## Программа для компьютера (Windows, Linux, macOS)
+
+Папка `desktop/` — та же программа в окне Electron. Сборку делает GitHub Actions
+(`.github/workflows/bible-cosmos-desktop.yml`) при каждом изменении:
+- **Windows**: `Bible-1.0.0-setup.exe` (установщик с ярлыком «Библия») и `Bible-1.0.0-portable.exe` (без установки);
+- **Linux**: `Bible-1.0.0-linux-x86_64.AppImage`;
+- **macOS**: `Bible-1.0.0-mac-arm64.dmg` и `…-x64.dmg` (без подписи: первый запуск — правой кнопкой → «Открыть»).
+
+Скачать: GitHub → Actions → «Bible Cosmos desktop» → последний запуск → Artifacts.
+Работает без интернета (three.js и JSZip внутри), F11 — во весь экран, Ctrl +/− — масштаб;
+чтение вслух продолжается, когда окно свёрнуто. Тексты Библии — из ваших EPUB, хранятся только на компьютере.
+Собрать самому: `cd desktop && npm install && npm run dist`.
+
 ## Файлы
 
 - `index.html` — страница и интерфейс
@@ -277,5 +290,6 @@ APK на шлеме Quest работает только как плоское о
 - `sky.js` — небо: туманности, галактики, чёрные дыры, квазары, планета, пыль
 - `data/summaries.json`, `figures.json`, `facts.json`, `parallels.json`, `otquotes.json`, `glossary.json` — объяснения и связи
 - `data/map.json` — карта (Natural Earth), `data/people.json` — биографии писателей и пророков, `data/books-info.json` — справка о книгах, `data/xref.json` — связи
+- `desktop/` — программа для компьютера (Electron)
 - `android/` — Android-приложение (WebView, служба «Чтение вслух» `ReadingService`), `android/prepare-assets.sh` — подготовка файлов для APK
 - `tools/build_xref.py` — сборка `data/xref.json` (связи между стихами)
