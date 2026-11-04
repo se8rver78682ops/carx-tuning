@@ -1,0 +1,94 @@
+{
+  "name": "bible-cosmos",
+  "productName": "Библия",
+  "version": "1.0.0",
+  "description": "Библия как космос: стихи-звёзды, связи, чтение вслух, карта и пророчества",
+  "author": "Bible Cosmos",
+  "license": "MIT",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "prepare-web": "node prepare.js",
+    "start": "node prepare.js && electron .",
+    "dist": "node prepare.js && electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8",
+    "jszip": "3.10.1",
+    "three": "0.160.0"
+  },
+  "build": {
+    "appId": "app.bible.cosmos",
+    "productName": "Библия",
+    "artifactName": "Bible-${version}-${os}-${arch}.${ext}",
+    "files": [
+      "main.js",
+      "preload.js",
+      "voice.ps1",
+      "icon.png",
+      "web/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Библия",
+      "artifactName": "Bible-${version}-setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "Bible-${version}-portable.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Education",
+      "icon": "icon.png"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.education",
+      "icon": "icon.png",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Вопросы советнику голосом"
+      }
+    },
+    "extraResources": [
+      {
+        "from": "piper",
+        "to": "piper",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "voices",
+        "to": "voices",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "whisper",
+        "to": "whisper",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}

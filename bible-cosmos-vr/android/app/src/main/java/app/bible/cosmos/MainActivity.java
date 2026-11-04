@@ -1,0 +1,721 @@
+package app.bible.cosmos;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.speech.RecognizerIntent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.PixelCopy;
+import android.media.AudioAttributes;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Build;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.DocumentsContract;
+import android.provider.Settings;
+import android.database.Cursor;
+import android.webkit.RenderProcessGoneDetail;
+import android.view.ViewGroup;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
+import android.util.Base64;
+import android.view.View;
+import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+
+import androidx.core.content.FileProvider;
+import androidx.webkit.WebViewAssetLoader;
+import androidx.webkit.WebViewClientCompat;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+/**
+ * Обёртка «Библейского космоса» для Android: показывает веб-приложение из assets,
+ * даёт ему синтезатор речи Android (в WebView нет speechSynthesis), выбор файлов и кнопку «Назад».
+ */
+public class MainActivity extends Activity {
+    private static final int FILE_REQUEST = 42;
+    /** Выбор папки с аудиозаписями глав (все MP3 из неё и вложенных папок). */
+    private static final int FOLDER_REQUEST = 43;
+    /** Вопрос советнику голосом: распознавание речи Android. */
+    private static final int SPEECH_REQUEST = 44;
+    private String speechId = null;
+    private static final String START_URL = "https://appassets.androidplatform.net/assets/index.html";
+
+    private WebView web;
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
+    private ValueCallback<Uri[]> fileCallback;
+    /** Звучит очередь главы (listActive) или длинный рассказ (soloActive): речь не останавливается в фоне. */
+    private volatile boolean listActive = false;
+    private volatile boolean soloActive = false;
+    private volatile String soloId = null;
+    /** Страница была пересоздана во время чтения: конец старой очереди просто завершает чтение. */
+    private volatile boolean orphanList = false;
+    private TtsBridge ttsBridge;
+    private ShareBridge shareBridge;
+    private EyesBridge eyesBridge;
+
+    /** Звучит запись главы (Аудио-Библия) — тоже продолжается в фоне. */
+    private volatile boolean audioActive = false;
+
+    private boolean speechActive() {
+        return listActive || soloActive || audioActive || (tts != null && tts.isSpeaking());
+    }
+
+    private void endSpeechSession() {
+        listActive = false;
+        soloActive = false;
+        soloId = null;
+        runOnUiThread(() -> ReadingService.stop(MainActivity.this));
+    }
+    private boolean askedNotify = false;
+    private static WeakReference<MainActivity> current = new WeakReference<>(null);
+
+    /** Кнопка «Остановить» в уведомлении. */
+    static void stopReadingFromNotification() {
+        MainActivity a = current.get();
+        if (a == null) return;
+        a.runOnUiThread(() -> {
+            if (a.tts != null) a.tts.stop();
+            a.audioActive = false;
+            a.endSpeechSession();
+            if (a.web != null) a.web.evaluateJavascript("window.__ttsStopped && window.__ttsStopped()", null);
+        });
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        current = new WeakReference<>(this);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        tts = new TextToSpeech(this, status -> {
+            ttsReady = status == TextToSpeech.SUCCESS;
+            if (ttsReady) {
+                tts.setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build());
+            }
+        });
+        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override public void onStart(String id) { notifyStart(id); }
+            @Override public void onDone(String id) { notifyDone(id); }
+            @Override public void onError(String id) { notifyDone(id); }
+        });
+        ttsBridge = new TtsBridge();
+        shareBridge = new ShareBridge();
+        eyesBridge = new EyesBridge();
+        createWeb(savedInstanceState);
+        hideSystemBars();
+    }
+
+    /** Страница программы. Её отрисовщик остаётся «важным» и в фоне, чтобы система не закрывала его при блокировке. */
+    private void createWeb(Bundle savedInstanceState) {
+        web = new WebView(this);
+        setContentView(web);
+
+        WebSettings s = web.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setMediaPlaybackRequiresUserGesture(false);
+        s.setAllowFileAccess(false);
+        s.setAllowContentAccess(true);
+
+        // Файлы приложения отдаются по https-адресу, чтобы работали fetch, модули и IndexedDB.
+        final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+        web.setWebViewClient(new WebViewClientCompat() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return loader.shouldInterceptRequest(request.getUrl());
+            }
+
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                // Система закрыла страницу (например, не хватило памяти в фоне). Речь продолжает звучать,
+                // а страница создаётся заново — программа не закрывается.
+                if (listActive) orphanList = true;
+                ViewGroup parent = (ViewGroup) view.getParent();
+                if (parent != null) parent.removeView(view);
+                view.destroy();
+                createWeb(null);
+                return true;
+            }
+        });
+
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+                if (fileCallback != null) fileCallback.onReceiveValue(null);
+                fileCallback = callback;
+                // «Выбрать папку с записями»: системный выбор папки, программа получает все MP3 из неё сразу.
+                if (Arrays.asList(params.getAcceptTypes()).contains("application/x-bible-audio-folder")) {
+                    try {
+                        startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), FOLDER_REQUEST);
+                        return true;
+                    } catch (Exception e) {
+                        // нет выбора папки — обычный выбор файлов ниже
+                    }
+                }
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("*/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+                try {
+                    startActivityForResult(intent, FILE_REQUEST);
+                } catch (Exception e) {
+                    fileCallback = null;
+                    return false;
+                }
+                return true;
+            }
+        });
+
+        if (Build.VERSION.SDK_INT >= 26) web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
+        web.addJavascriptInterface(ttsBridge, "AndroidTTS");
+        web.addJavascriptInterface(shareBridge, "AndroidShare");
+        web.addJavascriptInterface(eyesBridge, "AndroidEyes");
+        web.addJavascriptInterface(new EarsBridge(), "AndroidEars");
+        if (savedInstanceState != null) web.restoreState(savedInstanceState);
+        else web.loadUrl(START_URL);
+    }
+
+    private void notifyDone(String id) {
+        if (id == null || id.startsWith("part-") || id.startsWith("gap-")) return;
+        if (soloActive && id.equals(soloId)) {
+            // Рассказ закончился. Служба гасится с задержкой: если следом начнётся следующий рассказ
+            // (например, «Слушать все уроки»), она не прерывается — заново из фона её запустить нельзя.
+            soloActive = false;
+            soloId = null;
+            web.postDelayed(() -> {
+                if (!listActive && !soloActive && (tts == null || !tts.isSpeaking())) ReadingService.stop(MainActivity.this);
+            }, 5000);
+        }
+        if (orphanList && id.startsWith("L")) {
+            orphanList = false;
+            endSpeechSession();
+            return;
+        }
+        final String js = "window.__ttsDone && window.__ttsDone('" + id.replace("'", "") + "')";
+        web.post(() -> web.evaluateJavascript(js, null));
+    }
+
+    private void notifyStart(String id) {
+        if (id == null || !id.startsWith("v")) return;
+        final String js = "window.__ttsStart && window.__ttsStart('" + id.replace("'", "") + "')";
+        web.post(() -> web.evaluateJavascript(js, null));
+    }
+
+    private boolean online() {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            @SuppressWarnings("deprecation") NetworkInfo ni = cm.getActiveNetworkInfo();
+            return ni != null && ni.isConnected();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static boolean installed(Voice v) {
+        Set<String> f = v.getFeatures();
+        return f == null || !f.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED);
+    }
+
+    /** Голоса синтезатора для языка, лучшие первыми. */
+    private List<Voice> voicesFor(Locale locale) {
+        List<Voice> out = new ArrayList<>();
+        try {
+            Set<Voice> all = tts.getVoices();
+            if (all == null) return out;
+            for (Voice v : all) {
+                if (v.getLocale() != null && v.getLocale().getLanguage().equals(locale.getLanguage()) && installed(v)) out.add(v);
+            }
+        } catch (Exception ignored) {
+            return out;
+        }
+        final boolean net = online();
+        out.sort((a, b) -> Integer.compare(score(b, net, locale), score(a, net, locale)));
+        return out;
+    }
+
+    private static int score(Voice v, boolean net, Locale locale) {
+        int s = v.getQuality();
+        if (v.isNetworkConnectionRequired()) s += net ? 60 : -1000;
+        if (locale.getCountry().equals(v.getLocale().getCountry())) s += 20;
+        s -= v.getLatency() / 10;
+        return s;
+    }
+
+    /** Язык и голос: выбранный в настройках или самый качественный. */
+    private void prepareVoice(String lang, String wanted) {
+        Locale locale = Locale.forLanguageTag(lang == null ? "ru-RU" : lang);
+        int ok = tts.setLanguage(locale);
+        if (ok == TextToSpeech.LANG_MISSING_DATA || ok == TextToSpeech.LANG_NOT_SUPPORTED) {
+            web.post(() -> web.evaluateJavascript("window.__ttsNoVoice && window.__ttsNoVoice()", null));
+        }
+        List<Voice> list = voicesFor(locale);
+        Voice pick = null;
+        if (wanted != null && !wanted.isEmpty()) for (Voice v : list) if (v.getName().equals(wanted)) pick = v;
+        if (pick == null && !list.isEmpty()) pick = list.get(0);
+        if (pick != null) {
+            try { tts.setVoice(pick); } catch (Exception ignored) { }
+        }
+    }
+
+    /** Текст делится на части, которые синтезатор принимает за один раз. */
+    private void enqueue(String text, String id) {
+        int max = Math.max(200, TextToSpeech.getMaxSpeechInputLength() - 50);
+        String rest = text == null ? "" : text;
+        int part = 0;
+        boolean first = true;
+        while (rest.length() > max) {
+            int cut = rest.lastIndexOf(' ', max);
+            if (cut < max / 2) cut = max;
+            tts.speak(rest.substring(0, cut), TextToSpeech.QUEUE_ADD, null, first ? id : "part-" + (part++));
+            first = false;
+            rest = rest.substring(cut);
+        }
+        tts.speak(rest, TextToSpeech.QUEUE_ADD, null, first ? id : "part-" + (part++));
+    }
+
+    /** Мост для app.js: window.AndroidTTS.speak(text, 'ru-RU', id) и window.AndroidTTS.stop(). */
+    private class TtsBridge {
+        private float rate = 0.95f;
+        private float pitch = 1f;
+        private String voice = "";
+
+        @JavascriptInterface
+        public void setRate(float r) {
+            rate = Math.max(0.5f, Math.min(2f, r));
+        }
+
+        @JavascriptInterface
+        public void setPitch(float p) {
+            pitch = Math.max(0.5f, Math.min(2f, p));
+        }
+
+        @JavascriptInterface
+        public void setVoice(String name) {
+            voice = name == null ? "" : name;
+        }
+
+        /** Список голосов для языка: [{name, label, net, best}]. */
+        @JavascriptInterface
+        public String voices(String lang) {
+            JSONArray arr = new JSONArray();
+            if (!ttsReady) return arr.toString();
+            try {
+                Locale locale = Locale.forLanguageTag(lang == null ? "ru-RU" : lang);
+                List<Voice> list = voicesFor(locale);
+                int n = 0;
+                for (Voice v : list) {
+                    JSONObject o = new JSONObject();
+                    o.put("name", v.getName());
+                    o.put("label", v.getLocale().getDisplayCountry(locale) + " · " + (++n));
+                    o.put("net", v.isNetworkConnectionRequired());
+                    o.put("best", v.getQuality() >= Voice.QUALITY_VERY_HIGH);
+                    arr.put(o);
+                }
+            } catch (Exception ignored) {
+                // пустой список: остаётся «автоматически»
+            }
+            return arr.toString();
+        }
+
+        @JavascriptInterface
+        public void installVoices() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch (Exception e) {
+                    try { startActivity(new Intent("com.android.settings.TTS_SETTINGS")); } catch (Exception ignored) { }
+                }
+            });
+        }
+
+        private void begin(String lang) {
+            tts.stop();
+            prepareVoice(lang, voice);
+            tts.setSpeechRate(rate);
+            tts.setPitch(pitch);
+        }
+
+        @JavascriptInterface
+        public void speak(String text, String lang, String id) {
+            if (!ttsReady) { notifyDone(id); return; }
+            begin(lang);
+            final boolean wasActive = listActive || soloActive;
+            listActive = false;
+            enqueue(text, id);
+            // Длинный текст (рассказ о пророке, стих) звучит и при заблокированном экране.
+            if (text != null && text.length() > 150) {
+                soloActive = true;
+                soloId = id;
+                final String title = getString(R.string.app_name);
+                runOnUiThread(() -> {
+                    askNotificationPermission();
+                    ReadingService.start(MainActivity.this, title, stopLabel);
+                });
+            } else if (wasActive) {
+                soloActive = false;
+                runOnUiThread(() -> ReadingService.stop(MainActivity.this));
+            }
+        }
+
+        private String stopLabel = "Stop";
+
+        /** Запись главы (Аудио-Библия) начала или закончила звучать. */
+        @JavascriptInterface
+        public void audioSession(boolean playing, String title, String stop) {
+            audioActive = playing;
+            if (stop != null && !stop.isEmpty()) stopLabel = stop;
+            if (playing) {
+                final String t = title == null || title.isEmpty() ? getString(R.string.app_name) : title;
+                runOnUiThread(() -> {
+                    askNotificationPermission();
+                    ReadingService.start(MainActivity.this, t, stopLabel);
+                });
+            } else if (!listActive && !soloActive) {
+                runOnUiThread(() -> ReadingService.stop(MainActivity.this));
+            }
+        }
+
+        @JavascriptInterface
+        public void setStopLabel(String label) {
+            if (label != null && !label.isEmpty()) stopLabel = label;
+        }
+
+        /** Разрешено ли программе работать в фоне без ограничений батареи. */
+        @JavascriptInterface
+        public boolean backgroundAllowed() {
+            if (Build.VERSION.SDK_INT < 23) return true;
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            return pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
+        }
+
+        /** Системное окно «Разрешить работу в фоне» (без ограничений батареи). */
+        @JavascriptInterface
+        public void allowBackground() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    i.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(i);
+                } catch (Exception e) {
+                    try { startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)); } catch (Exception ignored) { }
+                }
+            });
+        }
+
+        /**
+         * Вся глава сразу: [[id, текст], ...]. Между стихами короткая пауза, в конце сообщается listId.
+         * Пока очередь звучит, работает служба «Чтение вслух» — так чтение не прерывается в фоне.
+         */
+        @JavascriptInterface
+        public void speakList(String json, String lang, String listId, String title, String stopLabel) {
+            if (!ttsReady) { notifyDone(listId); return; }
+            try {
+                JSONArray items = new JSONArray(json);
+                begin(lang);
+                for (int i = 0; i < items.length(); i++) {
+                    JSONArray it = items.getJSONArray(i);
+                    enqueue(it.getString(1), it.getString(0));
+                    tts.playSilentUtterance(i == 0 ? 450 : 280, TextToSpeech.QUEUE_ADD, "gap-" + i);
+                }
+                tts.playSilentUtterance(10, TextToSpeech.QUEUE_ADD, listId);
+                listActive = true;
+                soloActive = false;
+                orphanList = false;
+                if (stopLabel != null) this.stopLabel = stopLabel;
+                runOnUiThread(() -> {
+                    askNotificationPermission();
+                    ReadingService.start(MainActivity.this, title, stopLabel);
+                });
+            } catch (Exception e) {
+                notifyDone(listId);
+            }
+        }
+
+        @JavascriptInterface
+        public void stop() {
+            tts.stop();
+            if (listActive || soloActive) endSpeechSession();
+        }
+    }
+
+    /** Android 13+: разрешение на уведомление «Чтение вслух» спрашивается один раз. */
+    private void askNotificationPermission() {
+        if (askedNotify || Build.VERSION.SDK_INT < 33) return;
+        askedNotify = true;
+        if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] { "android.permission.POST_NOTIFICATIONS" }, 7);
+        }
+    }
+
+    /** Мост для app.js: window.AndroidShare.shareImage(dataUrl, text) — системное окно «Поделиться». */
+    /** «Глаза» советника: снимок экрана приложения. Ответ приходит в window.__eyes(id, jpegBase64). */
+    private class EyesBridge {
+        @JavascriptInterface
+        public void capture(String id) {
+            final String cb = id == null ? "" : id.replaceAll("[^A-Za-z0-9_-]", "");
+            runOnUiThread(() -> {
+                final View root = getWindow().getDecorView();
+                final int w = root.getWidth(), h = root.getHeight();
+                if (w <= 0 || h <= 0) { sendShot(cb, null); return; }
+                final Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+                if (Build.VERSION.SDK_INT >= 26) {
+                    try {
+                        // PixelCopy видит и 3D-сцену (WebGL), которую обычная отрисовка вида пропускает
+                        PixelCopy.request(getWindow(), bmp, (result) -> {
+                            if (result == PixelCopy.SUCCESS) encodeShot(cb, bmp);
+                            else { drawShot(root, bmp); encodeShot(cb, bmp); }
+                        }, new Handler(Looper.getMainLooper()));
+                        return;
+                    } catch (Exception e) {
+                        // ниже — запасной способ
+                    }
+                }
+                drawShot(root, bmp);
+                encodeShot(cb, bmp);
+            });
+        }
+    }
+
+    /** «Уши» советника: window.AndroidEars.listen(id, 'ru-RU'); ответ — window.__heard(id, text). */
+    private class EarsBridge {
+        @JavascriptInterface
+        public void listen(String id, String lang) {
+            final String cb = id == null ? "" : id.replaceAll("[^A-Za-z0-9_-]", "");
+            final String tag = lang == null || lang.isEmpty() ? "ru-RU" : lang;
+            runOnUiThread(() -> {
+                Intent it = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                it.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                it.putExtra(RecognizerIntent.EXTRA_LANGUAGE, tag);
+                it.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, tag);
+                it.putExtra(RecognizerIntent.EXTRA_PROMPT, tag.startsWith("ro") ? "Întrebați sfătuitorul" : "Спросите советника");
+                it.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+                speechId = cb;
+                try {
+                    startActivityForResult(it, SPEECH_REQUEST);
+                } catch (ActivityNotFoundException e) {
+                    speechId = null;
+                    sendHeard(cb, null, "none");
+                }
+            });
+        }
+    }
+
+    private void sendHeard(String cb, String text, String err) {
+        final String js = "window.__heard && window.__heard('" + cb + "', " + (text == null ? "null" : JSONObject.quote(text)) + ", " + (err == null ? "null" : JSONObject.quote(err)) + ")";
+        runOnUiThread(() -> { if (web != null) web.evaluateJavascript(js, null); });
+    }
+
+    private static void drawShot(View root, Bitmap bmp) {
+        try { root.draw(new Canvas(bmp)); } catch (Exception ignored) { }
+    }
+
+    private void encodeShot(String cb, Bitmap bmp) {
+        new Thread(() -> {
+            String b64 = null;
+            try {
+                int w = bmp.getWidth(), h = bmp.getHeight();
+                float k = Math.min(1f, 1280f / Math.max(w, h));
+                Bitmap small = k < 1f ? Bitmap.createScaledBitmap(bmp, Math.round(w * k), Math.round(h * k), true) : bmp;
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                small.compress(Bitmap.CompressFormat.JPEG, 75, out);
+                b64 = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
+                if (small != bmp) small.recycle();
+                bmp.recycle();
+            } catch (Exception e) {
+                b64 = null;
+            }
+            sendShot(cb, b64);
+        }).start();
+    }
+
+    private void sendShot(String cb, String b64) {
+        final String js = "window.__eyes && window.__eyes('" + cb + "', " + (b64 == null ? "null" : "'" + b64 + "'") + ")";
+        runOnUiThread(() -> { if (web != null) web.evaluateJavascript(js, null); });
+    }
+
+    private class ShareBridge {
+        @JavascriptInterface
+        public void shareImage(String dataUrl, String text) {
+            try {
+                String b64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
+                byte[] png = Base64.decode(b64, Base64.DEFAULT);
+                File dir = new File(getCacheDir(), "share");
+                if (!dir.exists() && !dir.mkdirs()) return;
+                File file = new File(dir, "verse.png");
+                try (FileOutputStream out = new FileOutputStream(file)) { out.write(png); }
+                Uri uri = FileProvider.getUriForFile(MainActivity.this, "app.bible.cosmos.files", file);
+                Intent send = new Intent(Intent.ACTION_SEND);
+                send.setType("image/png");
+                send.putExtra(Intent.EXTRA_STREAM, uri);
+                send.putExtra(Intent.EXTRA_TEXT, text);
+                send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                runOnUiThread(() -> startActivity(Intent.createChooser(send, null)));
+            } catch (Exception ignored) {
+                // Если поделиться не удалось, ничего не ломаем.
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SPEECH_REQUEST) {
+            String cb = speechId == null ? "" : speechId;
+            speechId = null;
+            String text = null;
+            if (resultCode == RESULT_OK && data != null) {
+                ArrayList<String> res = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                if (res != null && !res.isEmpty()) text = res.get(0);
+            }
+            sendHeard(cb, text, null);
+            return;
+        }
+        if (requestCode == FOLDER_REQUEST && fileCallback != null) {
+            Uri[] found = null;
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                Uri tree = data.getData();
+                List<Uri> out = new ArrayList<>();
+                collectMp3(tree, DocumentsContract.getTreeDocumentId(tree), out, 0);
+                found = out.toArray(new Uri[0]);
+            }
+            fileCallback.onReceiveValue(found);
+            fileCallback = null;
+            return;
+        }
+        if (requestCode != FILE_REQUEST || fileCallback == null) return;
+        Uri[] result = null;
+        if (resultCode == RESULT_OK && data != null) {
+            if (data.getClipData() != null) {
+                int n = data.getClipData().getItemCount();
+                result = new Uri[n];
+                for (int i = 0; i < n; i++) result[i] = data.getClipData().getItemAt(i).getUri();
+            } else if (data.getData() != null) {
+                result = new Uri[] { data.getData() };
+            }
+        }
+        fileCallback.onReceiveValue(result);
+        fileCallback = null;
+    }
+
+    /** Все файлы .mp3 в папке и во вложенных папках (до трёх уровней). */
+    private void collectMp3(Uri tree, String docId, List<Uri> out, int depth) {
+        Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, docId);
+        String[] cols = { DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_MIME_TYPE };
+        try (Cursor c = getContentResolver().query(children, cols, null, null, null)) {
+            if (c == null) return;
+            while (c.moveToNext()) {
+                String id = c.getString(0), name = c.getString(1), mime = c.getString(2);
+                if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
+                    if (depth < 3) collectMp3(tree, id, out, depth + 1);
+                } else if (name != null && name.toLowerCase(Locale.ROOT).endsWith(".mp3")) {
+                    out.add(DocumentsContract.buildDocumentUriUsingTree(tree, id));
+                }
+            }
+        } catch (Exception ignored) {
+            // папка недоступна — пропускаем
+        }
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onBackPressed() {
+        // Сначала «Назад» внутри программы: глава -> книга -> галактика, закрытие окон.
+        web.evaluateJavascript("window.__androidBack ? String(window.__androidBack()) : 'false'", value -> {
+            if (!"\"true\"".equals(value)) MainActivity.super.onBackPressed();
+        });
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) hideSystemBars();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void hideSystemBars() {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        web.saveState(outState);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Речь не обрывается, когда программу сворачивают или блокируют экран.
+        // Страница «засыпает» только если ничего не звучит.
+        if (speechActive()) return;
+        web.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        web.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        web.evaluateJavascript("window.__appBackground && window.__appBackground(true)", null);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (web != null) web.evaluateJavascript("window.__appBackground && window.__appBackground(false)", null);
+    }
+
+    @Override
+    protected void onDestroy() {
+        listActive = false;
+        soloActive = false;
+        ReadingService.stop(this);
+        if (tts != null) tts.shutdown();
+        web.destroy();
+        super.onDestroy();
+    }
+}

@@ -1,0 +1,214 @@
+# Собирает «Библию» для компьютера (Electron): Windows (установщик и переносная версия), Linux (AppImage), macOS (dmg).
+name: Bible Cosmos desktop
+
+on:
+  push:
+    paths:
+      - 'bible-cosmos-vr/**'
+      - '.github/workflows/bible-cosmos-desktop.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: --win nsis portable --x64
+            artifact: bible-windows
+          - os: ubuntu-latest
+            args: --linux AppImage --x64
+            artifact: bible-linux
+          - os: macos-latest
+            args: --mac dmg --arm64 --x64
+            artifact: bible-macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install
+        working-directory: bible-cosmos-vr/desktop
+        run: npm install --no-audit --no-fund
+
+      # Проверка помощника голосов Windows (наш voice.ps1, голоса самой системы): список голосов и WAV-файл.
+      - name: Voice helper test (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          $lines = '{"cmd":"voices"}' | powershell -NoProfile -ExecutionPolicy Bypass -File voice.ps1 -Dir $env:RUNNER_TEMP
+          $lines
+          $v = ($lines | Where-Object { $_ -like 'V*' } | Select-Object -First 1)
+          $voices = @()
+          if ($v) { $voices = @($v.Substring(1) | ConvertFrom-Json) }
+          "voices: $($voices.Count)"
+          if ($voices.Count -eq 0) { Write-Warning 'no voices on this machine'; exit 0 }
+          foreach ($id in @(($voices | Where-Object { $_.id -like 'rt:*' } | Select-Object -First 1).id, ($voices | Where-Object { $_.id -like 'sapi:*' } | Select-Object -First 1).id)) {
+            if (-not $id) { continue }
+            $req = (@{ t = 'Hello. This is a voice test.'; v = $id; r = 1 } | ConvertTo-Json -Compress)
+            $res = $req | powershell -NoProfile -ExecutionPolicy Bypass -File voice.ps1 -Dir $env:RUNNER_TEMP
+            "$id -> $res"
+            if (-not ($res -like 'F*.wav')) { throw "voice helper failed for $id" }
+            $f = $res.Substring(1); "size: $((Get-Item $f).Length) bytes"
+            if ((Get-Item $f).Length -lt 2000) { throw 'wav too small' }
+          }
+
+      # Нейросетевой голос Piper (с разрешения владельца): синтезатор github.com/rhasspy/piper
+      # и голоса «Ирина», «Руслан», «Дмитрий», «Денис» (RU) и «Михай» (RO) из huggingface.co/rhasspy/piper-voices. Работает без интернета.
+      - name: Piper for Windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          Invoke-WebRequest -Uri https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip -OutFile piper.zip
+          Expand-Archive piper.zip -DestinationPath .
+          Remove-Item piper.zip
+          Get-ChildItem piper | Select-Object -First 12
+
+      - name: Piper for Linux
+        if: runner.os == 'Linux'
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          curl -sSfL https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz | tar -xz -C .
+          ls piper | head -20
+
+      - name: Piper voices
+        if: runner.os != 'macOS'
+        shell: bash
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          mkdir -p voices
+          get() {  # голос: сначала из выпуска v1.0.0, затем из основной ветки
+            local f=$1 n; n=$(basename "$f")
+            for ref in v1.0.0 main; do
+              if curl -sSfL -o "voices/$n.onnx" "https://huggingface.co/rhasspy/piper-voices/resolve/$ref/$f.onnx" &&
+                 curl -sSfL -o "voices/$n.onnx.json" "https://huggingface.co/rhasspy/piper-voices/resolve/$ref/$f.onnx.json"; then return 0; fi
+            done
+            rm -f "voices/$n.onnx" "voices/$n.onnx.json"; return 1
+          }
+          for f in ru/ru_RU/irina/medium/ru_RU-irina-medium ru/ru_RU/ruslan/medium/ru_RU-ruslan-medium ro/ro_RO/mihai/medium/ro_RO-mihai-medium; do
+            get "$f"
+          done
+          # мужские голоса для советника — по возможности
+          for f in ru/ru_RU/dmitri/medium/ru_RU-dmitri-medium ru/ru_RU/denis/medium/ru_RU-denis-medium; do
+            get "$f" || echo "::warning::voice not found: $f"
+          done
+          ls -la voices
+
+      - name: Piper test (one phrase in each language)
+        if: runner.os != 'macOS'
+        shell: bash
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          exe=piper/piper; [ "$RUNNER_OS" = "Windows" ] && exe=piper/piper.exe
+          export LD_LIBRARY_PATH="$PWD/piper"
+          mkdir -p voicetest
+          printf 'Вначале Бог сотворил небо и землю.\n' | "$exe" --model voices/ru_RU-irina-medium.onnx --output_dir voicetest | tee ru.txt
+          printf 'Моисей вывел народ из Египта.\n' | "$exe" --model voices/ru_RU-ruslan-medium.onnx --output_dir voicetest | tee ru2.txt
+          for v in dmitri denis; do
+            m=voices/ru_RU-$v-medium.onnx
+            [ -f "$m" ] || continue
+            printf 'Я Тарс, ваш советник. Спрашивайте.\n' | "$exe" --model "$m" --output_dir voicetest | tee "$v.txt"
+            grep -qi 'wav' "$v.txt"; rm -f "$v.txt"
+          done
+          printf 'La început, Dumnezeu a creat cerurile și pământul.\n' | "$exe" --model voices/ro_RO-mihai-medium.onnx --output_dir voicetest | tee ro.txt
+          grep -qi 'wav' ru.txt && grep -qi 'wav' ru2.txt && grep -qi 'wav' ro.txt
+          ls -la voicetest
+          rm -rf voicetest ru.txt ru2.txt ro.txt
+
+      # Распознавание речи Whisper (с разрешения владельца — вопросы советнику голосом): whisper.cpp
+      # с github.com/ggml-org/whisper.cpp и модель с huggingface.co/ggerganov/whisper.cpp. Работает без интернета.
+      - name: Whisper for Windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        working-directory: bible-cosmos-vr/desktop
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $h = @{ Authorization = "Bearer $env:GH_TOKEN"; 'User-Agent' = 'bible-build' }
+          try { $rel = Invoke-RestMethod -Headers $h https://api.github.com/repos/ggml-org/whisper.cpp/releases/tags/v1.7.6 }
+          catch { $rel = Invoke-RestMethod -Headers $h https://api.github.com/repos/ggml-org/whisper.cpp/releases/latest }
+          "release: $($rel.tag_name)"
+          $asset = $rel.assets | Where-Object { $_.name -eq 'whisper-bin-x64.zip' } | Select-Object -First 1
+          if (-not $asset) { throw 'whisper-bin-x64.zip not found' }
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile w.zip
+          Expand-Archive w.zip -DestinationPath wtmp
+          $cli = Get-ChildItem wtmp -Recurse -Include whisper-cli.exe | Select-Object -First 1
+          if (-not $cli) { throw 'whisper-cli.exe not found' }
+          New-Item -ItemType Directory -Force whisper | Out-Null
+          Copy-Item (Join-Path $cli.DirectoryName '*') whisper -Recurse
+          Get-ChildItem whisper -Filter *.exe | Where-Object { $_.Name -ne 'whisper-cli.exe' } | Remove-Item
+          # библиотеки Visual C++ рядом с программой — на случай, если их нет на компьютере
+          foreach ($d in 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll') { $src = Join-Path $env:WINDIR "System32\$d"; if (Test-Path $src) { Copy-Item $src whisper } }
+          Remove-Item w.zip; Remove-Item wtmp -Recurse
+          Get-ChildItem whisper
+
+      - name: Whisper for Linux
+        if: runner.os == 'Linux'
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          git clone --depth 1 --branch v1.7.6 https://github.com/ggml-org/whisper.cpp wsrc || git clone --depth 1 https://github.com/ggml-org/whisper.cpp wsrc
+          cmake -S wsrc -B wsrc/build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF -DGGML_OPENMP=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF -DWHISPER_SDL2=OFF
+          cmake --build wsrc/build -j 4 --config Release --target whisper-cli
+          mkdir -p whisper && cp wsrc/build/bin/whisper-cli whisper/
+          rm -rf wsrc
+          ls -la whisper
+
+      - name: Whisper model
+        if: runner.os != 'macOS'
+        shell: bash
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          for m in ggml-small-q5_1.bin ggml-small.bin ggml-base.bin; do
+            if curl -sSfL -o "whisper/$m" "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$m"; then break; fi
+            rm -f "whisper/$m"
+          done
+          ls -la whisper
+          ls whisper/ggml-*.bin
+
+      - name: Whisper test (Russian question spoken by Piper)
+        if: runner.os != 'macOS'
+        shell: bash
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          exe=piper/piper; cli=whisper/whisper-cli
+          if [ "$RUNNER_OS" = "Windows" ]; then exe=piper/piper.exe; cli=whisper/whisper-cli.exe; fi
+          export LD_LIBRARY_PATH="$PWD/piper"
+          py=$(command -v python3 || command -v python)
+          mkdir -p wtest
+          printf 'Тарс, объясни, пожалуйста, что значит этот стих про Моисея.\n' | "$exe" --model voices/ru_RU-irina-medium.onnx --output_file wtest/q22.wav
+          cat > wtest/rs.py <<'PY'
+          import wave, struct
+          r = wave.open('wtest/q22.wav', 'rb'); sr = r.getframerate(); ch = r.getnchannels(); d = r.readframes(r.getnframes()); r.close()
+          s = struct.unpack('<%dh' % (len(d) // 2), d)[::ch]
+          o = [s[min(len(s) - 1, int(i * sr / 16000))] for i in range(int(len(s) * 16000 / sr))]
+          w = wave.open('wtest/q16.wav', 'wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(struct.pack('<%dh' % len(o), *o)); w.close()
+          PY
+          "$py" wtest/rs.py
+          "$cli" -m whisper/ggml-*.bin -f wtest/q16.wav -l ru -nt -np | tee wtest/out.txt
+          grep -Eq 'оисе|стих|бъясни' wtest/out.txt
+          rm -rf wtest
+
+      - name: Empty voice folders on macOS (system voices are used)
+        if: runner.os == 'macOS'
+        run: mkdir -p bible-cosmos-vr/desktop/piper bible-cosmos-vr/desktop/voices bible-cosmos-vr/desktop/whisper
+
+      - name: Build
+        working-directory: bible-cosmos-vr/desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: node prepare.js && npx electron-builder ${{ matrix.args }} --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            bible-cosmos-vr/desktop/dist/*.exe
+            bible-cosmos-vr/desktop/dist/*.AppImage
+            bible-cosmos-vr/desktop/dist/*.dmg
+          if-no-files-found: error
