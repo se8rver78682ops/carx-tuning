@@ -499,7 +499,7 @@ export function buildSky(THREE, { scene, renderer, eye, glowTex, quality = 1 }) 
   return {
     root,
     // mode: 'galaxy' | 'book' | 'chapter' — в главе пыль почти исчезает, чтобы не мешать чтению.
-    setMode(mode) { fadeTarget = mode === 'chapter' ? 0.25 : 1; dimTarget = mode === 'galaxy' ? 0 : mode === 'book' ? 0.5 : 0.45; },
+    setMode(mode) { fadeTarget = mode === 'quiet' ? 0 : mode === 'chapter' ? 0.25 : 1; dimTarget = mode === 'galaxy' ? 0 : mode === 'book' ? 0.5 : mode === 'quiet' ? 0.72 : 0.45; },
     update(t, dt, pxScale) {
       dustU.uTime.value = t;
       dustU.uScale.value = pxScale;

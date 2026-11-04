@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.util.Base64;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
@@ -16,9 +17,12 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import androidx.core.content.FileProvider;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Locale;
 
 /**
@@ -86,6 +90,7 @@ public class MainActivity extends Activity {
             @Override public void onError(String id) { notifyDone(id); }
         });
         web.addJavascriptInterface(new TtsBridge(), "AndroidTTS");
+        web.addJavascriptInterface(new ShareBridge(), "AndroidShare");
 
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl(START_URL);
@@ -129,6 +134,30 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void stop() {
             tts.stop();
+        }
+    }
+
+    /** Мост для app.js: window.AndroidShare.shareImage(dataUrl, text) — системное окно «Поделиться». */
+    private class ShareBridge {
+        @JavascriptInterface
+        public void shareImage(String dataUrl, String text) {
+            try {
+                String b64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
+                byte[] png = Base64.decode(b64, Base64.DEFAULT);
+                File dir = new File(getCacheDir(), "share");
+                if (!dir.exists() && !dir.mkdirs()) return;
+                File file = new File(dir, "verse.png");
+                try (FileOutputStream out = new FileOutputStream(file)) { out.write(png); }
+                Uri uri = FileProvider.getUriForFile(MainActivity.this, "app.bible.cosmos.files", file);
+                Intent send = new Intent(Intent.ACTION_SEND);
+                send.setType("image/png");
+                send.putExtra(Intent.EXTRA_STREAM, uri);
+                send.putExtra(Intent.EXTRA_TEXT, text);
+                send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                runOnUiThread(() -> startActivity(Intent.createChooser(send, null)));
+            } catch (Exception ignored) {
+                // Если поделиться не удалось, ничего не ломаем.
+            }
         }
     }
 
