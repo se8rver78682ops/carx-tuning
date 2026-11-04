@@ -145,6 +145,7 @@ const I18N = {
     prophDone: 'Исполнилось', prophOngoing: 'Исполняется', prophSign: 'Признак', prophPromise: 'Обещание', prophForetold: 'Предсказано', prophFulfilled: 'Исполнение', prophSays: 'Что сказано',
     prophAlso: 'Смотрите также', prophHistory: 'подтверждено историей', prophBack: '◀ К пророчествам', prophSkyNote: 'Дуги на небе ведут от пророчества к его исполнению.',
     neuralFail: 'Нейросетевой голос не запустился — читаю голосом системы.',
+    ttsSilent: (why, n) => (n ? `Голос системы не отвечает (${why}).` : 'На этом устройстве не найден ни один голос для чтения.') + (location.protocol === 'app:' ? ' В Windows: Параметры → Время и язык → Речь → «Добавить голоса» → Русский, затем перезапустите программу.' : ' Проверьте звук и голоса в настройках системы или откройте программу в браузере Microsoft Edge.'),
     welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
     showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
@@ -265,6 +266,7 @@ const I18N = {
     prophDone: 'Împlinită', prophOngoing: 'Se împlinește', prophSign: 'Semn', prophPromise: 'Promisiune', prophForetold: 'Prezis', prophFulfilled: 'Împlinire', prophSays: 'Ce se spune',
     prophAlso: 'Vedeți și', prophHistory: 'confirmată de istorie', prophBack: '◀ La profeții', prophSkyNote: 'Arcele de pe cer duc de la profeție la împlinirea ei.',
     neuralFail: 'Vocea neuronală nu a pornit — citesc cu vocea sistemului.',
+    ttsSilent: (why, n) => (n ? `Vocea sistemului nu răspunde (${why}).` : 'Pe acest dispozitiv nu s-a găsit nicio voce pentru citire.') + (location.protocol === 'app:' ? ' În Windows: Setări → Oră și limbă → Vorbire → „Adăugați voci” → Română, apoi reporniți programul.' : ' Verificați sunetul și vocile în setările sistemului sau deschideți programul în Microsoft Edge.'),
     welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
     showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
@@ -1355,17 +1357,26 @@ function speak(text, onDone) {
   if (!v && !tts.warned[LANG]) { tts.warned[LANG] = true; toast(T().noVoice, 7000); }
   const chunks = speechChunks(speechText(text));
   tts.talking = true;
+  // Голос системы может молчать (нет голоса для языка или синтезатор не отвечает) — тогда об этом говорится прямо.
+  let alive = false;
+  const silent = (why) => {
+    if (token !== tts.token) return;
+    stopReading(); stopNarration();
+    toast(T().ttsSilent(why, tts.voices.length), 14000);
+  };
   chunks.forEach((c, i) => {
     const u = new SpeechSynthesisUtterance(c);
     if (v) u.voice = v;
     u.lang = T().speech;
     u.rate = settings.rate;
     u.pitch = settings.pitch || 1;
-    if (i === chunks.length - 1) u.onend = () => { tts.talking = false; if (token === tts.token) onDone(); };
-    u.onerror = (e) => { if (token === tts.token && e.error !== 'interrupted' && e.error !== 'canceled') stopReading(); };
+    u.onstart = () => { alive = true; };
+    u.onend = () => { alive = true; if (i === chunks.length - 1) { tts.talking = false; if (token === tts.token) onDone(); } };
+    u.onerror = (e) => { if (token === tts.token && e.error !== 'interrupted' && e.error !== 'canceled') silent(e.error || 'error'); };
     tts.utter = u;
     speechSynthesis.speak(u);
   });
+  setTimeout(() => { if (!alive && token === tts.token && !speechSynthesis.speaking) silent('timeout'); }, 5000);
   return true;
 }
 
