@@ -84,7 +84,7 @@ jobs:
         run: |
           mkdir -p voices
           base=https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0
-          for f in ru/ru_RU/irina/medium/ru_RU-irina-medium ro/ro_RO/mihai/medium/ro_RO-mihai-medium; do
+          for f in ru/ru_RU/irina/medium/ru_RU-irina-medium ru/ru_RU/ruslan/medium/ru_RU-ruslan-medium ro/ro_RO/mihai/medium/ro_RO-mihai-medium; do
             n=$(basename "$f")
             curl -sSfL -o "voices/$n.onnx" "$base/$f.onnx"
             curl -sSfL -o "voices/$n.onnx.json" "$base/$f.onnx.json"
@@ -100,10 +100,11 @@ jobs:
           export LD_LIBRARY_PATH="$PWD/piper"
           mkdir -p voicetest
           printf 'Вначале Бог сотворил небо и землю.\n' | "$exe" --model voices/ru_RU-irina-medium.onnx --output_dir voicetest | tee ru.txt
+          printf 'Моисей вывел народ из Египта.\n' | "$exe" --model voices/ru_RU-ruslan-medium.onnx --output_dir voicetest | tee ru2.txt
           printf 'La început, Dumnezeu a creat cerurile și pământul.\n' | "$exe" --model voices/ro_RO-mihai-medium.onnx --output_dir voicetest | tee ro.txt
-          grep -qi 'wav' ru.txt && grep -qi 'wav' ro.txt
+          grep -qi 'wav' ru.txt && grep -qi 'wav' ru2.txt && grep -qi 'wav' ro.txt
           ls -la voicetest
-          rm -rf voicetest ru.txt ro.txt
+          rm -rf voicetest ru.txt ru2.txt ro.txt
 
       - name: Empty voice folders on macOS (system voices are used)
         if: runner.os == 'macOS'

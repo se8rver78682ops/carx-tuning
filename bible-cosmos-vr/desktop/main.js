@@ -81,6 +81,7 @@ app.whenReady().then(async () => {
     }
   });
   scanAudio();
+  warmVoices();
   await osVoices.ready();
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
@@ -98,7 +99,8 @@ const PIPER_DIR = path.join(RES, 'piper');
 const PIPER = path.join(PIPER_DIR, process.platform === 'win32' ? 'piper.exe' : 'piper');
 const VOICE_DIR = path.join(RES, 'voices');
 const PIPER_VOICES = [
-  { id: 'piper:ru-irina', lang: 'ru', file: 'ru_RU-irina-medium.onnx', label_ru: 'Ирина — нейросетевой голос', label_ro: 'Irina — voce neuronală' },
+  { id: 'piper:ru-irina', lang: 'ru', file: 'ru_RU-irina-medium.onnx', label_ru: 'Ирина — нейросетевой голос (женский)', label_ro: 'Irina — voce neuronală' },
+  { id: 'piper:ru-ruslan', lang: 'ru', file: 'ru_RU-ruslan-medium.onnx', label_ru: 'Руслан — нейросетевой голос (мужской, чётче)', label_ro: 'Ruslan — voce neuronală (bărbat)' },
   { id: 'piper:ro-mihai', lang: 'ro', file: 'ro_RO-mihai-medium.onnx', label_ru: 'Михай — нейросетевой голос', label_ro: 'Mihai — voce neuronală' },
 ];
 const piperVoices = () => (fs.existsSync(PIPER)
@@ -161,14 +163,14 @@ class LineProc {
 
 const tmpVoiceDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bible-voice-'));
 const pipers = new Map();
-function piperFor(voice, rate) {
-  const scale = Math.max(0.6, Math.min(1.6, 1 / (Number(rate) || 1)));
-  const key = `${voice.id}:${scale.toFixed(2)}`;
+// Один процесс на голос: модель загружается один раз (заранее, при запуске программы);
+// скорость меняется при воспроизведении, поэтому голос не перезагружается.
+function piperFor(voice) {
+  const key = voice.id;
   let e = pipers.get(key);
   if (!e || e.dead) {
-    for (const [k, old] of pipers) if (k.startsWith(voice.id + ':')) { old.kill(); pipers.delete(k); }
     e = new LineProc(PIPER, ['--model', path.join(VOICE_DIR, voice.file), '--output_dir', tmpVoiceDir,
-      '--length_scale', scale.toFixed(3), '--sentence_silence', '0.3'], {
+      '--sentence_silence', '0.25'], {
       cwd: PIPER_DIR, env: { ...process.env, LD_LIBRARY_PATH: [PIPER_DIR, process.env.LD_LIBRARY_PATH].filter(Boolean).join(':') },
     }, (line) => (/\.wav$/i.test(line.trim()) ? line.trim() : undefined));
     pipers.set(key, e);
@@ -232,12 +234,18 @@ const osVoices = {
 };
 
 const allVoices = () => [...piperVoices(), ...osVoices.list];
+// Голоса Piper загружаются заранее: первая фраза звучит без долгой паузы.
+function warmVoices() {
+  for (const v of piperVoices()) {
+    piperFor(v).ask('.').then((f) => fs.promises.unlink(f).catch(() => {})).catch(() => {});
+  }
+}
 ipcMain.on('tts:info', (event) => { event.returnValue = { voices: allVoices() }; });
 ipcMain.handle('tts:synth', async (event, { text, voice, rate }) => {
   const v = allVoices().find((x) => x.id === voice);
   if (!v) throw new Error('no voice');
   if (v.id.startsWith('piper:')) {
-    const file = await piperFor(v, rate).ask(String(text).replace(/[\r\n]+/g, ' ').trim());
+    const file = await piperFor(v).ask(String(text).replace(/[\r\n]+/g, ' ').trim());
     const data = await readWhole(file);
     fs.promises.unlink(file).catch(() => {});
     return data;

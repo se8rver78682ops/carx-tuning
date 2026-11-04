@@ -32,10 +32,13 @@ if (info && info.voices && info.voices.length) {
     token++;
     if (audio) { try { audio.pause(); } catch { /* уже остановлен */ } audio = null; }
   };
+  let playRate = 1;
   const play = (buf, my) => new Promise((resolve) => {
     if (my !== token) { resolve(); return; }
     const url = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
     const a = new Audio(url);
+    // у нейросетевого голоса скорость задаётся при воспроизведении (тон сохраняется)
+    if (playRate !== 1) { a.preservesPitch = true; a.playbackRate = playRate; }
     audio = a;
     const end = () => { URL.revokeObjectURL(url); resolve(); };
     a.onended = end; a.onerror = end; a.onpause = () => { if (my !== token) end(); };
@@ -49,8 +52,14 @@ if (info && info.voices && info.voices.length) {
     const segs = [];
     items.forEach(([id, text], i) => {
       const parts = split(text);
+      // первая фраза короче — звук начинается быстрее
+      if (i === 0 && parts[0] && parts[0].length > 90) {
+        const cut = parts[0].indexOf(', ', 25);
+        if (cut > 0 && cut < parts[0].length - 15) parts.splice(0, 1, parts[0].slice(0, cut + 1), parts[0].slice(cut + 2));
+      }
       parts.forEach((t, j) => segs.push({ id, t, first: j === 0, last: j === parts.length - 1, gap: j === parts.length - 1 && i < items.length - 1 }));
     });
+    playRate = v.id.startsWith('piper:') ? Math.max(0.6, Math.min(1.8, rate / 0.92)) : 1;
     const synth = (t) => ipcRenderer.invoke('tts:synth', { text: t, voice: v.id, rate });
     // пока звучит одна фраза, следующая уже готовится
     let next = segs.length ? synth(segs[0].t) : null;
