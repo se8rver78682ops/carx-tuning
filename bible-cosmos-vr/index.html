@@ -243,7 +243,11 @@
   #mapPanel .map-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
   #mapPanel .map-bar .on, #quiz .modes .on { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
   #mapPanel select { font: 14px var(--font-ui); color: var(--ink); background: var(--glass); border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; max-width: 100%; }
-  #mapPanel .map-canvas { display: block; width: 100%; height: min(56vh, 520px); border-radius: 10px; cursor: crosshair; }
+  #mapPanel .map-wrap { position: relative; }
+  #mapPanel .map-canvas { display: block; width: 100%; height: min(60vh, 560px); border-radius: 10px; cursor: grab; touch-action: none; }
+  #mapPanel .map-canvas:active { cursor: grabbing; }
+  #mapPanel .map-zoom { position: absolute; right: 8px; top: 8px; display: grid; gap: 6px; }
+  #mapPanel .map-zoom .btn { width: 42px; height: 42px; padding: 0; font-size: 22px; line-height: 1; background: rgba(10, 13, 28, 0.85); }
   #mapPanel .map-info { margin-top: 10px; }
   #mapPanel .map-info h3 { margin-top: 4px; }
   #mapPanel ul.links { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }

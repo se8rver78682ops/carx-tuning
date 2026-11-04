@@ -1,8 +1,9 @@
-# Собирает data/map.json из Natural Earth (ne_50m_land, ne_10m_lakes, ne_10m_rivers_lake_centerlines, GeoJSON).
+# Собирает data/map.json из Natural Earth (ne_50m_land, ne_10m_land, ne_10m_lakes, ne_10m_rivers_lake_centerlines, GeoJSON).
+# land — грубые контуры для всего региона, landHi — подробные (1:10 млн) для увеличения карты.
 # Запуск: python3 -I tools/build_map.py <папка с geojson> data/map.json
 import json, sys
 D = sys.argv[1]
-BB = (8.0, 22.0, 54.0, 43.0)  # lon0, lat0, lon1, lat1
+BB = (4.0, 16.0, 58.0, 48.5)  # lon0, lat0, lon1, lat1
 
 def clip(poly):
     def inside(p, e):
@@ -62,6 +63,16 @@ for f in json.load(open(f'{D}/ne_50m_land.geojson'))['features']:
         if len(c) >= 3:
             s = simplify(c, 0.04)
             if len(s) >= 3: land.append(r2(s))
+r3 = lambda pts: [[round(x, 3), round(y, 3)] for x, y in pts]
+landHi = []
+for f in json.load(open(f'{D}/ne_10m_land.geojson'))['features']:
+    for ring in rings(f['geometry']):
+        c = clip([tuple(p[:2]) for p in ring])
+        if len(c) >= 3:
+            xs = [p[0] for p in c]; ys = [p[1] for p in c]
+            if (max(xs) - min(xs)) * (max(ys) - min(ys)) < 0.0004: continue
+            s = simplify(c, 0.006)
+            if len(s) >= 3: landHi.append(r3(s))
 lakes = []
 for f in json.load(open(f'{D}/ne_10m_lakes.geojson'))['features']:
     for ring in rings(f['geometry']):
@@ -69,7 +80,7 @@ for f in json.load(open(f'{D}/ne_10m_lakes.geojson'))['features']:
         if len(c) >= 3:
             xs = [p[0] for p in c]; ys = [p[1] for p in c]
             if (max(xs) - min(xs)) * (max(ys) - min(ys)) < 0.01: continue
-            lakes.append(r2(simplify(c, 0.01)))
+            lakes.append(r3(simplify(c, 0.004)))
 rivers = []
 want = {'Nile', 'Euphrates', 'Tigris', 'Jordan', 'Orontes', 'Halys', 'Kızılırmak', 'Tiber'}
 for f in json.load(open(f'{D}/ne_10m_rivers_lake_centerlines.geojson'))['features']:
@@ -77,6 +88,6 @@ for f in json.load(open(f'{D}/ne_10m_rivers_lake_centerlines.geojson'))['feature
     if not any(w.lower() in name.lower() for w in want): continue
     for ln in lines(f['geometry']):
         pts = [tuple(p[:2]) for p in ln if BB[0] <= p[0] <= BB[2] and BB[1] <= p[1] <= BB[3]]
-        if len(pts) >= 2: rivers.append(r2(simplify(pts, 0.02)))
-json.dump({'bbox': BB, 'land': land, 'lakes': lakes, 'rivers': rivers, 'src': 'Natural Earth (public domain)'}, open(sys.argv[2], 'w'), separators=(',', ':'))
-print('land', len(land), sum(len(r) for r in land), 'lakes', len(lakes), 'rivers', len(rivers))
+        if len(pts) >= 2: rivers.append(r3(simplify(pts, 0.006)))
+json.dump({'bbox': BB, 'land': land, 'landHi': landHi, 'lakes': lakes, 'rivers': rivers, 'src': 'Natural Earth (public domain)'}, open(sys.argv[2], 'w'), separators=(',', ':'))
+print('land', len(land), sum(len(r) for r in land), 'landHi', len(landHi), sum(len(r) for r in landHi), 'lakes', len(lakes), 'rivers', len(rivers))

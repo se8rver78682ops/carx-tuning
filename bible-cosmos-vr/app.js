@@ -147,7 +147,7 @@ const I18N = {
     compare: 'Сравнить', quoteFrom: 'Цитата из', quoteTo: 'Цитируется в', fulfillment: 'исполнение пророчества', bloom: 'Свечение звёзд',
     notes: 'Заметки', noNotes: 'Заметок пока нет. Откройте стих и напишите мысль в поле «Моя заметка».', notePh: 'Моя заметка к этому стиху…', noteTitle: 'Моя заметка',
     places: 'Места в этом стихе', map: 'Карта', mapViews: { region: 'Весь регион', israel: 'Земля Израиля' }, mapNoRoute: 'Маршрут не выбран',
-    mapReadRoute: 'Читать:', mapHint: 'Нажмите на место, чтобы увидеть стихи о нём, или выберите маршрут.', mapVerses: (n) => `стихов: ${n}`,
+    mapReadRoute: 'Читать:', mapHint: 'Двумя пальцами или колёсиком — увеличить, пальцем — двигать, двойное касание — крупнее. Нажмите на место, чтобы увидеть стихи о нём.', zoomIn: 'Увеличить', zoomOut: 'Уменьшить', zoomFit: 'Показать всё', mapVerses: (n) => `стихов: ${n}`,
     events: 'События', eventsNote: 'Годы по традиционной хронологии, приблизительные; у историков есть и другие датировки.', inBeginning: 'В начале',
     plan: 'План чтения', planNote: 'Выберите план: каждый день программа предложит главы и отметит прочитанное.',
     plans: { year: 'Библия за год', nt90: 'Новый Завет за 3 месяца', gospels30: 'Евангелия за месяц', psalms30: 'Псалмы за месяц', prov31: 'Притчи за месяц' },
@@ -262,7 +262,7 @@ const I18N = {
     compare: 'Compară', quoteFrom: 'Citat din', quoteTo: 'Citat în', fulfillment: 'împlinirea unei profeții', bloom: 'Strălucirea stelelor',
     notes: 'Note', noNotes: 'Încă nu aveți note. Deschideți un verset și scrieți un gând în câmpul „Nota mea”.', notePh: 'Nota mea la acest verset…', noteTitle: 'Nota mea',
     places: 'Locuri în acest verset', map: 'Hartă', mapViews: { region: 'Toată regiunea', israel: 'Țara lui Israel' }, mapNoRoute: 'Fără traseu',
-    mapReadRoute: 'Citește:', mapHint: 'Atingeți un loc pentru a vedea versetele despre el sau alegeți un traseu.', mapVerses: (n) => `versete: ${n}`,
+    mapReadRoute: 'Citește:', mapHint: 'Cu două degete sau rotița — mărire, cu un deget — mutare, dublă atingere — mai aproape. Atingeți un loc pentru a vedea versetele despre el.', zoomIn: 'Mărește', zoomOut: 'Micșorează', zoomFit: 'Arată tot', mapVerses: (n) => `versete: ${n}`,
     events: 'Evenimente', eventsNote: 'Anii sunt după cronologia tradițională, aproximativi; istoricii au și alte datări.', inBeginning: 'La început',
     plan: 'Plan de citire', planNote: 'Alegeți un plan: în fiecare zi programul propune capitole și marchează ce ați citit.',
     plans: { year: 'Biblia într-un an', nt90: 'Noul Testament în 3 luni', gospels30: 'Evangheliile într-o lună', psalms30: 'Psalmii într-o lună', prov31: 'Proverbele într-o lună' },
@@ -2936,17 +2936,55 @@ async function loadMap() {
   if (!MAPDATA) { try { const r = await fetch('data/map.json'); if (r.ok) MAPDATA = await r.json(); } catch {} }
   return MAPDATA;
 }
-const mapState = { view: 'region', route: null, place: null, hits: [] };
+const mapState = { view: 'region', route: null, place: null, hits: [], cam: null };
+// Камера карты: центр (долгота, широта) и увеличение z относительно всего региона.
+const MAP_K = Math.cos(34.25 * Math.PI / 180);
+const MAP_ZMAX = 40;
+function mapBase(W, H) { const [lon0, lat0, lon1, lat1] = VIEWS.region; return Math.min(W / ((lon1 - lon0) * MAP_K), H / (lat1 - lat0)); }
+function camForBox(box, W, H, pad = 1) {
+  const [lon0, lat0, lon1, lat1] = box;
+  const s = Math.min(W / ((lon1 - lon0) * MAP_K), H / (lat1 - lat0)) / pad;
+  return { lon: (lon0 + lon1) / 2, lat: (lat0 + lat1) / 2, z: THREE.MathUtils.clamp(s / mapBase(W, H), 1, MAP_ZMAX) };
+}
+function camForView(view, W, H) {
+  const c = camForBox(VIEWS[view], W, H);
+  // На вертикальном экране телефона весь регион слишком мелкий: сразу немного крупнее, с центром на востоке моря.
+  if (view === 'region' && H > W * 0.8) return { lon: 31.5, lat: 34.2, z: Math.min(1.7, H / W * 1.4) };
+  return c;
+}
+function clampCam(c) {
+  const [lon0, lat0, lon1, lat1] = VIEWS.region;
+  c.z = THREE.MathUtils.clamp(c.z, 1, MAP_ZMAX);
+  c.lon = THREE.MathUtils.clamp(c.lon, lon0 - 2, lon1 + 2);
+  c.lat = THREE.MathUtils.clamp(c.lat, lat0 - 2, lat1 + 1);
+  return c;
+}
+// Названия морей и рек появляются при увеличении.
+const WATERS = [
+  [34.2, 18.5, 1, 'Великое (Средиземное) море', 'Marea cea Mare (Mediterana)'],
+  [42.2, 34.0, 1, 'Чёрное море', 'Marea Neagră'],
+  [27.3, 34.9, 1.4, 'Красное море', 'Marea Roșie'],
+  [38.6, 25.1, 1.8, 'Эгейское море', 'Marea Egee'],
+  [28.6, 30.9, 1.6, 'р. Нил', 'Nilul'],
+  [35.1, 39.8, 1.6, 'р. Евфрат', 'Eufratul'],
+  [35.6, 43.4, 2, 'р. Тигр', 'Tigrul'],
+  [29.4, 48.6, 1.6, 'Персидский залив', 'Golful Persic'],
+  [35.05, 33.2, 2.2, 'Кипр', 'Cipru'],
+  [31.3, 35.47, 4, 'Солёное море', 'Marea Sărată'],
+  [32.83, 35.6, 4, 'Галилейское море', 'Marea Galileii'],
+  [32.15, 35.57, 6, 'р. Иордан', 'Iordanul'],
+  [29.3, 34.85, 4, 'залив Акаба', 'Golful Aqaba'],
+  [29.6, 32.6, 4, 'Суэцкий залив', 'Golful Suez'],
+];
 const ptOf = (p) => (typeof p === 'string' ? [PLACE[p].lat, PLACE[p].lon] : p);
 
 function drawMap(cv, st) {
   const g = cv.getContext('2d');
   const W = cv.width, H = cv.height, dpr = cv.dataset.dpr ? +cv.dataset.dpr : 1;
-  const [lon0, lat0, lon1, lat1] = VIEWS[st.view];
-  const k = Math.cos(((lat0 + lat1) / 2) * Math.PI / 180);
-  const s = Math.min(W / ((lon1 - lon0) * k), H / (lat1 - lat0));
-  const ox = (W - (lon1 - lon0) * k * s) / 2, oy = (H - (lat1 - lat0) * s) / 2;
-  const P = (lat, lon) => [ox + (lon - lon0) * k * s, oy + (lat1 - lat) * s];
+  if (!st.cam) st.cam = camForView(st.view, W, H);
+  const cam = st.cam, k = MAP_K, s = mapBase(W, H) * cam.z;
+  const P = (lat, lon) => [W / 2 + (lon - cam.lon) * k * s, H / 2 - (lat - cam.lat) * s];
+  st.toWorld = (x, y) => [cam.lat - (y - H / 2) / s, cam.lon + (x - W / 2) / (k * s)];
   const sea = g.createLinearGradient(0, 0, 0, H);
   sea.addColorStop(0, '#0b1a33'); sea.addColorStop(1, '#071224');
   g.fillStyle = sea; g.fillRect(0, 0, W, H);
@@ -2959,9 +2997,10 @@ function drawMap(cv, st) {
   };
   if (MAPDATA) {
     g.shadowColor = 'rgba(243, 195, 91, 0.25)'; g.shadowBlur = 10 * dpr;
-    for (const ring of MAPDATA.land) poly(ring, '#2f2a1f', null);
+    const land = cam.z > 2.2 && MAPDATA.landHi ? MAPDATA.landHi : MAPDATA.land;
+    for (const ring of land) poly(ring, '#2f2a1f', null);
     g.shadowBlur = 0;
-    for (const ring of MAPDATA.land) poly(ring, null, 'rgba(214, 180, 110, 0.55)', 1.2 * dpr);
+    for (const ring of land) poly(ring, null, 'rgba(214, 180, 110, 0.55)', 1.2 * dpr);
     for (const ring of MAPDATA.lakes) poly(ring, '#173a63', 'rgba(120, 170, 230, 0.6)', 1 * dpr);
     g.strokeStyle = 'rgba(110, 160, 230, 0.75)'; g.lineWidth = 1.4 * dpr;
     for (const line of MAPDATA.rivers) {
@@ -2990,7 +3029,7 @@ function drawMap(cv, st) {
   const inRoute = new Set(route ? route.pts.filter((p) => typeof p === 'string') : []);
   const labels = [];
   st.hits = [];
-  const fs = Math.round(13 * dpr);
+  const fs = Math.round(13 * dpr * Math.min(1.35, 1 + Math.log2(cam.z) * 0.07));
   g.font = `500 ${fs}px ${FONT_UI}`;
   g.textBaseline = 'middle';
   const order = Object.values(PLACE).sort((a, b) => (b.id === st.place) - (a.id === st.place) || inRoute.has(b.id) - inRoute.has(a.id));
@@ -3004,21 +3043,69 @@ function drawMap(cv, st) {
     st.hits.push({ id: p.id, x, y });
     const name = placeName(p.id);
     const w = g.measureText(name).width;
-    const box = [x + 7 * dpr, y - fs / 2 - 2, w + 4, fs + 4];
-    if (!sel && labels.some((b) => box[0] < b[0] + b[2] && box[0] + box[2] > b[0] && box[1] < b[1] + b[3] && box[1] + box[3] > b[1])) continue;
+    // Название справа от точки; если там занято — слева, сверху или снизу.
+    const free = (bx) => !labels.some((b) => bx[0] < b[0] + b[2] && bx[0] + bx[2] > b[0] && bx[1] < b[1] + b[3] && bx[1] + bx[3] > b[1]);
+    const cands = [
+      [x + 7 * dpr, y - fs / 2 - 2],
+      [x - 7 * dpr - w - 4, y - fs / 2 - 2],
+      [x - w / 2 - 2, y - fs - 9 * dpr],
+      [x - w / 2 - 2, y + 7 * dpr],
+    ].map(([bx, by]) => [bx, by, w + 4, fs + 4]);
+    const box = sel ? cands[0] : cands.find(free);
+    if (!box) continue;
     labels.push(box);
     g.fillStyle = 'rgba(4, 6, 14, 0.6)'; g.fillRect(box[0] - 2, box[1], box[2] + 2, box[3]);
     g.fillStyle = sel ? '#ffffff' : rt ? '#f6e7c1' : '#c8cde0';
-    g.fillText(name, x + 8 * dpr, y);
+    g.fillText(name, box[0] + 1 * dpr, box[1] + box[3] / 2);
   }
+  // Моря и реки — после мест и только там, где не закрывают их названия
+  g.textBaseline = 'middle'; g.textAlign = 'center';
+  const wfs = Math.round(12 * dpr * Math.min(1.35, 1 + Math.log2(cam.z) * 0.08));
+  g.font = `italic 500 ${wfs}px ${FONT_UI}`;
+  g.fillStyle = 'rgba(140, 185, 245, 0.85)';
+  for (const [la, lo, mz, ru, ro] of WATERS) {
+    if (cam.z < mz) continue;
+    const [x, y] = P(la, lo);
+    if (x < -100 || y < -20 || x > W + 100 || y > H + 20) continue;
+    const t = LANG === 'ro' ? ro : ru, w = g.measureText(t).width;
+    const box = [x - w / 2, y - wfs / 2, w, wfs];
+    const hitsBox = (b) => box[0] < b[0] + b[2] && box[0] + box[2] > b[0] && box[1] < b[1] + b[3] && box[1] + box[3] > b[1];
+    if (labels.some(hitsBox) || st.hits.some((p) => p.x > box[0] - 6 * dpr && p.x < box[0] + box[2] + 6 * dpr && p.y > box[1] - 6 * dpr && p.y < box[1] + box[3] + 6 * dpr)) continue;
+    labels.push(box);
+    g.fillText(t, x, y);
+  }
+  g.textAlign = 'left';
   g.fillStyle = 'rgba(200, 205, 224, 0.5)'; g.font = `${Math.round(10 * dpr)}px ${FONT_UI}`; g.textBaseline = 'bottom';
   g.fillText('Natural Earth', 6 * dpr, H - 4 * dpr);
+  // Масштабная линейка: 1° широты ≈ 111 км
+  const kmPx = s / 111;
+  const want = 110 * dpr / kmPx;
+  const nice = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000].find((v) => v >= want * 0.6) || 1000;
+  const len = nice * kmPx, x1 = W - 12 * dpr, x0 = x1 - len, y0 = H - 10 * dpr;
+  g.strokeStyle = 'rgba(232, 235, 246, 0.8)'; g.lineWidth = 2 * dpr;
+  g.beginPath(); g.moveTo(x0, y0 - 5 * dpr); g.lineTo(x0, y0); g.lineTo(x1, y0); g.lineTo(x1, y0 - 5 * dpr); g.stroke();
+  g.fillStyle = 'rgba(232, 235, 246, 0.9)'; g.textAlign = 'center'; g.font = `${Math.round(11 * dpr)}px ${FONT_UI}`;
+  g.fillText(`${nice} ${LANG === 'ro' ? 'km' : 'км'}`, (x0 + x1) / 2, y0 - 6 * dpr);
+  g.textAlign = 'left';
+}
+
+// Подвести камеру к месту или маршруту
+function camToPlace(id, W, H) {
+  const p = PLACE[id], v = VIEWS.israel;
+  const inIsrael = p.lon > v[0] && p.lon < v[2] && p.lat > v[1] && p.lat < v[3];
+  const base = camForBox(inIsrael ? v : VIEWS.region, W, H);
+  return clampCam({ lon: p.lon, lat: p.lat, z: inIsrael ? base.z * 1.6 : Math.max(base.z, 4) });
+}
+function camToRoute(route, W, H) {
+  const pts = route.pts.map(ptOf);
+  const la = pts.map((p) => p[0]), lo = pts.map((p) => p[1]);
+  return clampCam(camForBox([Math.min(...lo) - 0.6, Math.min(...la) - 0.6, Math.max(...lo) + 0.6, Math.max(...la) + 0.6], W, H, 1.08));
 }
 
 async function openMap(opts = {}) {
   await loadMap();
-  if (opts.place) { mapState.place = opts.place; const p = PLACE[opts.place]; const v = VIEWS.israel; mapState.view = p.lon > v[0] && p.lon < v[2] && p.lat > v[1] && p.lat < v[3] ? 'israel' : 'region'; }
-  if (opts.route !== undefined) mapState.route = opts.route;
+  if (opts.place) { mapState.place = opts.place; const p = PLACE[opts.place]; const v = VIEWS.israel; mapState.view = p.lon > v[0] && p.lon < v[2] && p.lat > v[1] && p.lat < v[3] ? 'israel' : 'region'; mapState.cam = null; mapState.focus = opts.place; }
+  if (opts.route !== undefined) { mapState.route = opts.route; mapState.cam = null; }
   if (renderer.xr.isPresenting) { buildVrMap(); return; }
   renderMapPanel();
 }
@@ -3032,19 +3119,26 @@ function renderMapPanel() {
   const bar = el2('div', 'map-bar');
   for (const v of ['region', 'israel']) {
     const b = el2('button', 'btn' + (mapState.view === v ? ' on' : ''), L.mapViews[v]);
-    b.type = 'button'; b.addEventListener('click', () => { mapState.view = v; renderMapPanel(); });
+    b.type = 'button'; b.addEventListener('click', () => { mapState.view = v; mapState.cam = null; renderMapPanel(); });
     bar.append(b);
   }
   const sel = el2('select'); sel.id = 'mapRoute';
   sel.append(Object.assign(document.createElement('option'), { value: '', textContent: L.mapNoRoute }));
   for (const r of ROUTES) sel.append(Object.assign(document.createElement('option'), { value: r.id, textContent: r[LANG] || r.ru }));
   sel.value = mapState.route || '';
-  sel.addEventListener('change', () => { mapState.route = sel.value || null; if (mapState.route) mapState.view = 'region'; renderMapPanel(); });
+  sel.addEventListener('change', () => { mapState.route = sel.value || null; if (mapState.route) { mapState.view = 'region'; mapState.routeFit = true; } renderMapPanel(); });
   bar.append(sel);
   box.append(bar);
+  const wrap = el2('div', 'map-wrap');
   const cv = el2('canvas');
   cv.className = 'map-canvas';
-  box.append(cv);
+  const zoom = el2('div', 'map-zoom');
+  const zin = el2('button', 'btn', '+'), zout = el2('button', 'btn', '−'), zfit = el2('button', 'btn', '⤢');
+  [zin, zout, zfit].forEach((b) => { b.type = 'button'; });
+  zin.setAttribute('aria-label', L.zoomIn); zout.setAttribute('aria-label', L.zoomOut); zfit.setAttribute('aria-label', L.zoomFit);
+  zoom.append(zin, zout, zfit);
+  wrap.append(cv, zoom);
+  box.append(wrap);
   const info = el2('div', 'map-info');
   box.append(info);
   box.hidden = false;
@@ -3052,14 +3146,76 @@ function renderMapPanel() {
   const dpr = Math.min(2, devicePixelRatio || 1);
   const rect = cv.getBoundingClientRect();
   cv.width = Math.round(rect.width * dpr); cv.height = Math.round(rect.height * dpr); cv.dataset.dpr = dpr;
+  if (mapState.focus) { mapState.cam = camToPlace(mapState.focus, cv.width, cv.height); mapState.focus = null; }
+  if (mapState.routeFit && mapState.route) { mapState.cam = camToRoute(ROUTES.find((r) => r.id === mapState.route), cv.width, cv.height); mapState.routeFit = false; }
   drawMap(cv, mapState);
-  cv.addEventListener('click', (e) => {
-    const r = cv.getBoundingClientRect();
-    const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
-    let best = null, bd = 18 * dpr;
-    for (const h of mapState.hits) { const d = Math.hypot(h.x - x, h.y - y); if (d < bd) { bd = d; best = h.id; } }
-    if (best) { mapState.place = best; drawMap(cv, mapState); renderPlaceInfo(info); }
+  // Жесты: палец — двигать, два пальца или колёсико — увеличивать, двойное касание — крупнее.
+  let raf = 0;
+  const redraw = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; drawMap(cv, mapState); }); };
+  const local = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr]; };
+  const zoomAt = (x, y, z) => {
+    const c = mapState.cam, s1 = mapBase(cv.width, cv.height) * c.z;
+    const la = c.lat - (y - cv.height / 2) / s1, lo = c.lon + (x - cv.width / 2) / (MAP_K * s1);
+    c.z = THREE.MathUtils.clamp(z, 1, MAP_ZMAX);
+    const s2 = mapBase(cv.width, cv.height) * c.z;
+    c.lon = lo - (x - cv.width / 2) / (MAP_K * s2);
+    c.lat = la + (y - cv.height / 2) / s2;
+    clampCam(c); redraw();
+  };
+  const ptrs = new Map();
+  let moved = false, pinch = null, lastTap = 0;
+  cv.addEventListener('pointerdown', (e) => {
+    try { cv.setPointerCapture(e.pointerId); } catch { /* не у всех устройств */ }
+    ptrs.set(e.pointerId, local(e));
+    if (ptrs.size === 1) moved = false;
+    if (ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()];
+      pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z: mapState.cam.z, mid: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] };
+      moved = true;
+    }
   });
+  cv.addEventListener('pointermove', (e) => {
+    if (!ptrs.has(e.pointerId)) return;
+    const prev = ptrs.get(e.pointerId), cur = local(e);
+    ptrs.set(e.pointerId, cur);
+    const c = mapState.cam;
+    if (ptrs.size === 1) {
+      const dx = cur[0] - prev[0], dy = cur[1] - prev[1];
+      if (Math.abs(dx) + Math.abs(dy) > 0) {
+        const s2 = mapBase(cv.width, cv.height) * c.z;
+        c.lon -= dx / (MAP_K * s2); c.lat += dy / s2;
+        clampCam(c); redraw();
+      }
+      if (Math.hypot(cur[0] - prev[0], cur[1] - prev[1]) > 2) moved = true;
+    } else if (ptrs.size === 2 && pinch) {
+      const [a, b] = [...ptrs.values()];
+      const d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      // сдвиг середины между пальцами двигает карту, расстояние — увеличивает
+      const s2 = mapBase(cv.width, cv.height) * c.z;
+      c.lon -= (mid[0] - pinch.mid[0]) / (MAP_K * s2); c.lat += (mid[1] - pinch.mid[1]) / s2;
+      pinch.mid = mid;
+      zoomAt(mid[0], mid[1], pinch.z * (d / pinch.d));
+    }
+  });
+  const up = (e) => {
+    if (!ptrs.has(e.pointerId)) return;
+    const pt = ptrs.get(e.pointerId);
+    ptrs.delete(e.pointerId);
+    if (ptrs.size < 2) pinch = null;
+    if (ptrs.size || moved || e.type === 'pointercancel') return;
+    const now = performance.now();
+    if (now - lastTap < 320) { lastTap = 0; zoomAt(pt[0], pt[1], mapState.cam.z * 2); return; }
+    lastTap = now;
+    let best = null, bd = 22 * dpr;
+    for (const hh of mapState.hits) { const d = Math.hypot(hh.x - pt[0], hh.y - pt[1]); if (d < bd) { bd = d; best = hh.id; } }
+    if (best) { mapState.place = best; drawMap(cv, mapState); renderPlaceInfo(info); }
+  };
+  cv.addEventListener('pointerup', up);
+  cv.addEventListener('pointercancel', up);
+  cv.addEventListener('wheel', (e) => { e.preventDefault(); const [x, y] = local(e); zoomAt(x, y, mapState.cam.z * (e.deltaY < 0 ? 1.25 : 0.8)); }, { passive: false });
+  zin.addEventListener('click', () => zoomAt(cv.width / 2, cv.height / 2, mapState.cam.z * 1.6));
+  zout.addEventListener('click', () => zoomAt(cv.width / 2, cv.height / 2, mapState.cam.z / 1.6));
+  zfit.addEventListener('click', () => { mapState.view = 'region'; mapState.cam = null; renderMapPanel(); });
   const route = mapState.route && ROUTES.find((r) => r.id === mapState.route);
   if (route) {
     const r = fromRef(route.ref);
@@ -3086,6 +3242,7 @@ function renderPlaceInfo(info) {
 }
 function closeMap() {
   ui.mapPanel.hidden = true;
+  mapState.vrCam = false;
   if (mapVr.group) { scene.remove(mapVr.group); disposeTree(mapVr.group); mapVr.group = null; }
   mapVr.buttons = [];
 }
@@ -3095,6 +3252,9 @@ function buildVrMap() {
   const L = T();
   const cv = document.createElement('canvas');
   cv.width = 1600; cv.height = 1000; cv.dataset.dpr = 2.2;
+  // камера панели на экране рассчитана на другой размер холста — в VR вид подбирается заново
+  if (mapState.focus) { mapState.cam = camToPlace(mapState.focus, cv.width, cv.height); mapState.focus = null; }
+  if (!mapState.vrCam) { mapState.cam = null; mapState.vrCam = true; }
   drawMap(cv, mapState);
   const grp = new THREE.Group();
   const W = 1.5, H = W * cv.height / cv.width;
@@ -3105,14 +3265,20 @@ function buildVrMap() {
   const idx = mapState.route ? ROUTES.findIndex((r) => r.id === mapState.route) : -1;
   const nextRoute = ROUTES[(idx + 1) % ROUTES.length];
   const acts = [
-    [`⇄ ${nextRoute[LANG] || nextRoute.ru}`, () => { mapState.route = nextRoute.id; mapState.view = 'region'; buildVrMap(); }],
-    [L.mapViews[mapState.view === 'region' ? 'israel' : 'region'], () => { mapState.view = mapState.view === 'region' ? 'israel' : 'region'; buildVrMap(); }],
+    [`⇄ ${nextRoute[LANG] || nextRoute.ru}`, () => { mapState.route = nextRoute.id; mapState.view = 'region'; mapState.cam = camToRoute(nextRoute, 1600, 1000); buildVrMap(); }],
+    [L.mapViews[mapState.view === 'region' ? 'israel' : 'region'], () => { mapState.view = mapState.view === 'region' ? 'israel' : 'region'; mapState.cam = null; buildVrMap(); }],
+    ['+', () => { if (mapState.cam) { mapState.cam.z = Math.min(MAP_ZMAX, mapState.cam.z * 1.6); } buildVrMap(); }],
+    ['−', () => { if (mapState.cam) { mapState.cam.z = Math.max(1, mapState.cam.z / 1.6); } buildVrMap(); }],
     [L.xrClose, closeMap],
   ];
-  const bw = 0.42, gap = 0.015, total = acts.length * bw + (acts.length - 1) * gap;
+  const bws = acts.map(([t]) => (t.length <= 1 ? 0.14 : 0.42)), gap = 0.015;
+  const total = bws.reduce((a, b) => a + b, 0) + (acts.length - 1) * gap;
+  let xAt = -total / 2;
   mapVr.buttons = acts.map(([t, fn], i) => {
+    const bw = bws[i];
     const b = makeButton(t, fn, bw);
-    b.position.set(-total / 2 + bw / 2 + i * (bw + gap), -0.06, 0);
+    b.position.set(xAt + bw / 2, -0.06, 0);
+    xAt += bw + gap;
     grp.add(b);
     return b;
   });
@@ -5167,7 +5333,7 @@ window.__androidBack = () => {
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
   get look() { return look; }, pickAt(x, y) { const v = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); raycaster.setFromCamera(v, camera); const h = pick(raycaster.ray.clone()); return h && { type: h.type, vi: h.vi, bi: h.bi, ci: h.ci }; }, get busy() { return busy; },
-  go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  get mapState() { return mapState; }, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
   buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },
