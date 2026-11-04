@@ -5920,10 +5920,10 @@ const AI_TXT = {
     listen: '🔊', saw: 'видел экран', voiceOn: 'Отвечать голосом: вкл', voiceOff: 'Отвечать голосом: выкл',
     intro: (n) => `Я ${n}, ваш советник. Я вижу, что у вас открыто в программе, и могу объяснить стих, главу, пророчество или подсказать, где что найти. Спрашивайте — можно голосом: удерживайте пробел или боковую кнопку мыши.`,
     keyTitle: 'Подключение', keyLabel: 'Ключ Anthropic API', nameLabel: 'Имя советника', save: 'Сохранить',
-    keyHelp: 'Советник работает через Claude (Anthropic). Нужен свой ключ: зайдите на console.anthropic.com → API Keys → Create Key, скопируйте ключ (начинается с sk-ant-) и вставьте сюда. Оплата по использованию, на сайте Anthropic. Ключ хранится только на этом устройстве и отправляется только в Anthropic. Нужен интернет.',
+    keyHelp: 'Один раз: вставьте ключ Anthropic в поле ниже — щёлкните в поле и нажмите Ctrl+V (работает при любой раскладке), затем «Сохранить». После этого просто нажимайте 🎤 (или пробел, или боковую кнопку мыши) и говорите — Тарс ответит голосом. Ключ берётся на console.anthropic.com → API Keys → Create Key (начинается с sk-ant-). Он хранится только на этом устройстве и отправляется только в Anthropic. Нужен интернет.',
     keyBad: 'Ключ не подошёл. Проверьте его в настройке.', noNet: 'Нет связи с сервером. Проверьте интернет.',
     busy: 'Сервер сейчас перегружен или исчерпан лимит. Попробуйте через минуту.', fail: (m) => `Не получилось: ${m}`,
-    refusal: 'На это я ответить не могу.', cut: '…(ответ оборван)', keySaved: 'Готово. Спрашивайте.', keyNeed: 'Вставьте ключ.',
+    paste: '📋 Вставить', ready: (n) => `Я ${n}. Готов слушать. Нажмите на микрофон и говорите.`, refusal: 'На это я ответить не могу.', cut: '…(ответ оборван)', keySaved: 'Готово. Спрашивайте.', keyNeed: 'Вставьте ключ.',
     voiceLabel: 'Голос советника', voiceTest: '▶ Проверить', voiceSame: 'Как у чтения',
     askVerse: 'Спросить советника', askVerseQ: (r) => `Объясни, пожалуйста, стих ${r}.`,
   },
@@ -5933,10 +5933,10 @@ const AI_TXT = {
     listen: '🔊', saw: 'a văzut ecranul', voiceOn: 'Răspuns cu voce: da', voiceOff: 'Răspuns cu voce: nu',
     intro: (n) => `Sunt ${n}, sfătuitorul dumneavoastră. Văd ce aveți deschis în program și pot explica un verset, un capitol, o profeție sau vă pot arăta unde găsiți ceva. Întrebați — și cu vocea: țineți apăsat Space sau butonul lateral al mouse-ului.`,
     keyTitle: 'Conectare', keyLabel: 'Cheia Anthropic API', nameLabel: 'Numele sfătuitorului', save: 'Salvează',
-    keyHelp: 'Sfătuitorul funcționează prin Claude (Anthropic). Este nevoie de o cheie proprie: console.anthropic.com → API Keys → Create Key, copiați cheia (începe cu sk-ant-) și lipiți-o aici. Plata după utilizare, pe site-ul Anthropic. Cheia rămâne doar pe acest dispozitiv și se trimite doar la Anthropic. E nevoie de internet.',
+    keyHelp: 'O singură dată: lipiți cheia Anthropic în câmpul de mai jos — faceți clic în câmp și apăsați Ctrl+V, apoi «Salvează». După aceea apăsați 🎤 (sau Space, sau butonul lateral al mouse-ului) și vorbiți — Tars răspunde cu vocea. Cheia se ia de pe console.anthropic.com → API Keys → Create Key (începe cu sk-ant-). Rămâne doar pe acest dispozitiv și se trimite doar la Anthropic. E nevoie de internet.',
     keyBad: 'Cheia nu a mers. Verificați-o în setări.', noNet: 'Nu există legătură cu serverul. Verificați internetul.',
     busy: 'Serverul este ocupat sau limita s-a terminat. Încercați peste un minut.', fail: (m) => `Nu a reușit: ${m}`,
-    refusal: 'La aceasta nu pot răspunde.', cut: '…(răspuns întrerupt)', keySaved: 'Gata. Întrebați.', keyNeed: 'Lipiți cheia.',
+    paste: '📋 Lipește', ready: (n) => `Sunt ${n}. Sunt gata să ascult. Apăsați pe microfon și vorbiți.`, refusal: 'La aceasta nu pot răspunde.', cut: '…(răspuns întrerupt)', keySaved: 'Gata. Întrebați.', keyNeed: 'Lipiți cheia.',
     voiceLabel: 'Vocea sfătuitorului', voiceTest: '▶ Ascultă', voiceSame: 'Ca la citire',
     askVerse: 'Întreabă sfătuitorul', askVerseQ: (r) => `Explică-mi, te rog, versetul ${r}.`,
   },
@@ -6301,9 +6301,14 @@ function buildAiPanel() {
     if (!v) { toast(AT().keyNeed, 4000); return; }
     ai.key = v; store.set('aiKey', v);
     aiShowSetup(false); aiControls(); aiRenderLog(); toast(AT().keySaved, 3000);
+    if (ai.voice) aiSpeak(AT().ready(aiName()));
     p.querySelector('.ai-q').focus();
   });
-  setup.append(el2('h3', 'ai-st'), help, kl, key, nl, nameIn, vrow, save);
+  // кнопка «Вставить»: в программе для компьютера нет меню правой кнопки мыши
+  const paste = el2('button', 'btn ai-paste', '📋'); paste.type = 'button';
+  paste.addEventListener('click', async () => { try { const t = (await navigator.clipboard.readText()).trim(); if (t) key.value = t; } catch { key.focus(); toast('Ctrl+V', 3000); } });
+  const krow = el2('div', 'ai-vline'); krow.append(key, paste);
+  setup.append(el2('h3', 'ai-st'), help, kl, krow, nl, nameIn, vrow, save);
   const log = el2('div', 'ai-log'); log.setAttribute('aria-live', 'polite');
   const form = el2('form', 'ai-form');
   const q = el2('textarea', 'ai-q'); q.rows = 2;
@@ -6331,6 +6336,7 @@ function aiTexts() {
   p.querySelectorAll('.ai-lbl')[1].textContent = A.nameLabel;
   p.querySelector('.ai-nameIn').placeholder = A.defName;
   p.querySelector('.ai-saveKey').textContent = A.save;
+  p.querySelector('.ai-paste').textContent = A.paste;
   p.querySelector('.ai-vl').textContent = A.voiceLabel;
   p.querySelector('.ai-vtest').textContent = A.voiceTest;
   p.querySelector('.ai-q').placeholder = A.ph;
