@@ -138,6 +138,10 @@ const I18N = {
     lessonsListenAll: '▶ Слушать все уроки', lessonListen: '▶ Слушать урок', lessonsAll: '☰ Все уроки',
     lessonsMain: 'Главная мысль: человек счастлив, когда живёт в согласии с тем, как его задумал Создатель. Заповеди описывают этот замысел, истории показывают, что бывает при отступлении от него, а пророчества — что замысел исполнится.',
     chaptersN: (n) => `Глав: ${n}`, readOf: (r, n) => (r ? `прочитано ${r} из ${n}` : 'ещё не читали'),
+    prophecies: 'Пророчества', prophNote: (n) => `${n} пророчеств: что было предсказано, как и когда это исполнилось, и что Библия обещает на будущее. Нажмите на стих, чтобы открыть его.`,
+    prophNone: 'Не удалось загрузить пророчества.', prophListenAll: '▶ Слушать раздел', prophSkyAll: '✦ Все на небе', prophListen: '▶ Слушать', prophSky: '✦ На небе',
+    prophDone: 'Исполнилось', prophSign: 'Признак', prophPromise: 'Обещание', prophForetold: 'Предсказано', prophFulfilled: 'Исполнение', prophSays: 'Что сказано',
+    prophAlso: 'Смотрите также', prophHistory: 'подтверждено историей', prophBack: '◀ К пророчествам', prophSkyNote: 'Дуги на небе ведут от пророчества к его исполнению.',
     welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
     showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
@@ -253,6 +257,10 @@ const I18N = {
     lessonsListenAll: '▶ Ascultă toate lecțiile', lessonListen: '▶ Ascultă lecția', lessonsAll: '☰ Toate lecțiile',
     lessonsMain: 'Ideea principală: omul este fericit când trăiește în armonie cu felul în care l-a gândit Creatorul. Poruncile descriu acest plan, istoriile arată ce se întâmplă când ne abatem de la el, iar profețiile — că planul se va împlini.',
     chaptersN: (n) => `Capitole: ${n}`, readOf: (r, n) => (r ? `citite ${r} din ${n}` : 'încă necitite'),
+    prophecies: 'Profeții', prophNote: (n) => `${n} profeții: ce s-a prezis, cum și când s-a împlinit și ce promite Biblia pentru viitor. Atingeți un verset ca să-l deschideți.`,
+    prophNone: 'Profețiile nu au putut fi încărcate.', prophListenAll: '▶ Ascultă secțiunea', prophSkyAll: '✦ Toate pe cer', prophListen: '▶ Ascultă', prophSky: '✦ Pe cer',
+    prophDone: 'Împlinită', prophSign: 'Semn', prophPromise: 'Promisiune', prophForetold: 'Prezis', prophFulfilled: 'Împlinire', prophSays: 'Ce se spune',
+    prophAlso: 'Vedeți și', prophHistory: 'confirmată de istorie', prophBack: '◀ La profeții', prophSkyNote: 'Arcele de pe cer duc de la profeție la împlinirea ei.',
     welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
     showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
@@ -297,7 +305,7 @@ const $ = (id) => document.getElementById(id);
 const ui = {
   stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
   loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
-  q: $('q'), reader: $('reader'), readerBtn: $('readerBtn'), lessonsBtn: $('lessonsBtn'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
+  q: $('q'), prophPanel: $('prophPanel'), prophBtn: $('prophBtn'), reader: $('reader'), readerBtn: $('readerBtn'), lessonsBtn: $('lessonsBtn'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
   legendToggle: $('legendToggle'), home: $('home'), chapterInfo: $('chapterInfo'), parallelPanel: $('parallelPanel'), trailBtn: $('trailBtn'), notesBtn: $('notesBtn'), mapBtn: $('mapBtn'), eventsBtn: $('eventsBtn'), planBtn: $('planBtn'), musicBtn: $('musicBtn'), mapPanel: $('mapPanel'), quiet: $('quietBtn'), quietExit: $('quietExit'), welcome: $('welcome'), welcomeBtn: $('welcomeBtn'), listPanel: $('listPanel'), votd: $('votd'), continueBtn: $('continueBtn'), settingsPanel: $('settingsPanel'), bmBtn: $('bmBtn'), topicsBtn: $('topicsBtn'), votdBtn: $('votdBtn'), settingsBtn: $('settingsBtn'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
 };
 
@@ -2489,6 +2497,7 @@ function closeList() {
   if (kind === 'search') setGalaxyLayer('searchPts', null);
   if (kind === 'topic') setGalaxyLayer('topic', null);
   if (kind === 'lesson') setGalaxyLayer('lesson', null);
+  if (kind === 'proph') setGalaxyLayer('proph', null);
   if (kind === 'chlinks') setGalaxyLayer('chapterLinks', null);
 }
 function showBookmarks() {
@@ -3968,8 +3977,164 @@ async function listenLessons(i, chain) {
   if (!ok) narration.on = false;
 }
 
+
+/* ---------- Пророчества: предсказание → исполнение, с объяснением ---------- */
+const PROPH_GROUPS = [
+  { id: 'messiah', ru: 'О Мессии', ro: 'Despre Mesia', color: '#ffd27a', kind: 'done' },
+  { id: 'nations', ru: 'Народы и города', ro: 'Popoare și orașe', color: '#ff9a6b', kind: 'done' },
+  { id: 'israel', ru: 'Израиль и Иерусалим', ro: 'Israel și Ierusalim', color: '#7fb8ff', kind: 'done' },
+  { id: 'lastdays', ru: 'Последние дни', ro: 'Zilele din urmă', color: '#ff7aa8', kind: 'sign' },
+  { id: 'future', ru: 'Обещания о будущем', ro: 'Promisiuni pentru viitor', color: '#8fe38a', kind: 'promise' },
+];
+let PROPH = null;
+const prophState = { group: 'messiah' };
+async function loadProph() {
+  if (!PROPH) { try { const r = await fetch('data/prophecies.json'); if (r.ok) PROPH = await r.json(); } catch { /* нет файла */ } }
+  return PROPH;
+}
+const prophItems = (g) => (PROPH ? PROPH.items.filter((x) => x.group === g) : []);
+const prophGroup = (g) => PROPH_GROUPS.find((x) => x.id === g) || PROPH_GROUPS[0];
+const prophTitle = (it) => it[LANG] || it.ru;
+const prophText = (it) => (LANG === 'ro' ? it.tro : it.tru) || it.tru;
+const prophWhen = (it) => (LANG === 'ro' ? it.when_ro : it.when_ru) || '';
+const refsOf = (list) => (list || []).map(fromRef).filter(Boolean);
+
+async function openProphecies(group) {
+  await loadProph();
+  if (group) prophState.group = group;
+  closeList(); closeDetail();
+  renderProph();
+}
+function closeProph() { ui.prophPanel.hidden = true; }
+
+function verseBtn(r) {
+  const b = el2('button', 'pverse'); b.type = 'button';
+  b.append(el2('span', 'r', refOf(r.bi, r.ci, r.vi)), el2('span', 't', plain(verseText(r.bi, r.ci, r.vi))));
+  b.addEventListener('click', () => { closeProph(); jumpTo(r); });
+  return b;
+}
+function renderProph() {
+  const L = T(), box = ui.prophPanel;
+  box.replaceChildren();
+  const close = el2('button', 'close', '✕'); close.type = 'button'; close.setAttribute('aria-label', L.close2);
+  close.addEventListener('click', closeProph);
+  box.append(close, el2('h2', 'p-title', L.prophecies));
+  if (!PROPH) { box.append(el2('p', 'muted', L.prophNone)); box.hidden = false; placeProph(); return; }
+  box.append(el2('p', 'p-note', L.prophNote(PROPH.items.length)));
+  // Разделы
+  const tabs = el2('div', 'p-tabs');
+  for (const g of PROPH_GROUPS) {
+    const n = prophItems(g.id).length;
+    if (!n) continue;
+    const b = el2('button', 'p-tab' + (g.id === prophState.group ? ' on' : '')); b.type = 'button';
+    const dot = el2('span', 'dot'); dot.style.background = g.color;
+    b.append(dot, document.createTextNode(`${g[LANG] || g.ru} · ${n}`));
+    b.addEventListener('click', () => { prophState.group = g.id; renderProph(); box.scrollTop = 0; });
+    tabs.append(b);
+  }
+  box.append(tabs);
+  const grp = prophGroup(prophState.group), items = prophItems(grp.id);
+  const acts = el2('div', 'actions wrap');
+  const all = el2('button', 'btn primary', L.prophListenAll); all.type = 'button';
+  all.addEventListener('click', () => listenProph(grp.id, 0, true));
+  const sky2 = el2('button', 'btn', L.prophSkyAll); sky2.type = 'button';
+  sky2.addEventListener('click', () => showProphOnSky(items, grp, `${L.prophecies}: ${grp[LANG] || grp.ru}`));
+  acts.append(all, sky2);
+  box.append(acts);
+  // Карточки
+  const badge = { done: L.prophDone, sign: L.prophSign, promise: L.prophPromise }[grp.kind];
+  items.forEach((it, i) => {
+    const card = el2('article', 'pcard'); card.id = `p-${it.id}`;
+    card.style.setProperty('--pc', grp.color);
+    const head = el2('div', 'p-head');
+    head.append(el2('span', 'p-badge', badge), el2('h3', '', prophTitle(it)));
+    card.append(head);
+    const when = prophWhen(it);
+    if (when) card.append(el2('div', 'p-when', when));
+    const pr = refsOf(it.p), fr = refsOf(it.f);
+    if (pr.length) { card.append(el2('div', 'p-lbl', grp.kind === 'done' ? L.prophForetold : L.prophSays)); pr.forEach((r) => card.append(verseBtn(r))); }
+    if (fr.length) { card.append(el2('div', 'p-lbl', grp.kind === 'done' ? L.prophFulfilled : L.prophAlso)); fr.forEach((r) => card.append(verseBtn(r))); }
+    else if (grp.kind === 'done') card.append(el2('div', 'p-lbl', `${L.prophFulfilled}: ${L.prophHistory}`));
+    card.append(el2('p', 'p-text', prophText(it)));
+    const a2 = el2('div', 'actions wrap');
+    const lis = el2('button', 'btn', L.prophListen); lis.type = 'button';
+    lis.addEventListener('click', () => listenProph(grp.id, i, false));
+    const sk = el2('button', 'btn', L.prophSky); sk.type = 'button';
+    sk.addEventListener('click', () => showProphOnSky([it], grp, prophTitle(it)));
+    a2.append(lis, sk);
+    card.append(a2);
+    box.append(card);
+  });
+  box.hidden = false;
+  placeProph();
+}
+function placeProph() {
+  ui.prophPanel.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 8)}px`;
+}
+addEventListener('resize', () => { if (!ui.prophPanel.hidden) placeProph(); });
+
+// Небо: дуга от звезды пророчества к звезде исполнения (для обещаний — звёзды связанных мест)
+function starPos(r) {
+  const it = galaxy.items[r.bi];
+  if (!it) return null;
+  const k = BOOKS[r.bi].chStart[r.ci] + r.vi;
+  return new THREE.Vector3(it.pos[k * 3], it.pos[k * 3 + 1], it.pos[k * 3 + 2]);
+}
+async function showProphOnSky(items, grp, title) {
+  closeProph();
+  if (state.mode !== 'galaxy') await go('galaxy');
+  const all = new THREE.Group();
+  const curves = [];
+  const verses = [];
+  let first = null;
+  for (const it of items) {
+    const pr = refsOf(it.p), fr = refsOf(it.f);
+    verses.push(...pr, ...fr);
+    const a = pr.length && starPos(pr[0]);
+    if (!a) continue;
+    first = first || a;
+    const targets = (fr.length ? fr : pr.slice(1)).map(starPos).filter(Boolean).map((p) => ({ p, w: 1 }));
+    if (targets.length) { const arc = buildArcObject(a, targets, grp.color); curves.push(...arc.userData.curves); all.add(arc); }
+    for (const p of [a, ...targets.map((t) => t.p)]) {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: grp.color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      s.position.copy(p); s.scale.setScalar(2.4); all.add(s);
+    }
+  }
+  all.userData.curves = curves;
+  setGalaxyLayer('proph', all);
+  if (first && !renderer.xr.isPresenting) { const d = first.clone().sub(EYE); look.target = Math.atan2(d.x, -d.z); }
+  const back = el2('div', 'actions');
+  const b = el2('button', 'btn primary', T().prophBack); b.type = 'button';
+  b.addEventListener('click', () => { setGalaxyLayer('proph', null); openProphecies(); });
+  back.append(b);
+  openList('proph', title, items.length === 1 ? prophText(items[0]) : T().prophSkyNote, verses.slice(0, 80), back);
+}
+
+// Вслух: название, объяснение и стихи; «Слушать все» идёт по разделу подряд (и в фоне)
+function prophSpeech(it) {
+  const vs = [...refsOf(it.p), ...refsOf(it.f)];
+  return `${prophTitle(it)}. ${prophText(it)} ${vs.map((r) => `${refSpeech(r)}. ${plain(verseText(r.bi, r.ci, r.vi))}`).join(' ')}`;
+}
+function listenProph(group, i, chain) {
+  const items = prophItems(group);
+  const it = items[i];
+  if (!it) return;
+  stopReading(); stopNarration();
+  const card = document.getElementById(`p-${it.id}`);
+  document.querySelectorAll('.pcard.now').forEach((c) => c.classList.remove('now'));
+  if (card) { card.classList.add('now'); if (!isBg()) card.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+  narration.on = true;
+  const ok = speak(prophSpeech(it), () => {
+    narration.on = false;
+    if (card) card.classList.remove('now');
+    if (chain && i + 1 < items.length) listenProph(group, i + 1, true);
+  });
+  if (!ok) narration.on = false;
+}
+
 /* Пункты меню */
 ui.lessonsBtn.addEventListener('click', showLessons);
+ui.prophBtn.addEventListener('click', () => openProphecies());
 ui.notesBtn.addEventListener('click', showNotes);
 ui.mapBtn.addEventListener('click', () => openMap());
 ui.eventsBtn.addEventListener('click', showEvents);
@@ -4289,6 +4454,7 @@ function updateSparks(time) {
   const curves = [];
   if (arcs.lines.visible && arcs.curves) curves.push(...arcs.curves);
   if (galaxy.group && galaxy.group.visible && galaxy.chapterLinks) curves.push(...galaxy.chapterLinks.userData.curves.map((c) => ({ ...c, color: arcColor.gold })));
+  if (galaxy.group && galaxy.group.visible && galaxy.proph) curves.push(...galaxy.proph.userData.curves.slice(0, 20).map((c) => ({ ...c, color: arcColor.gold })));
   if (!curves.length || reducedMotion) { sparks.pts.visible = false; return; }
   const pos = sparks.geo.attributes.position.array, col = sparks.geo.attributes.color.array;
   let n = 0;
@@ -4942,6 +5108,7 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && quiet.on) exitQuiet();
   else if (e.key === 'Escape' && !ui.parallelPanel.hidden) ui.parallelPanel.hidden = true;
   else if (e.key === 'Escape' && !ui.mapPanel.hidden) closeMap();
+  else if (e.key === 'Escape' && !ui.prophPanel.hidden) closeProph();
   else if (e.key === 'Escape' && !ui.settingsPanel.hidden) ui.settingsPanel.hidden = true;
   else if (e.key === 'Escape' && !ui.listPanel.hidden) closeList();
   else if (e.key === 'Escape' && quiz.open) closeQuiz();
@@ -5443,7 +5610,7 @@ window.__androidBack = () => {
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
   get look() { return look; }, pickAt(x, y) { const v = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); raycaster.setFromCamera(v, camera); const h = pick(raycaster.ray.clone()); return h && { type: h.type, vi: h.vi, bi: h.bi, ci: h.ci }; }, get busy() { return busy; },
-  get mapState() { return mapState; }, ROUTES, PLACE, fromRef, setLang, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  get mapState() { return mapState; }, ROUTES, PLACE, fromRef, setLang, openProphecies, get PROPH() { return PROPH; }, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
   buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },

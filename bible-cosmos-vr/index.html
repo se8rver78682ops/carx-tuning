@@ -325,6 +325,33 @@
   #parallelPanel p { font: 14px/1.5 var(--font-text); margin: 0 0 6px; }
   #parallelPanel sup { color: var(--gold); font: 600 11px var(--font-ui); }
   @media (max-width: 720px) { #chapterInfo { max-height: 30vh; } }
+
+  /* Пророчества */
+  #prophPanel {
+    left: 50%; transform: translateX(-50%); width: min(760px, calc(100vw - 24px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto; overscroll-behavior: contain; padding: 16px 18px 24px; z-index: 8; background: #080b18;
+  }
+  #prophPanel .close { position: absolute; top: 10px; right: 10px; }
+  #prophPanel .p-title { margin: 0 40px 4px 0; font: 600 32px/1.1 var(--font-title); color: #f6e7c1; }
+  #prophPanel .p-note { margin: 0 0 12px; font: 15px/1.5 var(--font-text); color: var(--dim); }
+  #prophPanel .p-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  #prophPanel .p-tab { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
+    background: rgba(20, 26, 50, 0.9); color: var(--ink); font: 15px var(--font-ui); cursor: pointer; }
+  #prophPanel .p-tab.on { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+  #prophPanel .p-tab .dot { width: 10px; height: 10px; border-radius: 50%; }
+  #prophPanel .pcard { margin-top: 14px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); border-left: 4px solid var(--pc, var(--gold));
+    background: rgba(16, 21, 42, 0.92); scroll-margin-top: 10px; }
+  #prophPanel .pcard.now { box-shadow: 0 0 0 2px var(--pc, var(--gold)); }
+  #prophPanel .p-head { display: grid; gap: 6px; }
+  #prophPanel .p-head h3 { margin: 0; font: 600 23px/1.2 var(--font-title); color: #f6e7c1; }
+  #prophPanel .p-badge { justify-self: start; font: 600 11px var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--pc, var(--gold)); }
+  #prophPanel .p-when { margin-top: 4px; font: 14px var(--font-ui); color: var(--dim); }
+  #prophPanel .p-lbl { margin: 12px 0 4px; font: 600 11px var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+  #prophPanel .pverse { display: grid; gap: 2px; width: 100%; text-align: left; padding: 8px 10px; margin-bottom: 6px; border-radius: 8px;
+    border: 1px solid var(--line); background: rgba(8, 11, 24, 0.7); color: var(--ink); cursor: pointer; }
+  #prophPanel .pverse .r { font: 600 14px var(--font-ui); color: var(--gold); }
+  #prophPanel .pverse .t { font: 16px/1.5 var(--font-text); }
+  #prophPanel .p-text { margin: 12px 0 10px; font: 17px/1.6 var(--font-text); color: #f6e7c1; }
   /* Режим чтения: глава крупным текстом */
   #reader {
     left: 0; right: 0; top: 120px; bottom: 76px; z-index: 4; overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -428,6 +455,7 @@
         <button id="mapBtn" class="btn" type="button" data-i18n="map">Карта</button>
         <button id="trailBtn" class="btn" type="button" data-i18n="trail">Мой путь по связям</button>
         <button id="eventsBtn" class="btn" type="button" data-i18n="events">События</button>
+        <button id="prophBtn" class="btn" type="button" data-i18n="prophecies">Пророчества</button>
         <button id="lessonsBtn" class="btn" type="button" data-i18n="lessons">Уроки для жизни</button>
         <button id="topicsBtn" class="btn" type="button" data-i18n="topics">Созвездия тем</button>
         <button id="votdBtn" class="btn" type="button" data-i18n="votd">Стих дня</button>
@@ -454,6 +482,7 @@
 </aside>
 
 <section id="reader" class="hud" hidden aria-live="off"></section>
+<section id="prophPanel" class="hud glass" hidden aria-label="Пророчества"></section>
 
 <div id="nav" class="hud" hidden>
   <button id="readerBtn" class="btn" type="button" aria-pressed="false">📖 Текст</button>
