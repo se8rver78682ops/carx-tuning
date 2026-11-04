@@ -35,6 +35,29 @@ jobs:
         working-directory: bible-cosmos-vr/desktop
         run: npm install --no-audit --no-fund
 
+      # Проверка помощника голосов Windows (наш voice.ps1, голоса самой системы): список голосов и WAV-файл.
+      - name: Voice helper test (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        working-directory: bible-cosmos-vr/desktop
+        run: |
+          $lines = '{"cmd":"voices"}' | powershell -NoProfile -ExecutionPolicy Bypass -File voice.ps1 -Dir $env:RUNNER_TEMP
+          $lines
+          $v = ($lines | Where-Object { $_ -like 'V*' } | Select-Object -First 1)
+          $voices = @()
+          if ($v) { $voices = @($v.Substring(1) | ConvertFrom-Json) }
+          "voices: $($voices.Count)"
+          if ($voices.Count -eq 0) { Write-Warning 'no voices on this machine'; exit 0 }
+          foreach ($id in @(($voices | Where-Object { $_.id -like 'rt:*' } | Select-Object -First 1).id, ($voices | Where-Object { $_.id -like 'sapi:*' } | Select-Object -First 1).id)) {
+            if (-not $id) { continue }
+            $req = (@{ t = 'Hello. This is a voice test.'; v = $id; r = 1 } | ConvertTo-Json -Compress)
+            $res = $req | powershell -NoProfile -ExecutionPolicy Bypass -File voice.ps1 -Dir $env:RUNNER_TEMP
+            "$id -> $res"
+            if (-not ($res -like 'F*.wav')) { throw "voice helper failed for $id" }
+            $f = $res.Substring(1); "size: $((Get-Item $f).Length) bytes"
+            if ((Get-Item $f).Length -lt 2000) { throw 'wav too small' }
+          }
+
       # Папки для нейросетевого голоса Piper: пока пустые, программа читает голосами системы.
       - name: Voice folders
         shell: bash

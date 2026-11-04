@@ -45,7 +45,7 @@ if (info && info.voices && info.voices.length) {
   async function run(items, lang, listId) {
     const my = ++token;
     const v = pickVoice(lang);
-    if (!v) { emit('fail'); return; }
+    if (!v) { emit('nolang'); return; }
     const segs = [];
     items.forEach(([id, text], i) => {
       const parts = split(text);
@@ -83,3 +83,19 @@ if (info && info.voices && info.voices.length) {
     stop: () => stop(),
   });
 }
+
+// Аудио-Библия: записи с диска (папка программы и выбранные папки), без копирования.
+let audioInfo = null;
+try { audioInfo = ipcRenderer.sendSync('audio:list'); } catch { audioInfo = null; }
+contextBridge.exposeInMainWorld('DesktopAudio', {
+  keys: () => (audioInfo ? audioInfo.keys.slice() : []),
+  dirs: () => (audioInfo ? audioInfo.dirs.slice() : []),
+  url: (key) => 'app://bible/__audio/' + encodeURIComponent(String(key)),
+  addFolder: async () => {
+    const r = await ipcRenderer.invoke('audio:addFolder');
+    if (!r) return -1;
+    audioInfo = { ...(audioInfo || { dirs: [] }), keys: r.keys };
+    try { audioInfo = ipcRenderer.sendSync('audio:list'); } catch { /* оставляем как есть */ }
+    return r.keys.length;
+  },
+});

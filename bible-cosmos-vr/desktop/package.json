@@ -25,6 +25,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "voice.ps1",
       "icon.png",
       "web/**/*",
       "package.json"

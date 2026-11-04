@@ -155,6 +155,8 @@ const I18N = {
     audioSaving: (d, n) => `Сохраняю записи: ${d} из ${n}…`,
     audioSaved: (n, l, sk) => `Готово: сохранено записей — ${n} (${l}).${sk ? ` Пропущено других файлов: ${sk}.` : ''}`,
     audioAligning: 'Ищу начало стиха в записи…', audioFull: 'Не хватает места на устройстве для всех записей.',
+    noLangVoice: 'в Windows нет голоса для этого языка', audioFound: (n) => `Найдено записей глав: ${n}.`,
+    audioDirs: (d) => `Программа сама берёт записи из своей папки и вложенных папок, а также из выбранных: ${d}. Файлы читаются прямо с диска, ничего не копируется.`,
     welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
     showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
@@ -285,6 +287,8 @@ const I18N = {
     audioSaving: (d, n) => `Salvez înregistrările: ${d} din ${n}…`,
     audioSaved: (n, l, sk) => `Gata: înregistrări salvate — ${n} (${l}).${sk ? ` Alte fișiere omise: ${sk}.` : ''}`,
     audioAligning: 'Caut începutul versetului în înregistrare…', audioFull: 'Nu este destul spațiu pe dispozitiv pentru toate înregistrările.',
+    noLangVoice: 'în Windows nu există o voce pentru această limbă', audioFound: (n) => `Înregistrări de capitole găsite: ${n}.`,
+    audioDirs: (d) => `Programul ia singur înregistrările din dosarul său și din subdosare, precum și din cele alese: ${d}. Fișierele se citesc direct de pe disc, nimic nu se copiază.`,
     welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
     showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
@@ -1291,6 +1295,11 @@ window.addEventListener('native-tts', (e) => {
   const [type, id] = String(e.detail).split('|');
   if (type === 'start') window.__ttsStart(id);
   else if (type === 'done') window.__ttsDone(id);
+  else if (type === 'nolang') {
+    // в системе нет голоса для этого языка
+    stopReading(); stopNarration();
+    toast(T().ttsSilent(T().noLangVoice, 1), 14000);
+  }
   else if (type === 'fail' && window.AndroidTTS === window.DesktopTTS) {
     // нейросетевой голос не запустился — дальше читают голоса системы
     window.AndroidTTS = undefined;
@@ -4219,6 +4228,8 @@ const audioIndex = { ru: new Set(), ro: new Set() };
 const audioKey = (lang, bookNum, ch) => `${lang}:${bookNum}:${ch}`;
 async function loadAudioIndex() {
   const keys = (await adb.keys('files')) || [];
+  // программа для компьютера: записи с диска (рядом с программой и в выбранных папках)
+  if (window.DesktopAudio) keys.push(...window.DesktopAudio.keys());
   audioIndex.ru = new Set(); audioIndex.ro = new Set();
   for (const k of keys) { const [l, b, c] = String(k).split(':'); if (audioIndex[l]) audioIndex[l].add(`${b}:${c}`); }
 }
@@ -4274,11 +4285,20 @@ function showAudioPanel() {
   box.append(el2('p', 'lesson-text', L.audioStatus(have, total)));
   const acts = el2('div', 'actions wrap');
   const dirBtn = el2('button', 'btn primary', L.audioPickFolder); dirBtn.type = 'button';
-  dirBtn.addEventListener('click', () => { ui.audioDir.value = ''; ui.audioDir.click(); });
+  dirBtn.addEventListener('click', async () => {
+    if (window.DesktopAudio) {
+      const n = await window.DesktopAudio.addFolder();
+      if (n >= 0) { await loadAudioIndex(); toast(L.audioFound(audioIndex[LANG].size), 8000); showAudioPanel(); }
+      return;
+    }
+    ui.audioDir.value = ''; ui.audioDir.click();
+  });
   const fBtn = el2('button', 'btn', L.audioPickFiles); fBtn.type = 'button';
   fBtn.addEventListener('click', () => { ui.audioFiles.value = ''; ui.audioFiles.click(); });
-  acts.append(dirBtn, fBtn);
+  acts.append(dirBtn);
+  if (!window.DesktopAudio) acts.append(fBtn);
   box.append(acts);
+  if (window.DesktopAudio) box.append(el2('p', 'muted small', L.audioDirs(window.DesktopAudio.dirs().join('; '))));
   const useRow = el2('label', 'set-row');
   const use = el2('input'); use.type = 'checkbox'; use.checked = settings.useAudio !== false;
   use.addEventListener('change', () => { settings.useAudio = use.checked; saveSettings(); updateListenButton(); });
@@ -4364,6 +4384,15 @@ function alignVerses(data, sr, items) {
   path.reverse();
   return path.slice(0, M).map((i) => pts[i]); // начало каждого элемента (заголовок, стих 1, стих 2, …)
 }
+async function audioSource(bi, ci) {
+  const key = audioKey(LANG, bookNumOf(bi), ci + 1);
+  if (window.DesktopAudio && window.DesktopAudio.keys().includes(key)) {
+    const url = window.DesktopAudio.url(key);
+    return { url, blob: () => fetch(url).then((r) => r.blob()) };
+  }
+  const b = await adb.get('files', key);
+  return b ? { url: null, blob: () => Promise.resolve(b), raw: b } : null;
+}
 async function chapterTimes(bi, ci, blob) {
   const key = audioKey(LANG, bookNumOf(bi), ci + 1);
   const cached = await adb.get('times', key);
@@ -4371,6 +4400,8 @@ async function chapterTimes(bi, ci, blob) {
   if (cached && cached.v === ALIGN_VERSION && cached.t.length === n + 1) return cached.t;
   let t;
   try {
+    if (!blob) { const src = await audioSource(bi, ci); blob = src ? await src.blob() : null; }
+    if (!blob) return null;
     const { data, sr } = await decodeMono(blob);
     const items = [plain(chapterHeading(bi, ci)), ...BOOKS[bi].chapters[ci].map((v) => plain(v))];
     t = alignVerses(data, sr, items);
@@ -4400,13 +4431,14 @@ function audioEl() {
 }
 async function audioReadFrom(vi, bi, ci) {
   const my = ++aplayer.token;
-  const blob = await adb.get('files', audioKey(LANG, bookNumOf(bi), ci + 1));
+  const src = await audioSource(bi, ci);
   if (my !== aplayer.token || !tts.reading) return;
-  if (!blob) { audioIndex[LANG].delete(`${bookNumOf(bi)}:${ci + 1}`); readFrom(vi, { bi, ci }); return; }
+  if (!src) { audioIndex[LANG].delete(`${bookNumOf(bi)}:${ci + 1}`); readFrom(vi, { bi, ci }); return; }
   const a = audioEl();
   if (aplayer.url) URL.revokeObjectURL(aplayer.url);
-  aplayer.url = URL.createObjectURL(blob);
-  a.src = aplayer.url;
+  aplayer.url = src.raw ? URL.createObjectURL(src.raw) : '';
+  a.src = src.url || aplayer.url;
+  const blob = src.raw || null;
   aplayer.bi = bi; aplayer.ci = ci; aplayer.vi = -1;
   aplayer.times = null;
   a.playbackRate = Math.max(0.6, Math.min(1.6, (settings.rate || 0.92) / 0.92));
