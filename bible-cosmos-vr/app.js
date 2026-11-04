@@ -4434,11 +4434,15 @@ async function audioReadFrom(vi, bi, ci) {
   const src = await audioSource(bi, ci);
   if (my !== aplayer.token || !tts.reading) return;
   if (!src) { audioIndex[LANG].delete(`${bookNumOf(bi)}:${ci + 1}`); readFrom(vi, { bi, ci }); return; }
+  // Запись целиком в памяти (несколько мегабайт): так перемотка к стиху работает везде,
+  // в том числе в программе для компьютера, где запись читается с диска.
+  let blob = src.raw || null;
+  if (!blob) { try { blob = await src.blob(); } catch { blob = null; } }
+  if (my !== aplayer.token || !tts.reading) return;
   const a = audioEl();
   if (aplayer.url) URL.revokeObjectURL(aplayer.url);
-  aplayer.url = src.raw ? URL.createObjectURL(src.raw) : '';
-  a.src = src.url || aplayer.url;
-  const blob = src.raw || null;
+  aplayer.url = blob ? URL.createObjectURL(blob) : '';
+  a.src = aplayer.url || src.url;
   aplayer.bi = bi; aplayer.ci = ci; aplayer.vi = -1;
   aplayer.times = null;
   a.playbackRate = Math.max(0.6, Math.min(1.6, (settings.rate || 0.92) / 0.92));
@@ -4448,13 +4452,26 @@ async function audioReadFrom(vi, bi, ci) {
     if (!aplayer.timesNote) { aplayer.timesNote = true; toast(T().audioAligning, 4000); }
     aplayer.times = await chapterTimes(bi, ci, blob);
     if (my !== aplayer.token || !tts.reading) return;
-    if (aplayer.times) a.currentTime = aplayer.times[vi + 1];
+    if (aplayer.times) await seekAudio(a, aplayer.times[vi + 1]);
   }
   try { await a.play(); } catch (err) { console.warn('audio', err); }
+  // проверка: если проигрыватель всё же начал с начала — ещё раз к нужному стиху
+  if (vi > 0 && aplayer.times) {
+    const want = aplayer.times[vi + 1];
+    setTimeout(() => { if (my === aplayer.token && Math.abs(a.currentTime - want) > 2.5) { try { a.currentTime = want; } catch { /* нет */ } } }, 600);
+  }
   showReadingVerse(vi);
   if (!aplayer.times) chapterTimes(bi, ci, blob).then((t) => { if (my === aplayer.token) aplayer.times = t; });
 }
 // keepSession: при переходе к следующей главе служба «Чтение вслух» в APK не гасится (из фона её не запустить заново)
+// Перемотка после загрузки сведений о записи (раньше проигрыватель может её проигнорировать)
+function seekAudio(a, t) {
+  return new Promise((res) => {
+    const go = () => { try { a.currentTime = t; } catch { /* нет */ } res(); };
+    if (a.readyState >= 1) go(); else a.addEventListener('loadedmetadata', go, { once: true });
+    setTimeout(res, 4000);
+  });
+}
 function stopAudio(keepSession) {
   aplayer.token++;
   if (aplayer.el) { aplayer.el.pause(); aplayer.el.onended = null; }
