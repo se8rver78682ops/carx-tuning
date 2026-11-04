@@ -133,6 +133,10 @@ const I18N = {
     gfx: 'Графика', gfxAuto: 'Авто — подстраивается под устройство', gfxFast: 'Быстрая — плавнее, бережёт батарею', gfxBest: 'Красивая — все эффекты',
     allowBg: 'Разрешить работу в фоне', bgAllowed: 'Работа в фоне разрешена',
     bgHint: 'Чтобы чтение не прерывалось при блокировке экрана, разрешите программе работать в фоне: «Ещё → Настройки → Разрешить работу в фоне».',
+    readerText: '📖 Текст', readerSpace: '✦ Космос', chapterEssence: 'Суть главы', textSmaller: 'Мельче', textBigger: 'Крупнее',
+    lessons: 'Уроки для жизни', lessonsNote: 'Библия как инструкция для человека: девять ступеней от замысла до цели. Нажмите на ступень — её стихи загорятся на небе.',
+    lessonsListenAll: '▶ Слушать все уроки', lessonListen: '▶ Слушать урок', lessonsAll: '☰ Все уроки',
+    lessonsMain: 'Главная мысль: человек счастлив, когда живёт в согласии с тем, как его задумал Создатель. Заповеди описывают этот замысел, истории показывают, что бывает при отступлении от него, а пророчества — что замысел исполнится.',
     welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
     showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
@@ -243,6 +247,10 @@ const I18N = {
     gfx: 'Grafica', gfxAuto: 'Automată — se adaptează dispozitivului', gfxFast: 'Rapidă — mai fluidă, cruță bateria', gfxBest: 'Frumoasă — toate efectele',
     allowBg: 'Permite funcționarea în fundal', bgAllowed: 'Funcționarea în fundal este permisă',
     bgHint: 'Ca citirea să nu se oprească la blocarea ecranului, permiteți aplicației să funcționeze în fundal: „Mai mult → Setări → Permite funcționarea în fundal”.',
+    readerText: '📖 Text', readerSpace: '✦ Cosmos', chapterEssence: 'Esența capitolului', textSmaller: 'Mai mic', textBigger: 'Mai mare',
+    lessons: 'Lecții pentru viață', lessonsNote: 'Biblia ca manual pentru om: nouă trepte, de la scop până la țintă. Apăsați pe o treaptă — versetele ei se vor aprinde pe cer.',
+    lessonsListenAll: '▶ Ascultă toate lecțiile', lessonListen: '▶ Ascultă lecția', lessonsAll: '☰ Toate lecțiile',
+    lessonsMain: 'Ideea principală: omul este fericit când trăiește în armonie cu felul în care l-a gândit Creatorul. Poruncile descriu acest plan, istoriile arată ce se întâmplă când ne abatem de la el, iar profețiile — că planul se va împlini.',
     welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
     showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
@@ -287,7 +295,7 @@ const $ = (id) => document.getElementById(id);
 const ui = {
   stage: $('stage'), crumbs: $('crumbs'), info: $('info'), nav: $('nav'), legend: $('legend'), toast: $('toast'),
   loader: $('loader'), bar: $('bar'), status: $('status'), vr: $('vr'), random: $('random'), search: $('search'),
-  q: $('q'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
+  q: $('q'), reader: $('reader'), readerBtn: $('readerBtn'), lessonsBtn: $('lessonsBtn'), prevCh: $('prevCh'), nextCh: $('nextCh'), prevPage: $('prevPage'), nextPage: $('nextPage'),
   legendToggle: $('legendToggle'), home: $('home'), chapterInfo: $('chapterInfo'), parallelPanel: $('parallelPanel'), trailBtn: $('trailBtn'), notesBtn: $('notesBtn'), mapBtn: $('mapBtn'), eventsBtn: $('eventsBtn'), planBtn: $('planBtn'), musicBtn: $('musicBtn'), mapPanel: $('mapPanel'), quiet: $('quietBtn'), quietExit: $('quietExit'), welcome: $('welcome'), welcomeBtn: $('welcomeBtn'), listPanel: $('listPanel'), votd: $('votd'), continueBtn: $('continueBtn'), settingsPanel: $('settingsPanel'), bmBtn: $('bmBtn'), topicsBtn: $('topicsBtn'), votdBtn: $('votdBtn'), settingsBtn: $('settingsBtn'), quiz: $('quiz'), quizBtn: $('quizBtn'), menuBtn: $('menuBtn'), menuList: $('menuList'), hintsBtn: $('hintsBtn'), toastText: $('toastText'), toastClose: $('toastClose'), legendClose: $('legendClose'), brand: $('brand'), detail: $('detail'), bookInfo: $('bookInfo'), file: $('file'), fileBtn: $('fileBtn'), listen: $('listen'), langRu: $('langRu'), langRo: $('langRo'),
 };
 
@@ -319,7 +327,7 @@ const texCache = new Set();
 function makeTexture(canvas) {
   const t = new THREE.CanvasTexture(canvas);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   return t;
 }
 function disposeTree(obj) {
@@ -1352,6 +1360,7 @@ function markReading(vi) {
   const out = new THREE.Vector3().subVectors(home, ch.eye).setY(0).normalize();
   readFrame.position.copy(home).addScaledVector(out, 0.004);
   readFrame.visible = true;
+  markReaderVerse();
   ch.pts.material.uniforms.uHover.value = ch.items.indexOf(mesh);
   if (!renderer.xr.isPresenting) {
     const d = new THREE.Vector3().subVectors(home, ch.eye);
@@ -1509,6 +1518,9 @@ function applyLangDom() {
   ui.langRo.setAttribute('aria-pressed', LANG === 'ro' ? 'true' : 'false');
   updateVrButton();
   updateListenButton();
+  navLabels();
+  reader.built = '';
+  updateReaderBtn();
   ui.hintsBtn.textContent = hintsOn ? L.hintsOn : L.hintsOff;
   if (typeof music !== 'undefined') updateMusicBtn();
   ui.hintsBtn.setAttribute('aria-pressed', hintsOn ? 'true' : 'false');
@@ -1786,6 +1798,7 @@ function selectVerse(vi) {
   const rel = related(state.bi, state.ci, vi);
   if (renderer.xr.isPresenting) buildVrDetail(vi, rel, mesh);
   else renderDetail(vi, rel);
+  markReaderVerse();
 }
 function closeDetail() {
   detail.open = false;
@@ -1795,6 +1808,7 @@ function closeDetail() {
   document.body.classList.remove('has-detail');
   if (detail.vrGroup) { scene.remove(detail.vrGroup); disposeTree(detail.vrGroup); detail.vrGroup = null; }
   detail.vrButtons = [];
+  markReaderVerse();
 }
 function jumpTo(r) {
   go('chapter', { bi: r.bi, ci: r.ci, focus: r.vi, select: r.vi });
@@ -1933,6 +1947,8 @@ function renderDetail(vi, rel) {
 }
 function placeDetail() {
   ui.detail.style.top = `${Math.round(document.getElementById('top').getBoundingClientRect().bottom + 10)}px`;
+  // Карточка заканчивается над кнопками внизу, даже если они переносятся во вторую строку.
+  ui.detail.style.bottom = innerWidth >= 720 && !ui.nav.hidden ? `${Math.round(innerHeight - ui.nav.getBoundingClientRect().top + 10)}px` : '';
 }
 addEventListener('resize', placeDetail);
 
@@ -2467,6 +2483,7 @@ function closeList() {
   ui.listPanel.dataset.kind = '';
   if (kind === 'search') setGalaxyLayer('searchPts', null);
   if (kind === 'topic') setGalaxyLayer('topic', null);
+  if (kind === 'lesson') setGalaxyLayer('lesson', null);
   if (kind === 'chlinks') setGalaxyLayer('chapterLinks', null);
 }
 function showBookmarks() {
@@ -3340,6 +3357,7 @@ function enterQuiet() {
   document.body.classList.add('quiet');
   if (sky) sky.setMode('quiet');
   xrPanel.group.visible = false;
+  renderReader();
   if (!tts.reading) readFrom(0);
 }
 function exitQuiet() {
@@ -3349,9 +3367,264 @@ function exitQuiet() {
   if (sky) sky.setMode(state.mode);
   if (renderer.xr.isPresenting) { xrPanel.group.visible = true; rebuildPanel(); }
   stopReading();
+  renderReader();
+}
+
+
+/* ---------- Режим чтения: глава крупным текстом, как страница книги ---------- */
+// На телефоне он включён сразу (узкий экран), на компьютере — по кнопке «📖 Текст». Выбор запоминается.
+const reader = { el: null, built: '' };
+function readerWanted() {
+  if (renderer.xr.isPresenting || quiet.on || state.mode !== 'chapter') return false;
+  if (settings.reader === 'text') return true;
+  if (settings.reader === 'space') return false;
+  return innerWidth < 760;
+}
+function readerSize() { return settings.readerPx || (innerWidth < 760 ? 21 : 22); }
+function renderReader(force) {
+  const box = ui.reader;
+  const on = readerWanted();
+  document.body.classList.toggle('reading', on);
+  updateReaderBtn();
+  if (!on) { box.hidden = true; reader.built = ''; return; }
+  const bi = state.bi, ci = state.ci, b = BOOKS[bi], L = T();
+  const key = `${LANG}:${bi}:${ci}:${BOOKS.length}`;
+  box.hidden = false;
+  box.style.setProperty('--rpx', `${readerSize()}px`);
+  if (reader.built === key && !force) { markReaderVerse(); return; }
+  reader.built = key;
+  box.replaceChildren();
+  const head = el2('header', 'r-head');
+  head.append(el2('div', 'r-book', b.name), el2('h2', 'r-ch', b.code === 'Ps' ? L.psalm(ci + 1) : L.chapter(ci + 1)));
+  const tools = el2('div', 'r-tools');
+  const minus = el2('button', 'btn', 'A−'); minus.type = 'button'; minus.setAttribute('aria-label', L.textSmaller);
+  const plus = el2('button', 'btn', 'A+'); plus.type = 'button'; plus.setAttribute('aria-label', L.textBigger);
+  const setPx = (d) => { settings.readerPx = Math.max(16, Math.min(34, readerSize() + d)); saveSettings(); box.style.setProperty('--rpx', `${settings.readerPx}px`); };
+  minus.addEventListener('click', () => setPx(-2));
+  plus.addEventListener('click', () => setPx(2));
+  tools.append(minus, plus);
+  head.append(tools);
+  box.append(head);
+  // Суть главы — крупно, над текстом
+  const sum = chapterSummary(bi, ci);
+  if (sum) {
+    const s = el2('div', 'r-sum');
+    s.append(el2('div', 'r-sum-h', L.chapterEssence), el2('p', '', sum));
+    box.append(s);
+  }
+  const body = el2('div', 'r-body');
+  const starts = paragraphStarts(b, ci);
+  const vs = b.chapters[ci];
+  let p = null;
+  vs.forEach((text, vi) => {
+    const poetry = text.includes('\n');
+    if (!p || starts.has(vi) || poetry) { p = el2('p', poetry ? 'r-p poem' : 'r-p'); body.append(p); }
+    const span = el2('span', 'v');
+    span.dataset.vi = vi;
+    const sup = el2('sup', '', String(vi + 1));
+    span.append(sup);
+    const lines = text.split('\n');
+    lines.forEach((ln, i) => { if (i) span.append(document.createElement('br')); span.append(document.createTextNode((i ? '' : ' ') + ln)); });
+    if (noteOf(bi, ci, vi)) span.append(el2('span', 'r-note', ' ✎'));
+    span.append(document.createTextNode(' '));
+    span.addEventListener('click', () => { selectVerse(vi); markReaderVerse(); });
+    p.append(span);
+    if (poetry) p = null;
+  });
+  box.append(body);
+  const info = el2('div', 'r-info');
+  const figs = figuresInChapter(bi, ci);
+  if (figs.length) {
+    info.append(el2('h3', '', L.peopleHere));
+    const row = el2('div', 'chips');
+    for (const f of figs.slice(0, 12)) { const c = el2('button', 'chip', LANG === 'ro' ? f.ro : f.ru); c.type = 'button'; c.addEventListener('click', () => showFigure(f)); row.append(c); }
+    info.append(row);
+  }
+  const facts = FACTS && b.code && FACTS[b.code] ? (FACTS[b.code][LANG] || FACTS[b.code].ru) : null;
+  if (facts && facts.length) info.append(el2('h3', '', L.didYouKnow), el2('p', '', facts[ci % facts.length]));
+  if (XREF && chapterLinks(bi, ci).length) {
+    const sky2 = el2('button', 'btn', `${L.chLinks}: ${L.showOnSky}`); sky2.type = 'button';
+    sky2.addEventListener('click', () => showChapterLinksOnSky(bi, ci));
+    info.append(sky2);
+  }
+  if (info.childNodes.length) box.append(info);
+  const foot = el2('div', 'r-foot');
+  const nb = neighbourChapter(bi, ci, 1);
+  if (nb) {
+    const next = el2('button', 'btn primary', `${BOOKS[nb.bi].name} ${nb.ci + 1} ▶`); next.type = 'button';
+    next.addEventListener('click', () => go('chapter', { bi: nb.bi, ci: nb.ci }));
+    foot.append(next);
+  }
+  box.append(foot);
+  box.scrollTop = 0;
+  markReaderVerse();
+}
+// Подсветка выбранного и звучащего стиха; звучащий плавно прокручивается в центр.
+function markReaderVerse() {
+  if (ui.reader.hidden) return;
+  const r = tts.reading && tts.reading.bi === state.bi && tts.reading.ci === state.ci ? tts.reading.vi : -1;
+  ui.reader.querySelectorAll('.v').forEach((s) => {
+    const vi = +s.dataset.vi;
+    s.classList.toggle('sel', detail.open && detail.vi === vi);
+    const was = s.classList.contains('now');
+    s.classList.toggle('now', vi === r);
+    if (vi === r && !was && !isBg()) s.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+}
+function updateReaderBtn() {
+  const L = T();
+  const on = readerWanted();
+  ui.readerBtn.textContent = on ? L.readerSpace : L.readerText;
+  ui.readerBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+ui.readerBtn.addEventListener('click', () => {
+  settings.reader = readerWanted() ? 'space' : 'text';
+  saveSettings();
+  renderReader(true);
+  renderChapterInfo();
+});
+addEventListener('resize', () => { if (state.mode === 'chapter' && !settings.reader) renderReader(); });
+
+// Короткие подписи кнопок внизу на узком экране, чтобы они помещались в одну строку.
+function navLabels() {
+  const L = T(), narrow = innerWidth < 760;
+  ui.prevCh.textContent = narrow ? '◀' : L.prevCh;
+  ui.nextCh.textContent = narrow ? '▶' : L.nextCh;
+  ui.quiet.textContent = narrow ? '☾' : L.quiet;
+  ui.prevCh.setAttribute('aria-label', L.prevCh);
+  ui.nextCh.setAttribute('aria-label', L.nextCh);
+  ui.quiet.setAttribute('aria-label', L.quiet);
+  // Верхняя панель на телефоне: значки вместо длинных подписей
+  ui.home.textContent = narrow ? '⌂' : L.home;
+  ui.random.textContent = narrow ? '✦' : L.random;
+  ui.quizBtn.textContent = narrow ? '?' : L.quiz;
+  ui.home.setAttribute('aria-label', L.home);
+  ui.random.setAttribute('aria-label', L.random);
+  ui.quizBtn.setAttribute('aria-label', L.quiz);
+}
+addEventListener('resize', navLabels);
+
+/* ---------- Уроки для жизни: Библия как инструкция для человека ---------- */
+// Девять ступеней: замысел → поломка → диагноз → ремонт → правила → примеры → обслуживание → неисправности → цель.
+const LESSONS = [
+  { id: 'design', color: '#ffd27a', ru: 'Замысел: для чего создан человек', ro: 'Scopul: de ce a fost creat omul',
+    tru: 'Человек создан по образу Бога — способным любить, поступать справедливо, творить и выбирать. У него есть духовная потребность, которую не заполнить вещами, успехом или удовольствиями. Вывод книги Экклезиаст: бойся Бога и соблюдай его заповеди — в этом весь человек.',
+    tro: 'Omul a fost creat după chipul lui Dumnezeu — capabil să iubească, să fie drept, să creeze și să aleagă. El are o nevoie spirituală pe care lucrurile, succesul sau plăcerile nu o pot umple. Concluzia cărții Eclesiastul: teme-te de Dumnezeu și păzește-i poruncile — aceasta este datoria întregă a omului.',
+    refs: ['Gen.1.27', 'Gen.2.15', 'Ps.139.14', 'Isa.45.18', 'Matt.5.3', 'Jer.10.23', 'Acts.17.27', 'Eccl.12.13'] },
+  { id: 'fall', color: '#ff9a6b', ru: 'Поломка: что пошло не так', ro: 'Defectul: ce a mers prost',
+    tru: 'Бытие 3 — схема любой ошибки: сомнение в добрых намерениях Бога, желание самому решать, что хорошо и что плохо, затем стыд, оправдания и перекладывание вины. Почти каждая беда начинается с мысли «я лучше знаю, что мне хорошо».',
+    tro: 'Geneza 3 arată tiparul oricărei greșeli: îndoiala față de intențiile bune ale lui Dumnezeu, dorința de a hotărî singur ce este bine și ce este rău, apoi rușinea, scuzele și aruncarea vinei pe alții. Aproape orice necaz începe cu gândul „eu știu mai bine ce e bine pentru mine”.',
+    refs: ['Gen.3.1', 'Gen.3.5', 'Gen.3.6', 'Gen.3.12', 'Gen.3.13', 'Rom.5.12', 'Eccl.7.29'] },
+  { id: 'heart', color: '#ff7aa8', ru: 'Диагноз: проблема глубже поступков', ro: 'Diagnosticul: problema e mai adâncă decât faptele',
+    tru: 'Сердце обманчиво, и человек не всегда видит свои настоящие мотивы. Иисус показал, что зло начинается с мысли: гнев раньше убийства, желание раньше измены. Поэтому менять нужно не только поступки, но и образ мыслей — «обновлять ум» и «облекаться в новую личность».',
+    tro: 'Inima este înșelătoare, iar omul nu își vede mereu motivele reale. Isus a arătat că răul începe cu un gând: mânia înaintea crimei, dorința înaintea infidelității. De aceea trebuie schimbate nu doar faptele, ci și felul de a gândi — „înnoirea minții” și „îmbrăcarea noii personalități”.',
+    refs: ['Jer.17.9', 'Matt.15.19', 'Matt.5.22', 'Matt.5.28', 'Jas.1.14', 'Jas.1.15', 'Rom.7.19', 'Rom.12.2', 'Col.3.10'] },
+  { id: 'repair', color: '#c99bff', ru: 'Ремонт: исправление возможно', ro: 'Repararea: schimbarea este posibilă',
+    tru: 'Покаяние — это изменить образ мыслей и повернуться. Давид после тяжёлого греха просит чистого сердца, Пётр после отречения восстановлен. Выкуп показывает: прощение реально и стоит дорого. Библия не говорит «ты хороший» и не говорит «ты безнадёжен» — она говорит «ты можешь измениться».',
+    tro: 'Căința înseamnă să-ți schimbi felul de a gândi și să te întorci. David, după un păcat grav, cere o inimă curată, iar Petru, după ce s-a lepădat, este restabilit. Răscumpărarea arată că iertarea este reală și are un preț mare. Biblia nu spune „ești bun” și nici „ești fără speranță”, ci „te poți schimba”.',
+    refs: ['Ps.51.10', 'Ps.51.17', 'Isa.1.18', 'Acts.3.19', 'Matt.20.28', '1John.1.9', 'Ps.103.12', 'Luke.15.20', 'John.21.17'] },
+  { id: 'rules', color: '#7fb8ff', ru: 'Правила: заповеди как законы жизни', ro: 'Regulile: poruncile ca legi ale vieții',
+    tru: 'Закон Бога назван «совершенным законом свободы». Инструкция к самолёту не мешает пилоту, а помогает ему не разбиться — так и заповеди описывают, как устроен человек. Честность хранит доверие, верность хранит семью, прощение освобождает. Любовь в Библии — это поведение: терпение, доброта, отказ от зависти и от счёта обид.',
+    tro: 'Legea lui Dumnezeu este numită „legea desăvârșită a libertății”. Manualul unui avion nu îl încurcă pe pilot, ci îl ajută să nu se prăbușească — la fel, poruncile descriu cum este făcut omul. Cinstea păstrează încrederea, fidelitatea păstrează familia, iertarea eliberează. Iubirea în Biblie este un comportament: răbdare, bunătate, fără invidie și fără a ține socoteala răului.',
+    refs: ['Isa.48.17', 'Jas.1.25', 'Ps.19.7', 'Matt.22.37', 'Matt.22.39', 'Matt.7.12', '1Cor.13.4', '1Cor.13.5', '1Cor.13.7', 'Acts.20.35'] },
+  { id: 'examples', color: '#6fe0d0', ru: 'Примеры: чужой опыт', ro: 'Exemplele: experiența altora',
+    tru: 'Библия учит судьбами людей. Иосиф не озлобился, и зло обратилось в добро. Саул разрушил себя гордостью. Давид упал, но покаялся. Иов страдал не за грехи. Асаф завидовал нечестным, пока не увидел их конец. Чужой опыт учит дешевле собственного.',
+    tro: 'Biblia ne învață prin viețile oamenilor. Iosif nu s-a amărât, iar răul s-a transformat în bine. Saul s-a distrus prin mândrie. David a căzut, dar s-a căit. Iov a suferit fără să fi păcătuit. Asaf i-a invidiat pe cei răi până când a văzut sfârșitul lor. Experiența altora ne învață mai ieftin decât a noastră.',
+    refs: ['Gen.50.20', '1Sam.15.22', '2Sam.12.13', 'Job.1.21', 'Ps.73.3', 'Ps.73.17', 'Rom.15.4', '1Cor.10.11'] },
+  { id: 'habits', color: '#8fe38a', ru: 'Обслуживание: ежедневные привычки', ro: 'Întreținerea: obiceiuri zilnice',
+    tru: 'Слово Бога — светильник, который освещает следующий шаг. Молитва меняет тревогу на мир. С кем общаешься, таким и становишься. Жизнь коротка, поэтому важно ценить время. Характер строится из верности в малом, а рост идёт постепенно, как рассвет.',
+    tro: 'Cuvântul lui Dumnezeu este o lampă care luminează pasul următor. Rugăciunea schimbă îngrijorarea în pace. Devii asemenea celor cu care te însoțești. Viața este scurtă, de aceea timpul trebuie prețuit. Caracterul se clădește din fidelitate în lucrurile mici, iar creșterea vine treptat, ca lumina dimineții.',
+    refs: ['Ps.119.105', 'Ps.1.2', 'Josh.1.8', 'Phil.4.6', 'Phil.4.7', 'Prov.13.20', '1Cor.15.33', 'Ps.90.12', 'Luke.16.10', 'Prov.4.18'] },
+  { id: 'trouble', color: '#ffc0e0', ru: 'Неисправности: когда трудно', ro: 'Problemele: când e greu',
+    tru: 'Не все беды от Бога: время и непредвиденный случай постигают всех. Гнев не стоит держать до заката. Зависть лечится взглядом на конец пути. Заботы можно передать Богу. А тому, кто чувствует себя ничтожным: даже воробьи не забыты, а вы дороже многих воробьёв.',
+    tro: 'Nu toate necazurile vin de la Dumnezeu: timpul și întâmplările neprevăzute îi ajung pe toți. Mânia nu trebuie ținută până la apusul soarelui. Invidia se vindecă privind la sfârșitul drumului. Grijile pot fi aruncate asupra lui Dumnezeu. Iar cine se simte neînsemnat să știe: nici vrăbiile nu sunt uitate, iar noi valorăm mai mult decât multe vrăbii.',
+    refs: ['Jas.1.13', 'Eccl.9.11', 'Eph.4.26', 'Ps.55.22', '1Pet.5.7', 'Ps.34.18', 'Isa.41.10', 'Matt.10.29', 'Matt.10.31'] },
+  { id: 'goal', color: '#ffe9a8', ru: 'Цель: чем всё закончится', ro: 'Ținta: cum se va sfârși totul',
+    tru: 'Инструкция заканчивается обещанием: мир будет восстановлен таким, каким был задуман, — без слёз, боли и смерти, кроткие унаследуют землю. Надежда меняет поведение уже сейчас: кто знает, чем всё закончится, иначе переносит трудности и иначе принимает решения.',
+    tro: 'Manualul se încheie cu o promisiune: lumea va fi readusă la ce a fost gândită să fie — fără lacrimi, durere și moarte, iar cei blânzi vor moșteni pământul. Speranța schimbă purtarea chiar de acum: cine știe cum se va sfârși totul trece altfel prin greutăți și ia altfel deciziile.',
+    refs: ['Matt.6.10', 'Ps.37.11', 'Ps.37.29', 'Isa.11.9', 'Isa.65.21', 'Isa.25.8', 'Rev.21.3', 'Rev.21.4', 'John.17.3', 'Heb.6.19'] },
+];
+const lessonName = (l) => l[LANG] || l.ru;
+const lessonText = (l) => (LANG === 'ro' ? l.tro : l.tru);
+
+// Созвездие на небе: стихи соединяются линией, над ними подпись.
+function drawConstellation(name, verses, color) {
+  const grp = new THREE.Group();
+  const pts = [];
+  for (const r of verses) {
+    const it = galaxy.items[r.bi];
+    if (!it) continue;
+    const k = BOOKS[r.bi].chStart[r.ci] + r.vi;
+    pts.push(new THREE.Vector3(it.pos[k * 3], it.pos[k * 3 + 1], it.pos[k * 3 + 2]));
+  }
+  if (!pts.length) return null;
+  const seg = [];
+  for (let i = 1; i < pts.length; i++) seg.push(pts[i - 1].x, pts[i - 1].y, pts[i - 1].z, pts[i].x, pts[i].y, pts[i].z);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(seg), 3));
+  grp.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false })));
+  for (const p of pts) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    s.position.copy(p);
+    s.scale.setScalar(2.8);
+    grp.add(s);
+  }
+  const lbl = makeLabel(name.toUpperCase(), { font: FONT_TITLE, px: 96, weight: 600, color, height: 3.2, letter: 12 });
+  lbl.position.copy(pts[0]).sub(EYE).multiplyScalar(0.92).add(EYE).add(new THREE.Vector3(0, 4, 0));
+  grp.add(lbl);
+  if (!renderer.xr.isPresenting) { const d = pts[0].clone().sub(EYE); look.target = Math.atan2(d.x, -d.z); }
+  return grp;
+}
+
+function showLessons() {
+  const L = T();
+  const items = LESSONS.map((l, i) => ({ label: `${i + 1}. ${lessonName(l)}`, sub: lessonText(l).split(/(?<=[.!?])\s/)[0], vi: null, onClick: () => showLesson(i) }));
+  const extra = el2('div', 'actions');
+  const all = el2('button', 'btn primary', L.lessonsListenAll); all.type = 'button';
+  all.addEventListener('click', () => listenLessons(0, true));
+  extra.append(all);
+  openList('lessons', L.lessons, L.lessonsNote, items, extra);
+}
+
+async function showLesson(i) {
+  const l = LESSONS[i], L = T();
+  const verses = l.refs.map(fromRef).filter(Boolean);
+  if (state.mode !== 'galaxy') await go('galaxy');
+  setGalaxyLayer('lesson', drawConstellation(lessonName(l), verses, l.color));
+  const extra = el2('div', 'lesson');
+  extra.append(el2('p', 'lesson-text', lessonText(l)));
+  const acts = el2('div', 'actions wrap');
+  const lis = el2('button', 'btn primary', L.lessonListen); lis.type = 'button';
+  lis.addEventListener('click', () => listenLessons(i, false));
+  acts.append(lis);
+  if (i > 0) { const p = el2('button', 'btn', `◀ ${i}`); p.type = 'button'; p.addEventListener('click', () => showLesson(i - 1)); acts.append(p); }
+  if (i < LESSONS.length - 1) { const n = el2('button', 'btn', `${i + 2} ▶`); n.type = 'button'; n.addEventListener('click', () => showLesson(i + 1)); acts.append(n); }
+  const back = el2('button', 'btn', L.lessonsAll); back.type = 'button'; back.addEventListener('click', showLessons); acts.append(back);
+  extra.append(acts);
+  if (i === LESSONS.length - 1) extra.append(el2('p', 'lesson-main', L.lessonsMain));
+  openList('lesson', `${i + 1} / ${LESSONS.length} · ${lessonName(l)}`, '', verses, extra);
+}
+
+// Урок вслух: объяснение и стихи. «Слушать все» идёт по ступеням подряд и показывает каждую на небе.
+function lessonSpeech(l) {
+  const verses = l.refs.map(fromRef).filter(Boolean);
+  return `${lessonName(l)}. ${lessonText(l)} ${verses.map((r) => `${refSpeech(r)}. ${plain(verseText(r.bi, r.ci, r.vi))}`).join(' ')}`;
+}
+function refSpeech(r) { return `${BOOKS[r.bi].name}, ${T().chapter(r.ci + 1).toLowerCase()}, ${r.vi + 1}`; }
+async function listenLessons(i, chain) {
+  stopReading(); stopNarration();
+  const l = LESSONS[i];
+  if (chain) await showLesson(i);
+  narration.on = true;
+  const ok = speak(lessonSpeech(l), () => {
+    narration.on = false;
+    if (chain && i + 1 < LESSONS.length) listenLessons(i + 1, true);
+  });
+  if (!ok) narration.on = false;
 }
 
 /* Пункты меню */
+ui.lessonsBtn.addEventListener('click', showLessons);
 ui.notesBtn.addEventListener('click', showNotes);
 ui.mapBtn.addEventListener('click', () => openMap());
 ui.eventsBtn.addEventListener('click', showEvents);
@@ -3539,6 +3812,7 @@ async function showChapterLinksOnSky(bi, ci) {
 // Панель «О главе»: краткое содержание, люди, связи, «Знаете ли вы?».
 function renderChapterInfo() {
   const box = ui.chapterInfo;
+  if (readerWanted()) { box.hidden = true; return; }
   if (state.mode !== 'chapter' || renderer.xr.isPresenting || quiet.on || box.dataset.closed === `${state.bi}:${state.ci}`) { box.hidden = true; return; }
   const L = T(), bi = state.bi, ci = state.ci, b = BOOKS[bi];
   box.replaceChildren();
@@ -3754,7 +4028,15 @@ const post = (() => {
     },
   };
 })();
+let readerFrame = 0;
 function renderFrame() {
+  if (state.mode === 'chapter' && ui.reader && !ui.reader.hidden && !renderer.xr.isPresenting) {
+    if (!renderer.xr.isPresenting && perf.pr < prFloor()) { perf.pr = prFloor(); renderer.setPixelRatio(perf.pr); }
+    perf.last = 0; perf.frames.length = 0;
+    if ((readerFrame = (readerFrame + 1) % 4) !== 0) return;
+    renderer.render(scene, camera);
+    return;
+  }
   perfSample();
   if (bloomOn() && !renderer.xr.isPresenting) {
     try { post.render(); return; } catch (err) { console.warn('bloom', err); perf.noBloom = true; }
@@ -3781,7 +4063,9 @@ function applyGfx() {
   perf.pr = prCap();
   renderer.setPixelRatio(perf.pr);
 }
+function prFloor() { return state.mode === 'chapter' ? Math.min(window.devicePixelRatio || 1, 1.5) : 1; }
 function perfSample() {
+  if (!renderer.xr.isPresenting && perf.pr < prFloor()) { perf.pr = prFloor(); renderer.setPixelRatio(perf.pr); }
   if (renderer.xr.isPresenting || gfxMode() !== 'auto' || document.hidden) { perf.last = 0; return; }
   const now = performance.now();
   if (perf.last) perf.frames.push(now - perf.last);
@@ -3795,8 +4079,8 @@ function perfSample() {
   if (med > 26) {
     perf.good = 0;
     if (bloomOn()) { perf.noBloom = true; if (med < 60) return; }
-    if (perf.pr > 0.75) {
-      perf.okPr = Math.max(0.75, perf.pr - 0.25);
+    if (perf.pr > prFloor()) {
+      perf.okPr = Math.max(prFloor(), perf.pr - 0.25);
       perf.pr = perf.okPr;
       renderer.setPixelRatio(perf.pr);
     }
@@ -4341,6 +4625,14 @@ function crumbButton(text, fn) {
   b.addEventListener('click', fn);
   return b;
 }
+function placeReader() {
+  if (ui.reader.hidden) return;
+  const top = document.getElementById('top').getBoundingClientRect().bottom;
+  const nav = ui.nav.hidden ? innerHeight - 12 : ui.nav.getBoundingClientRect().top;
+  ui.reader.style.top = `${Math.round(top + 8)}px`;
+  ui.reader.style.bottom = `${Math.round(innerHeight - nav + 8)}px`;
+}
+addEventListener('resize', () => setTimeout(placeReader, 50));
 function updateChrome() {
   const c = ui.crumbs;
   c.replaceChildren();
@@ -4361,8 +4653,10 @@ function updateChrome() {
   if (state.mode !== 'galaxy') ui.votd.hidden = true;
   renderBookPanel();
   renderChapterInfo();
+  renderReader();
+  placeReader();
   if (state.mode === 'book') toast(T().toastBook, 6000, true);
-  if (state.mode === 'chapter' && !tts.reading) toast(T().toastChapter, 6000, true);
+  if (state.mode === 'chapter' && !tts.reading && !readerWanted()) toast(T().toastChapter, 6000, true);
   updateListenButton();
   rebuildPanel();
 }
@@ -4436,6 +4730,7 @@ function placeMenu() {
   const left = Math.max(12, Math.min(r.left, innerWidth - w - 12));
   ui.menuList.style.left = `${Math.round(left)}px`;
   ui.menuList.style.top = `${Math.round(r.bottom + 6)}px`;
+  ui.menuList.style.maxHeight = `${Math.round(innerHeight - r.bottom - 18)}px`;
 }
 ui.menuBtn.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -4769,6 +5064,7 @@ async function start() {
     buildLegend();
     updateChrome();
     applyGfx();
+    navLabels();
     renderer.setAnimationLoop(tick);
     ui.loader.classList.add('done');
     window.__started = true;
@@ -4801,7 +5097,7 @@ window.__androidBack = () => {
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
   get look() { return look; }, pickAt(x, y) { const v = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); raycaster.setFromCamera(v, camera); const h = pick(raycaster.ray.clone()); return h && { type: h.type, vi: h.vi, bi: h.bi, ci: h.ci }; }, get busy() { return busy; },
-  tts, perf, bloomOn, applyGfx, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
   buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },

@@ -31,7 +31,7 @@
   .glass { background: var(--glass); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 
   #top {
-    top: 0; left: 0; right: 0;
+    top: 0; left: 0; right: 0; z-index: 9; /* выпадающее меню «Ещё» выше легенды и панелей */
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
     padding-top: calc(12px + env(safe-area-inset-top, 0px));
     padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -167,7 +167,7 @@
   .menu { position: relative; }
   #menuList {
     position: fixed; z-index: 20; display: grid; gap: 6px; padding: 8px;
-    min-width: 200px; max-width: calc(100vw - 24px); border-radius: 10px;
+    min-width: 200px; max-width: calc(100vw - 24px); border-radius: 10px; overflow-y: auto; overscroll-behavior: contain;
     background: rgba(10, 13, 28, 0.97);
   }
   #menuList .btn { text-align: left; }
@@ -313,6 +313,44 @@
   #parallelPanel p { font: 14px/1.5 var(--font-text); margin: 0 0 6px; }
   #parallelPanel sup { color: var(--gold); font: 600 11px var(--font-ui); }
   @media (max-width: 720px) { #chapterInfo { max-height: 30vh; } }
+  /* Режим чтения: глава крупным текстом */
+  #reader {
+    left: 0; right: 0; top: 120px; bottom: 76px; z-index: 4; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    background: #070914; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    padding: 18px max(18px, env(safe-area-inset-left, 0px)) 32px max(18px, env(safe-area-inset-right, 0px));
+    overscroll-behavior: contain;
+  }
+  #reader > * { max-width: 680px; margin-left: auto; margin-right: auto; }
+  .r-head { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 2px 12px; margin-bottom: 14px; }
+  .r-book { grid-column: 1; font: 600 12px var(--font-ui); letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+  .r-ch { grid-column: 1; margin: 0; font: 600 36px/1.1 var(--font-title); color: #f6e7c1; }
+  .r-tools { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 6px; }
+  .r-sum { border-left: 3px solid var(--gold); background: rgba(243, 195, 91, 0.08); padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 18px; }
+  .r-sum-h, .r-info h3 { font: 600 11px var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin: 0 0 6px; }
+  .r-sum p { margin: 0; font: calc(var(--rpx, 21px) * 0.9)/1.55 var(--font-text); color: #f6e7c1; }
+  .r-body { font: var(--rpx, 21px)/1.72 var(--font-text); color: #eef0f8; text-wrap: pretty; hyphens: auto; }
+  .r-p { margin: 0 0 0.7em; text-indent: 1.2em; }
+  .r-p.poem { text-indent: 0; padding-left: 1.2em; margin-bottom: 0.4em; }
+  .v { border-radius: 4px; cursor: pointer; transition: background 0.25s; -webkit-tap-highlight-color: transparent; }
+  .v sup { font: 600 0.58em var(--font-ui); color: var(--gold); margin-right: 0.12em; vertical-align: 0.55em; line-height: 0; }
+  .v.sel { background: rgba(243, 195, 91, 0.16); }
+  .v.now { background: rgba(243, 195, 91, 0.3); box-shadow: 0 0 0 2px rgba(243, 195, 91, 0.3); }
+  .r-note { color: #7fe3c2; }
+  .r-info { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+  .r-info p { margin: 0; font: calc(var(--rpx, 21px) * 0.8)/1.5 var(--font-text); color: var(--ink); }
+  .r-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  body.reading #chapterInfo, body.reading #info { display: none !important; }
+  #listPanel .lesson-text { font: 17px/1.55 var(--font-text); color: #f6e7c1; margin: 4px 0 10px; }
+  #listPanel .lesson-main { font: italic 15px/1.5 var(--font-text); color: var(--dim); margin: 10px 0 0; }
+  @media (max-width: 760px) {
+    #nav { left: 12px; right: 12px; transform: none; flex-wrap: nowrap; gap: 6px; justify-content: space-between; }
+    body.has-info #nav { left: 12px; right: 12px; }
+    #nav .btn { padding-left: 12px; padding-right: 12px; white-space: nowrap; }
+    #nav #listen { flex: 1; }
+    #vr:disabled { display: none; }
+    .r-ch { font-size: 32px; }
+  }
+
   #continueBtn { left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 5; }
   @media (max-width: 720px) {
     #listPanel { left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: auto; max-height: 55vh; }
@@ -348,13 +386,13 @@
       <input id="q" name="q" placeholder="Ин 3:16" data-i18n-ph="searchPh" autocomplete="off" spellcheck="false">
       <button class="btn" type="submit" data-i18n="search">Найти</button>
     </form>
-    <button id="home" class="btn" type="button" data-i18n="home" data-i18n-title="homeTitle">⌂ В начало</button>
+    <button id="home" class="btn" type="button" data-i18n-title="homeTitle">⌂ В начало</button>
     <div class="lang" role="group" aria-label="Язык / Limba">
       <button id="langRu" class="btn" type="button" aria-pressed="true">RU</button>
       <button id="langRo" class="btn" type="button" aria-pressed="false">RO</button>
     </div>
-    <button id="random" class="btn" type="button" data-i18n="random">✦ Случайный стих</button>
-    <button id="quizBtn" class="btn" type="button" data-i18n="quiz">Викторина</button>
+    <button id="random" class="btn" type="button">✦ Случайный стих</button>
+    <button id="quizBtn" class="btn" type="button">Викторина</button>
     <div class="menu">
       <button id="menuBtn" class="btn" type="button" aria-haspopup="true" aria-expanded="false" data-i18n="menu">☰ Ещё</button>
       <div id="menuList" class="glass" hidden>
@@ -364,6 +402,7 @@
         <button id="mapBtn" class="btn" type="button" data-i18n="map">Карта</button>
         <button id="trailBtn" class="btn" type="button" data-i18n="trail">Мой путь по связям</button>
         <button id="eventsBtn" class="btn" type="button" data-i18n="events">События</button>
+        <button id="lessonsBtn" class="btn" type="button" data-i18n="lessons">Уроки для жизни</button>
         <button id="topicsBtn" class="btn" type="button" data-i18n="topics">Созвездия тем</button>
         <button id="votdBtn" class="btn" type="button" data-i18n="votd">Стих дня</button>
         <button id="musicBtn" class="btn" type="button">Музыка: выкл</button>
@@ -388,13 +427,16 @@
   <div class="hint"></div>
 </aside>
 
+<section id="reader" class="hud" hidden aria-live="off"></section>
+
 <div id="nav" class="hud" hidden>
-  <button id="prevCh" class="btn" type="button" data-i18n="prevCh">◀ Предыдущая глава</button>
+  <button id="readerBtn" class="btn" type="button" aria-pressed="false">📖 Текст</button>
+  <button id="prevCh" class="btn" type="button">◀ Предыдущая глава</button>
   <button id="prevPage" class="btn" type="button" hidden data-i18n="prevPage">◀ Стр.</button>
   <button id="listen" class="btn primary" type="button" aria-pressed="false">▶ Слушать главу</button>
-  <button id="quietBtn" class="btn" type="button" data-i18n="quiet">☾ Тишина</button>
+  <button id="quietBtn" class="btn" type="button">☾ Тишина</button>
   <button id="nextPage" class="btn" type="button" hidden data-i18n="nextPage">Стр. ▶</button>
-  <button id="nextCh" class="btn" type="button" data-i18n="nextCh">Следующая глава ▶</button>
+  <button id="nextCh" class="btn" type="button">Следующая глава ▶</button>
 </div>
 
 <aside id="chapterInfo" class="hud glass" hidden></aside>

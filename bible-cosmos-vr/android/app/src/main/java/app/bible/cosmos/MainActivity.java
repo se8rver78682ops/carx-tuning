@@ -177,8 +177,13 @@ public class MainActivity extends Activity {
     private void notifyDone(String id) {
         if (id == null || id.startsWith("part-") || id.startsWith("gap-")) return;
         if (soloActive && id.equals(soloId)) {
+            // Рассказ закончился. Служба гасится с задержкой: если следом начнётся следующий рассказ
+            // (например, «Слушать все уроки»), она не прерывается — заново из фона её запустить нельзя.
             soloActive = false;
-            if (!listActive) endSpeechSession();
+            soloId = null;
+            web.postDelayed(() -> {
+                if (!listActive && !soloActive && (tts == null || !tts.isSpeaking())) ReadingService.stop(MainActivity.this);
+            }, 5000);
         }
         if (orphanList && id.startsWith("L")) {
             orphanList = false;
