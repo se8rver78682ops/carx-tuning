@@ -121,3 +121,4 @@ contextBridge.exposeInMainWorld('DesktopEars', {
   ok: () => !!(earsInfo && earsInfo.ok),
   hear: (wav, lang) => ipcRenderer.invoke('ears:hear', { wav, lang }),
 });
+ipcRenderer.on('ears:toggle', () => window.dispatchEvent(new CustomEvent('ears-toggle')));

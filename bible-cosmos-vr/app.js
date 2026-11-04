@@ -6527,7 +6527,7 @@ function earsToggle() { if (ears.on) earsStop(false); else earsStart('tap'); }
 // Пробел: удерживать — говорить, отпустить — отправить; короткое нажатие — слушать до паузы.
 // Mouse 5: удерживать — говорить; короткий щелчок — слушать до паузы.
 const typing = (el) => !!(el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));
-const ptt = { space: 0, spaceTimer: 0, spaceHeld: false, mouse: 0, mouseHeld: false, mouseTimer: 0 };
+const ptt = { space: 0, spaceTimer: 0, spaceHeld: false, mouse: 0, mouseHeld: false, mouseTimer: 0, sideAt: 0 };
 const spaceTalks = (el) => !typing(el) || (el.classList && el.classList.contains('ai-q') && !el.value.trim());
 addEventListener('keydown', (e) => {
   if (e.code !== 'Space' || !spaceTalks(e.target) || renderer.xr.isPresenting || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -6546,23 +6546,34 @@ addEventListener('keyup', (e) => {
   if (was === -1) return;
   if (held) earsStop(false); else earsStart('tap');
 }, true);
+// боковые кнопки мыши: и «вперёд» (Mouse 5), и «назад» (Mouse 4) — у разных мышей нумерация разная
+const sideBtn = (e) => e.button === 3 || e.button === 4;
 addEventListener('mousedown', (e) => {
-  if (e.button !== 4) return;
+  if (!sideBtn(e)) return;
   e.preventDefault();
+  ptt.sideAt = performance.now();
   if (ears.on) { earsStop(false); ptt.mouse = -1; return; }
   ptt.mouse = performance.now(); ptt.mouseHeld = false;
   ptt.mouseTimer = setTimeout(() => { ptt.mouseHeld = true; earsStart('hold'); }, 280);
 }, true);
 addEventListener('mouseup', (e) => {
-  if (e.button !== 4) return;
+  if (!sideBtn(e)) return;
   e.preventDefault();
+  ptt.sideAt = performance.now();
   clearTimeout(ptt.mouseTimer);
   const held = ptt.mouseHeld, was = ptt.mouse;
   ptt.mouse = 0; ptt.mouseHeld = false;
   if (was === -1 || !was) return;
   if (held) earsStop(false); else earsStart('tap');
 }, true);
-// боковые кнопки мыши не листают «вперёд/назад»
+// Некоторые мыши (и программы к ним) вместо кнопки присылают команду «вперёд/назад» — тогда щелчок включает и выключает микрофон.
+function sideToggle() {
+  if (performance.now() - (ptt.sideAt || 0) < 900 || ptt.mouse) return;
+  ptt.sideAt = performance.now();
+  earsToggle();
+}
+addEventListener('keydown', (e) => { if (e.key === 'BrowserForward' || e.key === 'BrowserBack') { e.preventDefault(); sideToggle(); } }, true);
+addEventListener('ears-toggle', sideToggle);
 addEventListener('auxclick', (e) => { if (e.button === 3 || e.button === 4) e.preventDefault(); }, true);
 
 document.getElementById('aiBtn').addEventListener('click', () => openAi());

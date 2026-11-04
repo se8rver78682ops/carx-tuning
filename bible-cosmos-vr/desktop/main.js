@@ -35,6 +35,10 @@ function createWindow() {
     },
   });
   win.removeMenu();
+  // Боковые кнопки мыши в Windows приходят как команды «вперёд/назад» — это микрофон советника
+  win.on('app-command', (e, cmd) => {
+    if (cmd === 'browser-forward' || cmd === 'browser-backward') { e.preventDefault(); win.webContents.send('ears:toggle'); }
+  });
   win.once('ready-to-show', () => win.show());
   win.loadURL('app://bible/index.html');
   // Ссылки на сайты открываются в обычном браузере
