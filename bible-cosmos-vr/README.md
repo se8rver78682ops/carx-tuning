@@ -201,8 +201,13 @@ python3 -m http.server 8000
 ```
 
 Для шлема страницу нужно открыть по HTTPS. Самый простой путь — GitHub Pages:
-Settings → Pages → Deploy from a branch → выбрать ветку, затем открыть в браузере шлема
-`https://<user>.github.io/<repo>/bible-cosmos-vr/` и нажать «Войти в VR».
+Settings → Pages → Build and deployment → Source: «Deploy from a branch» → ветка `claude/greeting-540bqn`,
+папка `/ (root)` → Save. Через минуту программа открывается в браузере шлема (Meta Quest Browser, Pico):
+`https://se8rver78682ops.github.io/carx-tuning/bible-cosmos-vr/` → «Открыть файлы EPUB» → «Войти в VR».
+Файл `.nojekyll` в корне отключает обработку Jekyll, чтобы файлы отдавались как есть.
+
+APK на шлеме Quest работает только как плоское окно (WebView в Android не поддерживает WebXR),
+поэтому для настоящего VR нужен браузер шлема.
 
 ## Текст Библии
 
