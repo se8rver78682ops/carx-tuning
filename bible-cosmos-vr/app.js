@@ -140,7 +140,7 @@ const I18N = {
     chaptersN: (n) => `Глав: ${n}`, readOf: (r, n) => (r ? `прочитано ${r} из ${n}` : 'ещё не читали'),
     prophecies: 'Пророчества', prophNote: (n) => `${n} пророчеств: что было предсказано, как и когда это исполнилось, и что Библия обещает на будущее. Нажмите на стих, чтобы открыть его.`,
     prophNone: 'Не удалось загрузить пророчества.', prophListenAll: '▶ Слушать раздел', prophSkyAll: '✦ Все на небе', prophListen: '▶ Слушать', prophSky: '✦ На небе',
-    prophDone: 'Исполнилось', prophSign: 'Признак', prophPromise: 'Обещание', prophForetold: 'Предсказано', prophFulfilled: 'Исполнение', prophSays: 'Что сказано',
+    prophDone: 'Исполнилось', prophOngoing: 'Исполняется', prophSign: 'Признак', prophPromise: 'Обещание', prophForetold: 'Предсказано', prophFulfilled: 'Исполнение', prophSays: 'Что сказано',
     prophAlso: 'Смотрите также', prophHistory: 'подтверждено историей', prophBack: '◀ К пророчествам', prophSkyNote: 'Дуги на небе ведут от пророчества к его исполнению.',
     welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
@@ -259,7 +259,7 @@ const I18N = {
     chaptersN: (n) => `Capitole: ${n}`, readOf: (r, n) => (r ? `citite ${r} din ${n}` : 'încă necitite'),
     prophecies: 'Profeții', prophNote: (n) => `${n} profeții: ce s-a prezis, cum și când s-a împlinit și ce promite Biblia pentru viitor. Atingeți un verset ca să-l deschideți.`,
     prophNone: 'Profețiile nu au putut fi încărcate.', prophListenAll: '▶ Ascultă secțiunea', prophSkyAll: '✦ Toate pe cer', prophListen: '▶ Ascultă', prophSky: '✦ Pe cer',
-    prophDone: 'Împlinită', prophSign: 'Semn', prophPromise: 'Promisiune', prophForetold: 'Prezis', prophFulfilled: 'Împlinire', prophSays: 'Ce se spune',
+    prophDone: 'Împlinită', prophOngoing: 'Se împlinește', prophSign: 'Semn', prophPromise: 'Promisiune', prophForetold: 'Prezis', prophFulfilled: 'Împlinire', prophSays: 'Ce se spune',
     prophAlso: 'Vedeți și', prophHistory: 'confirmată de istorie', prophBack: '◀ La profeții', prophSkyNote: 'Arcele de pe cer duc de la profeție la împlinirea ei.',
     welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
@@ -4047,7 +4047,7 @@ function renderProph() {
     const card = el2('article', 'pcard'); card.id = `p-${it.id}`;
     card.style.setProperty('--pc', grp.color);
     const head = el2('div', 'p-head');
-    head.append(el2('span', 'p-badge', badge), el2('h3', '', prophTitle(it)));
+    head.append(el2('span', 'p-badge', it.status === 'ongoing' ? L.prophOngoing : badge), el2('h3', '', prophTitle(it)));
     card.append(head);
     const when = prophWhen(it);
     if (when) card.append(el2('div', 'p-when', when));
