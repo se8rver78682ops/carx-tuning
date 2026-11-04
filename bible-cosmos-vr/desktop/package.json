@@ -22,9 +22,23 @@
     "appId": "app.bible.cosmos",
     "productName": "Библия",
     "artifactName": "Bible-${version}-${os}-${arch}.${ext}",
-    "files": ["main.js", "icon.png", "web/**/*", "package.json"],
-    "directories": { "output": "dist" },
-    "win": { "target": ["nsis", "portable"], "icon": "icon.png" },
+    "files": [
+      "main.js",
+      "preload.js",
+      "icon.png",
+      "web/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "icon.png"
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -32,8 +46,38 @@
       "shortcutName": "Библия",
       "artifactName": "Bible-${version}-setup.${ext}"
     },
-    "portable": { "artifactName": "Bible-${version}-portable.${ext}" },
-    "linux": { "target": ["AppImage"], "category": "Education", "icon": "icon.png" },
-    "mac": { "target": ["dmg"], "category": "public.app-category.education", "icon": "icon.png" }
+    "portable": {
+      "artifactName": "Bible-${version}-portable.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Education",
+      "icon": "icon.png"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.education",
+      "icon": "icon.png"
+    },
+    "extraResources": [
+      {
+        "from": "piper",
+        "to": "piper",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "voices",
+        "to": "voices",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
   }
 }

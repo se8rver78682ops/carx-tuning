@@ -144,6 +144,7 @@ const I18N = {
     prophNone: 'Не удалось загрузить пророчества.', prophListenAll: '▶ Слушать раздел', prophSkyAll: '✦ Все на небе', prophListen: '▶ Слушать', prophSky: '✦ На небе',
     prophDone: 'Исполнилось', prophOngoing: 'Исполняется', prophSign: 'Признак', prophPromise: 'Обещание', prophForetold: 'Предсказано', prophFulfilled: 'Исполнение', prophSays: 'Что сказано',
     prophAlso: 'Смотрите также', prophHistory: 'подтверждено историей', prophBack: '◀ К пророчествам', prophSkyNote: 'Дуги на небе ведут от пророчества к его исполнению.',
+    neuralFail: 'Нейросетевой голос не запустился — читаю голосом системы.',
     welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
     showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
@@ -263,6 +264,7 @@ const I18N = {
     prophNone: 'Profețiile nu au putut fi încărcate.', prophListenAll: '▶ Ascultă secțiunea', prophSkyAll: '✦ Toate pe cer', prophListen: '▶ Ascultă', prophSky: '✦ Pe cer',
     prophDone: 'Împlinită', prophOngoing: 'Se împlinește', prophSign: 'Semn', prophPromise: 'Promisiune', prophForetold: 'Prezis', prophFulfilled: 'Împlinire', prophSays: 'Ce se spune',
     prophAlso: 'Vedeți și', prophHistory: 'confirmată de istorie', prophBack: '◀ La profeții', prophSkyNote: 'Arcele de pe cer duc de la profeție la împlinirea ei.',
+    neuralFail: 'Vocea neuronală nu a pornit — citesc cu vocea sistemului.',
     welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
     showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
@@ -1263,6 +1265,21 @@ function pickVoice() {
   return list.sort((a, b) => score(b) - score(a))[0] || null;
 }
 // В APK (Android WebView) нет speechSynthesis, там читает встроенный синтезатор Android через мост AndroidTTS.
+// В программе для компьютера тот же интерфейс даёт нейросетевой голос (Piper) — мост DesktopTTS.
+if (window.DesktopTTS && !window.AndroidTTS) window.AndroidTTS = window.DesktopTTS;
+window.addEventListener('native-tts', (e) => {
+  const [type, id] = String(e.detail).split('|');
+  if (type === 'start') window.__ttsStart(id);
+  else if (type === 'done') window.__ttsDone(id);
+  else if (type === 'fail' && window.AndroidTTS === window.DesktopTTS) {
+    // нейросетевой голос не запустился — дальше читают голоса системы
+    window.AndroidTTS = undefined;
+    const was = tts.reading;
+    stopReading();
+    toast(T().neuralFail, 8000);
+    if (was) readFrom(was.vi, { bi: was.bi, ci: was.ci });
+  }
+});
 const androidDone = {}, androidStart = {};
 window.__ttsDone = (id) => { const f = androidDone[id]; delete androidDone[id]; if (f) f(); };
 window.__ttsStart = (id) => { const f = androidStart[id]; delete androidStart[id]; if (f) f(); };
