@@ -13,4 +13,5 @@ for (const f of ['index.html', 'app.js', 'sky.js', 'bible-import.js']) fs.copyFi
 fs.cpSync(path.join(SRC, 'data'), path.join(OUT, 'data'), { recursive: true });
 fs.copyFileSync(path.join(NM, 'three', 'build', 'three.module.js'), path.join(OUT, 'vendor', 'three.module.js'));
 fs.copyFileSync(path.join(NM, 'jszip', 'dist', 'jszip.min.js'), path.join(OUT, 'vendor', 'jszip.min.js'));
+fs.copyFileSync(path.join(SRC, 'vendor', 'anthropic-sdk.js'), path.join(OUT, 'vendor', 'anthropic-sdk.js'));
 console.log('web ready:', fs.readdirSync(OUT).join(', '));

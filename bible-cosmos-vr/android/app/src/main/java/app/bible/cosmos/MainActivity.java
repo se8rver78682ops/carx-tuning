@@ -3,6 +3,11 @@ package app.bible.cosmos;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.PixelCopy;
 import android.media.AudioAttributes;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -36,6 +41,7 @@ import androidx.webkit.WebViewClientCompat;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
@@ -67,6 +73,7 @@ public class MainActivity extends Activity {
     private volatile boolean orphanList = false;
     private TtsBridge ttsBridge;
     private ShareBridge shareBridge;
+    private EyesBridge eyesBridge;
 
     /** Звучит запись главы (Аудио-Библия) — тоже продолжается в фоне. */
     private volatile boolean audioActive = false;
@@ -118,6 +125,7 @@ public class MainActivity extends Activity {
         });
         ttsBridge = new TtsBridge();
         shareBridge = new ShareBridge();
+        eyesBridge = new EyesBridge();
         createWeb(savedInstanceState);
         hideSystemBars();
     }
@@ -188,6 +196,7 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 26) web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
         web.addJavascriptInterface(ttsBridge, "AndroidTTS");
         web.addJavascriptInterface(shareBridge, "AndroidShare");
+        web.addJavascriptInterface(eyesBridge, "AndroidEyes");
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl(START_URL);
     }
@@ -467,6 +476,62 @@ public class MainActivity extends Activity {
     }
 
     /** Мост для app.js: window.AndroidShare.shareImage(dataUrl, text) — системное окно «Поделиться». */
+    /** «Глаза» советника: снимок экрана приложения. Ответ приходит в window.__eyes(id, jpegBase64). */
+    private class EyesBridge {
+        @JavascriptInterface
+        public void capture(String id) {
+            final String cb = id == null ? "" : id.replaceAll("[^A-Za-z0-9_-]", "");
+            runOnUiThread(() -> {
+                final View root = getWindow().getDecorView();
+                final int w = root.getWidth(), h = root.getHeight();
+                if (w <= 0 || h <= 0) { sendShot(cb, null); return; }
+                final Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+                if (Build.VERSION.SDK_INT >= 26) {
+                    try {
+                        // PixelCopy видит и 3D-сцену (WebGL), которую обычная отрисовка вида пропускает
+                        PixelCopy.request(getWindow(), bmp, (result) -> {
+                            if (result == PixelCopy.SUCCESS) encodeShot(cb, bmp);
+                            else { drawShot(root, bmp); encodeShot(cb, bmp); }
+                        }, new Handler(Looper.getMainLooper()));
+                        return;
+                    } catch (Exception e) {
+                        // ниже — запасной способ
+                    }
+                }
+                drawShot(root, bmp);
+                encodeShot(cb, bmp);
+            });
+        }
+    }
+
+    private static void drawShot(View root, Bitmap bmp) {
+        try { root.draw(new Canvas(bmp)); } catch (Exception ignored) { }
+    }
+
+    private void encodeShot(String cb, Bitmap bmp) {
+        new Thread(() -> {
+            String b64 = null;
+            try {
+                int w = bmp.getWidth(), h = bmp.getHeight();
+                float k = Math.min(1f, 1280f / Math.max(w, h));
+                Bitmap small = k < 1f ? Bitmap.createScaledBitmap(bmp, Math.round(w * k), Math.round(h * k), true) : bmp;
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                small.compress(Bitmap.CompressFormat.JPEG, 75, out);
+                b64 = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
+                if (small != bmp) small.recycle();
+                bmp.recycle();
+            } catch (Exception e) {
+                b64 = null;
+            }
+            sendShot(cb, b64);
+        }).start();
+    }
+
+    private void sendShot(String cb, String b64) {
+        final String js = "window.__eyes && window.__eyes('" + cb + "', " + (b64 == null ? "null" : "'" + b64 + "'") + ")";
+        runOnUiThread(() -> { if (web != null) web.evaluateJavascript(js, null); });
+    }
+
     private class ShareBridge {
         @JavascriptInterface
         public void shareImage(String dataUrl, String text) {

@@ -59,7 +59,7 @@ jobs:
           }
 
       # Нейросетевой голос Piper (с разрешения владельца): синтезатор github.com/rhasspy/piper
-      # и голоса «Ирина» (RU) и «Михай» (RO) из huggingface.co/rhasspy/piper-voices. Работает без интернета.
+      # и голоса «Ирина», «Руслан», «Дмитрий», «Денис» (RU) и «Михай» (RO) из huggingface.co/rhasspy/piper-voices. Работает без интернета.
       - name: Piper for Windows
         if: runner.os == 'Windows'
         shell: powershell
@@ -83,11 +83,20 @@ jobs:
         working-directory: bible-cosmos-vr/desktop
         run: |
           mkdir -p voices
-          base=https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0
+          get() {  # голос: сначала из выпуска v1.0.0, затем из основной ветки
+            local f=$1 n; n=$(basename "$f")
+            for ref in v1.0.0 main; do
+              if curl -sSfL -o "voices/$n.onnx" "https://huggingface.co/rhasspy/piper-voices/resolve/$ref/$f.onnx" &&
+                 curl -sSfL -o "voices/$n.onnx.json" "https://huggingface.co/rhasspy/piper-voices/resolve/$ref/$f.onnx.json"; then return 0; fi
+            done
+            rm -f "voices/$n.onnx" "voices/$n.onnx.json"; return 1
+          }
           for f in ru/ru_RU/irina/medium/ru_RU-irina-medium ru/ru_RU/ruslan/medium/ru_RU-ruslan-medium ro/ro_RO/mihai/medium/ro_RO-mihai-medium; do
-            n=$(basename "$f")
-            curl -sSfL -o "voices/$n.onnx" "$base/$f.onnx"
-            curl -sSfL -o "voices/$n.onnx.json" "$base/$f.onnx.json"
+            get "$f"
+          done
+          # мужские голоса для советника — по возможности
+          for f in ru/ru_RU/dmitri/medium/ru_RU-dmitri-medium ru/ru_RU/denis/medium/ru_RU-denis-medium; do
+            get "$f" || echo "::warning::voice not found: $f"
           done
           ls -la voices
 
@@ -101,6 +110,12 @@ jobs:
           mkdir -p voicetest
           printf 'Вначале Бог сотворил небо и землю.\n' | "$exe" --model voices/ru_RU-irina-medium.onnx --output_dir voicetest | tee ru.txt
           printf 'Моисей вывел народ из Египта.\n' | "$exe" --model voices/ru_RU-ruslan-medium.onnx --output_dir voicetest | tee ru2.txt
+          for v in dmitri denis; do
+            m=voices/ru_RU-$v-medium.onnx
+            [ -f "$m" ] || continue
+            printf 'Я Тарс, ваш советник. Спрашивайте.\n' | "$exe" --model "$m" --output_dir voicetest | tee "$v.txt"
+            grep -qi 'wav' "$v.txt"; rm -f "$v.txt"
+          done
           printf 'La început, Dumnezeu a creat cerurile și pământul.\n' | "$exe" --model voices/ro_RO-mihai-medium.onnx --output_dir voicetest | tee ro.txt
           grep -qi 'wav' ru.txt && grep -qi 'wav' ru2.txt && grep -qi 'wav' ro.txt
           ls -la voicetest

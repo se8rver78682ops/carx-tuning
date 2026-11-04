@@ -108,3 +108,8 @@ contextBridge.exposeInMainWorld('DesktopAudio', {
     return r.keys.length;
   },
 });
+
+// «Глаза» советника: снимок окна программы.
+contextBridge.exposeInMainWorld('DesktopEyes', {
+  capture: () => ipcRenderer.invoke('eyes:capture'),
+});

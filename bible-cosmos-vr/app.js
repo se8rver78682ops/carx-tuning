@@ -157,7 +157,7 @@ const I18N = {
     audioAligning: 'Ищу начало стиха в записи…', audioFull: 'Не хватает места на устройстве для всех записей.',
     noLangVoice: 'в Windows нет голоса для этого языка', audioFound: (n) => `Найдено записей глав: ${n}.`,
     audioDirs: (d) => `Программа сама берёт записи из своей папки и вложенных папок, а также из выбранных: ${d}. Файлы читаются прямо с диска, ничего не копируется.`,
-    welcomeBtn: 'Открыть файлы EPUB',
+    advisor: '🤖 Советник', welcomeBtn: 'Открыть файлы EPUB',
     mentions: (n) => `Упоминаний: ${n}.`, aboutChapter: (x) => `О главе: ${x}`, peopleHere: 'Люди в главе', chLinks: 'С чем связана глава',
     showOnSky: 'Показать на небе', didYouKnow: 'Знаете ли вы?', chLinksTitle: (r) => `Связи главы ${r}`, linksN: (n) => `связей: ${n}`,
     trail: 'Мой путь по связям', trailNote: 'Стихи, по которым вы шли, — последние сверху. На небе путь светится розовым.',
@@ -289,7 +289,7 @@ const I18N = {
     audioAligning: 'Caut începutul versetului în înregistrare…', audioFull: 'Nu este destul spațiu pe dispozitiv pentru toate înregistrările.',
     noLangVoice: 'în Windows nu există o voce pentru această limbă', audioFound: (n) => `Înregistrări de capitole găsite: ${n}.`,
     audioDirs: (d) => `Programul ia singur înregistrările din dosarul său și din subdosare, precum și din cele alese: ${d}. Fișierele se citesc direct de pe disc, nimic nu se copiază.`,
-    welcomeBtn: 'Deschide fișierele EPUB',
+    advisor: '🤖 Sfătuitor', welcomeBtn: 'Deschide fișierele EPUB',
     mentions: (n) => `Mențiuni: ${n}.`, aboutChapter: (x) => `Despre capitol: ${x}`, peopleHere: 'Persoane în capitol', chLinks: 'Cu ce este legat capitolul',
     showOnSky: 'Arată pe cer', didYouKnow: 'Știați că?', chLinksTitle: (r) => `Legăturile capitolului ${r}`, linksN: (n) => `legături: ${n}`,
     trail: 'Drumul meu prin legături', trailNote: 'Versetele prin care ați trecut, cele recente sus. Pe cer drumul strălucește roz.',
@@ -1594,6 +1594,7 @@ function applyLangDom() {
   ui.hintsBtn.textContent = hintsOn ? L.hintsOn : L.hintsOff;
   if (typeof music !== 'undefined') updateMusicBtn();
   ui.hintsBtn.setAttribute('aria-pressed', hintsOn ? 'true' : 'false');
+  aiTexts();
 }
 async function setLang(lang) {
   if (lang === LANG || busy) return;
@@ -1904,7 +1905,10 @@ function renderDetail(vi, rel) {
   sh.type = 'button';
   sh.addEventListener('click', () => shareVerse(bi, ci, vi));
   box.append(el2('div', 'actions'));
-  box.lastChild.append(listen, bm, sh);
+  const ask = el2('button', 'btn', AT().askVerse);
+  ask.type = 'button';
+  ask.addEventListener('click', () => openAi(AT().askVerseQ(refOf(bi, ci, vi))));
+  box.lastChild.append(listen, bm, sh, ask);
   // Заметка к стиху
   const nl = el2('label', 'note-label', L.noteTitle);
   nl.htmlFor = 'noteInput';
@@ -5906,6 +5910,452 @@ function tick() {
   renderFrame();
 }
 
+/* ---------- Советник: искусственный интеллект (Claude), который видит то же, что и пользователь ---------- */
+// Ключ Anthropic хранится только на этом устройстве и уходит только на api.anthropic.com.
+// «Глаза»: к вопросу прикладывается снимок экрана программы и описание того, что открыто.
+const AI_MODEL = 'claude-opus-5-5';
+const AI_TXT = {
+  ru: {
+    title: 'Советник', defName: 'Тарс', eyesOn: '👁 Видит экран', eyesOff: '👁 Не видит', ph: 'Спросите о стихе, главе, жизни или о программе…',
+    send: 'Спросить', stop: 'Стоп', thinking: 'думает…', looking: 'смотрит на экран…', clear: 'Новый разговор', setup: 'Настройка',
+    listen: '🔊', saw: 'видел экран', voiceOn: 'Отвечать голосом: вкл', voiceOff: 'Отвечать голосом: выкл',
+    intro: (n) => `Я ${n}, ваш советник. Я вижу, что у вас открыто в программе, и могу объяснить стих, главу, пророчество или подсказать, где что найти. Спрашивайте.`,
+    keyTitle: 'Подключение', keyLabel: 'Ключ Anthropic API', nameLabel: 'Имя советника', save: 'Сохранить',
+    keyHelp: 'Советник работает через Claude (Anthropic). Нужен свой ключ: зайдите на console.anthropic.com → API Keys → Create Key, скопируйте ключ (начинается с sk-ant-) и вставьте сюда. Оплата по использованию, на сайте Anthropic. Ключ хранится только на этом устройстве и отправляется только в Anthropic. Нужен интернет.',
+    keyBad: 'Ключ не подошёл. Проверьте его в настройке.', noNet: 'Нет связи с сервером. Проверьте интернет.',
+    busy: 'Сервер сейчас перегружен или исчерпан лимит. Попробуйте через минуту.', fail: (m) => `Не получилось: ${m}`,
+    refusal: 'На это я ответить не могу.', cut: '…(ответ оборван)', keySaved: 'Готово. Спрашивайте.', keyNeed: 'Вставьте ключ.',
+    voiceLabel: 'Голос советника', voiceTest: '▶ Проверить', voiceSame: 'Как у чтения',
+    askVerse: 'Спросить советника', askVerseQ: (r) => `Объясни, пожалуйста, стих ${r}.`,
+  },
+  ro: {
+    title: 'Sfătuitor', defName: 'Tars', eyesOn: '👁 Vede ecranul', eyesOff: '👁 Nu vede', ph: 'Întrebați despre un verset, un capitol, viață sau program…',
+    send: 'Întreabă', stop: 'Stop', thinking: 'se gândește…', looking: 'se uită la ecran…', clear: 'Conversație nouă', setup: 'Setări',
+    listen: '🔊', saw: 'a văzut ecranul', voiceOn: 'Răspuns cu voce: da', voiceOff: 'Răspuns cu voce: nu',
+    intro: (n) => `Sunt ${n}, sfătuitorul dumneavoastră. Văd ce aveți deschis în program și pot explica un verset, un capitol, o profeție sau vă pot arăta unde găsiți ceva. Întrebați.`,
+    keyTitle: 'Conectare', keyLabel: 'Cheia Anthropic API', nameLabel: 'Numele sfătuitorului', save: 'Salvează',
+    keyHelp: 'Sfătuitorul funcționează prin Claude (Anthropic). Este nevoie de o cheie proprie: console.anthropic.com → API Keys → Create Key, copiați cheia (începe cu sk-ant-) și lipiți-o aici. Plata după utilizare, pe site-ul Anthropic. Cheia rămâne doar pe acest dispozitiv și se trimite doar la Anthropic. E nevoie de internet.',
+    keyBad: 'Cheia nu a mers. Verificați-o în setări.', noNet: 'Nu există legătură cu serverul. Verificați internetul.',
+    busy: 'Serverul este ocupat sau limita s-a terminat. Încercați peste un minut.', fail: (m) => `Nu a reușit: ${m}`,
+    refusal: 'La aceasta nu pot răspunde.', cut: '…(răspuns întrerupt)', keySaved: 'Gata. Întrebați.', keyNeed: 'Lipiți cheia.',
+    voiceLabel: 'Vocea sfătuitorului', voiceTest: '▶ Ascultă', voiceSame: 'Ca la citire',
+    askVerse: 'Întreabă sfătuitorul', askVerseQ: (r) => `Explică-mi, te rog, versetul ${r}.`,
+  },
+};
+const AT = () => AI_TXT[LANG] || AI_TXT.ru;
+const ai = {
+  key: store.get('aiKey', ''), name: store.get('aiName', ''), eyes: store.get('aiEyes', true), voice: store.get('aiVoice', true), voices: store.get('aiVoices', {}),
+  history: store.get('aiChat', []), busy: false, stream: null, sdk: null, setup: false, renderQueued: false,
+};
+const aiName = () => ai.name || AT().defName;
+// Свой голос советника (отдельно от голоса чтения): по умолчанию спокойный мужской нейросетевой «Дмитрий» или «Денис».
+function aiVoiceList() {
+  if (window.AndroidTTS && window.AndroidTTS.voices) return androidVoices().map((v) => ({ value: v.name, label: v.label || v.name }));
+  if (hasTts) return tts.voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(LANG)).map((v) => ({ value: v.name, label: v.name }));
+  return [];
+}
+function aiVoice() {
+  const list = aiVoiceList();
+  const saved = (ai.voices || {})[LANG];
+  if (saved === '-') return '';
+  if (saved && list.some((v) => v.value === saved)) return saved;
+  for (const pref of ['dmitri', 'denis']) { const v = list.find((x) => x.value.toLowerCase().includes(pref)); if (v) return v.value; }
+  return '';
+}
+function aiSpeak(text) {
+  stopReading(); stopNarration();
+  const v = aiVoice(), old = settings.voices;
+  if (v) settings.voices = { ...(old || {}), [LANG]: v };
+  try { speak(text, () => {}); } finally { settings.voices = old; }
+}
+const aiPanel = () => document.getElementById('aiPanel');
+
+// Что сейчас открыто — словами (дополняет снимок экрана).
+function aiScene() {
+  const out = [];
+  const cut = (s, n) => { s = String(s || '').replace(/\s+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim(); return s.length > n ? s.slice(0, n) + '…' : s; };
+  out.push(`Язык программы: ${LANG === 'ro' ? 'румынский' : 'русский'}. Перевод: ${translationName || '—'}.`);
+  if (!BOOKS.length) out.push('Библия ещё не открыта (экран приветствия).');
+  else if (state.mode === 'galaxy') out.push('Вид: вся Библия — галактика книг.');
+  else if (state.mode === 'book') out.push(`Вид: книга «${BOOKS[state.bi].name}» (${BOOKS[state.bi].chapters.length} глав).`);
+  else if (state.mode === 'chapter') {
+    const b = BOOKS[state.bi];
+    out.push(`Вид: глава ${b.name} ${state.ci + 1} (${b.chapters[state.ci].length} стихов), страница ${state.page + 1} из ${state.pages}${!ui.reader.hidden ? ', режим чтения крупным текстом' : ''}.`);
+    if (detail.open && detail.vi >= 0) out.push(`Открыта карточка стиха ${refOf(state.bi, state.ci, detail.vi)}: «${verseText(state.bi, state.ci, detail.vi)}»`);
+    const text = b.chapters[state.ci].map((_, vi) => `${vi + 1} ${verseText(state.bi, state.ci, vi)}`).join(' ');
+    out.push(`Текст главы: ${cut(text, 6000)}`);
+  }
+  if (tts.reading) out.push(`Сейчас читается вслух: ${refOf(tts.reading.bi, tts.reading.ci, Math.max(0, tts.reading.vi))}.`);
+  const seen = [];
+  document.querySelectorAll('.hud, #welcome, #votd').forEach((el) => {
+    if (el.id === 'aiPanel' || el.id === 'reader' || el.id === 'detail' || el.hidden || el.closest('[hidden]')) return;
+    if (!el.getClientRects().length || getComputedStyle(el).visibility === 'hidden' || el.classList.contains('gone')) return;
+    const t = cut(el.innerText, 1600);
+    if (t) seen.push(`[${el.id || el.className}] ${t}`);
+  });
+  if (seen.length) out.push(`Открытые окна и надписи на экране:\n${cut(seen.join('\n'), 5000)}`);
+  return out.join('\n');
+}
+
+function aiSystem() {
+  const n = aiName();
+  const books = BOOKS.map((b) => `${noAcc(b.name)} — ${noAcc(b.short)}`).join('; ');
+  return `Ты — ${n}, встроенный советник в программе «Библия». Ты спутник пользователя в чтении и изучении Библии и знаешь эту программу изнутри.
+
+О программе «Библия»:
+- Библия показана как космос. Вся Библия — галактика: каждая книга — скопление звёзд, каждый стих — звезда. Цвет показывает жанр (закон, история, поэзия и мудрость, пророки, Евангелия и Деяния, письма, Откровение). Прочитанные главы светятся ярче. Есть порядок книг «по канону» и «по времени написания».
+- Текст — собственный перевод пользователя: «Перевод нового мира» (файлы EPUB, русский и румынский). Файлы хранятся только на устройстве пользователя.
+- Уровни: галактика → книга (страница книги: о книге, автор, время, главы) → глава (стихи-звёзды по страницам). Нажатие на стих открывает карточку стиха: «Слушать отсюда», закладка, поделиться, заметка, места на карте, связи с другими стихами, сноски, параллельные места Евангелий, цитаты из Еврейских Писаний, словарь.
+- О главе: суть главы, люди в главе, «С чем связана глава», «Знаете ли вы?». Режим чтения — глава крупным текстом с подсветкой читаемого стиха.
+- Чтение вслух: голос устройства; на компьютере — нейросетевые голоса Piper (Ирина, Руслан, Дмитрий, Денис по-русски, Михай по-румынски; у тебя свой голос). «Аудио-Библия» — записи чтеца (MP3-файлы пользователя с jw.org); подсветка стиха идёт за голосом. Чтение продолжается при заблокированном телефоне.
+- Верхняя панель: поиск (место, стих или слово), RU/RO, «Случайный стих», «Викторина», меню «☰ Ещё» и кнопка VR.
+- Меню «Ещё»: План чтения, Закладки, Заметки, Карта (библейские места с подробной картой, 24 путешествия: Авраам, Исход, Давид, Иисус, путешествия Павла и другие), Мой путь по связям, События (по времени), Аудио-Библия, Пророчества (71 пророчество в 5 группах: о Мессии; народы и города; Израиль и Иерусалим; последние дни; обещания о будущем — предсказание, исполнение, объяснение, дуги на небе, можно слушать), Уроки для жизни (9 ступеней: Библия как инструкция для человека), Созвездия тем, Стих дня, Музыка, Настройки (размер текста, голос, скорость, графика), Свой перевод, Жанры, Подсказки, и ты — Советник.
+- Программа работает в браузере, в шлеме VR, на телефоне Android и на компьютере (Windows, Linux, macOS).
+
+Твои глаза: к вопросу пользователя прикладывается снимок экрана программы (если он не выключил «глаза») и описание того, что открыто: вид, книга, глава с текстом, карточка стиха, открытые окна. Когда пользователь говорит «это», «здесь», «этот стих», «что я вижу» — опирайся на снимок и описание. Твоё собственное окно на снимке скрыто.
+
+Как отвечать:
+- Язык ответа — ${LANG === 'ro' ? 'румынский' : 'русский'}, если пользователь не пишет на другом языке.
+- Кратко, ясно и тепло, как мудрый друг; лёгкий юмор уместен, но без насмешки над верой. Длинные разборы — когда просят. Без таблиц; простые абзацы и короткие списки.
+- Опирайся на Библию. Ссылки пиши так: «сокращение глава:стих», с сокращениями из списка ниже (например, «${noAcc((BOOKS[CODE_TO_BI.John] || {}).short || 'Ин')} 3:16»). В программе такие ссылки становятся кнопками, которые открывают стих.
+- Не выдумывай текст стихов: цитируй дословно только то, что видишь в описании экрана, иначе давай ссылку или пересказ.
+- Пользователь читает «Перевод нового мира»; уважай это, не навязывай споры между конфессиями. Где есть разные толкования, честно скажи, что это толкование.
+- Помогай пользоваться программой: подскажи, какую кнопку нажать и где что найти.
+- В жизненных вопросах опирайся на библейские принципы, мягко и без осуждения. При угрозе жизни, здоровью или в кризисе советуй сразу обратиться к близким, врачу или службе помощи.
+
+Книги в этом переводе (название — сокращение): ${books || 'перевод ещё не открыт'}.`;
+}
+
+function aiApiMessages(img) {
+  const hist = ai.history.filter((m) => !m.live).slice(-20);
+  while (hist.length && hist[0].role !== 'user') hist.shift();
+  return hist.map((m, i) => {
+    if (m.role === 'assistant') return { role: 'assistant', content: m.text || '…' };
+    const text = `<экран>\n${m.scene || ''}\n</экран>\n\n${m.text}`;
+    if (i === hist.length - 1 && img) {
+      return { role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img } }, { type: 'text', text }] };
+    }
+    return { role: 'user', content: text };
+  });
+}
+
+// Снимок экрана (без окна советника): компьютер — снимок окна, телефон — снимок экрана приложения, браузер — 3D-сцена.
+const nextFrames = (n) => new Promise((r) => { const f = () => (--n <= 0 ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); });
+function shrinkJpeg(src, max = 1280) {
+  return new Promise((resolve) => {
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, max / Math.max(im.width, im.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      resolve(c.toDataURL('image/jpeg', 0.72).split(',')[1]);
+    };
+    im.onerror = () => resolve(null);
+    im.src = src;
+  });
+}
+function androidShot() {
+  return new Promise((resolve) => {
+    const id = 'e' + Date.now();
+    const t = setTimeout(() => { delete window.__eyesCb[id]; resolve(null); }, 5000);
+    window.__eyesCb = window.__eyesCb || {};
+    window.__eyesCb[id] = (b64) => { clearTimeout(t); delete window.__eyesCb[id]; resolve(b64 || null); };
+    window.AndroidEyes.capture(id);
+  });
+}
+window.__eyes = (id, b64) => { const f = window.__eyesCb && window.__eyesCb[id]; if (f) f(b64); };
+async function aiLook() {
+  if (!ai.eyes || renderer.xr.isPresenting) return null;
+  document.body.classList.add('ai-peek');
+  await nextFrames(2);
+  let src = null;
+  try {
+    if (window.DesktopEyes) src = await window.DesktopEyes.capture();
+    else if (window.AndroidEyes) { const b = await androidShot(); src = b ? 'data:image/jpeg;base64,' + b : null; }
+    else { renderer.render(scene, camera); src = renderer.domElement.toDataURL('image/jpeg', 0.8); }
+  } catch (err) { console.warn('eyes', err); src = null; }
+  document.body.classList.remove('ai-peek');
+  return src ? shrinkJpeg(src) : null;
+}
+
+// Ссылки в ответе («Ин 3:16», «Быт 1:1-3») становятся кнопками.
+let aiRefRe = null, aiRefMap = null, aiRefFor = '';
+const aiKey = (n) => noAcc(n).toLowerCase().replace(/\.$/, '').replace(/\s+/g, '');
+function aiRefs() {
+  const sig = LANG + BOOKS.length + (BOOKS[0] ? BOOKS[0].name : '');
+  if (aiRefFor === sig) return;
+  aiRefFor = sig; aiRefMap = new Map();
+  for (const b of BOOKS) for (const n of [b.name, b.short]) if (n) aiRefMap.set(aiKey(n), b.i);
+  const names = new Set();
+  for (const b of BOOKS) for (const n of [b.name, b.short]) if (n) names.add(noAcc(n).replace(/\.$/, ''));
+  const alts = [...names].sort((a, b) => b.length - a.length).map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s*'));
+  aiRefRe = alts.length ? new RegExp(`(^|[^\\p{L}\\d])(${alts.join('|')})\\.?\\s*(\\d{1,3})(?::(\\d{1,3})(?:\\s*[-–]\\s*\\d{1,3})?)?(?![\\p{L}\\d])`, 'giu') : null;
+}
+function aiLinkify(parent, text) {
+  aiRefs();
+  if (!aiRefRe) { parent.append(text); return; }
+  let last = 0;
+  aiRefRe.lastIndex = 0;
+  for (let m; (m = aiRefRe.exec(text));) {
+    const bi = aiRefMap.get(aiKey(m[2]));
+    const b = BOOKS[bi];
+    const ci = +m[3] - 1, vi = m[4] ? +m[4] - 1 : null;
+    if (!b || ci < 0 || ci >= b.chapters.length || (vi != null && (vi < 0 || vi >= b.chapters[ci].length))) continue;
+    const start = m.index + m[1].length;
+    parent.append(text.slice(last, start));
+    const a = el2('button', 'ai-ref', text.slice(start, m.index + m[0].length)); a.type = 'button';
+    a.addEventListener('click', () => { closeAi(); if (vi == null) go('chapter', { bi, ci }); else jumpTo({ bi, ci, vi }); });
+    parent.append(a);
+    last = m.index + m[0].length;
+  }
+  parent.append(text.slice(last));
+}
+function aiInline(parent, text) {
+  text.split(/(\*\*[^*]+\*\*)/).forEach((part) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) { const s = el2('strong'); aiLinkify(s, part.slice(2, -2)); parent.append(s); } else if (part) aiLinkify(parent, part.replace(/(^|\s)\*([^*\s][^*]*)\*/g, '$1$2'));
+  });
+}
+function aiRender(box, text) {
+  box.replaceChildren();
+  let list = null;
+  for (const raw of String(text).split('\n')) {
+    const line = raw.trim();
+    if (!line) { list = null; continue; }
+    const li = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
+    if (li) {
+      if (!list) { list = el2(/^\d/.test(line) ? 'ol' : 'ul'); box.append(list); }
+      const item = el2('li'); aiInline(item, li[1]); list.append(item);
+      continue;
+    }
+    list = null;
+    const h = line.match(/^#{1,4}\s+(.*)$/);
+    const p = el2('p', h ? 'ai-h' : '');
+    aiInline(p, h ? h[1] : line);
+    box.append(p);
+  }
+}
+
+function aiBubble(m, idx) {
+  const A = AT();
+  const wrap = el2('div', `ai-msg ${m.role === 'user' ? 'me' : 'bot'}`);
+  if (m.role === 'user') {
+    wrap.append(el2('p', '', m.text));
+    if (m.saw) wrap.append(el2('span', 'ai-saw', `👁 ${aiName()} ${A.saw}`));
+  } else {
+    const body = el2('div', 'ai-body');
+    if (m.text) aiRender(body, m.text); else body.append(el2('p', 'ai-wait', m.status || A.thinking));
+    wrap.append(body);
+    if (m.text && !m.live) {
+      const say = el2('button', 'ai-say', A.listen); say.type = 'button'; say.title = A.listen;
+      say.addEventListener('click', () => aiSpeak(body.innerText.replace(/\s+/g, ' ')));
+      wrap.append(say);
+    }
+  }
+  wrap.dataset.i = idx;
+  return wrap;
+}
+function aiRenderLog() {
+  const log = aiPanel().querySelector('.ai-log');
+  log.replaceChildren(el2('div', 'ai-msg bot intro', AT().intro(aiName())));
+  ai.history.forEach((m, i) => log.append(aiBubble(m, i)));
+  log.scrollTop = log.scrollHeight;
+}
+function aiUpdateLast() {
+  if (ai.renderQueued) return;
+  ai.renderQueued = true;
+  requestAnimationFrame(() => {
+    ai.renderQueued = false;
+    const panel = aiPanel(); if (!panel || panel.hidden) return;
+    const log = panel.querySelector('.ai-log');
+    const i = ai.history.length - 1;
+    const old = log.querySelector(`.ai-msg[data-i="${i}"]`);
+    const near = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
+    const fresh = aiBubble(ai.history[i], i);
+    if (old) old.replaceWith(fresh); else log.append(fresh);
+    if (near) log.scrollTop = log.scrollHeight;
+  });
+}
+function aiSave() {
+  store.set('aiChat', ai.history.slice(-30).map((m) => ({ role: m.role, text: m.text || '', scene: m.role === 'user' ? (m.scene || '').slice(0, 1500) : undefined, saw: m.saw || undefined })));
+}
+
+async function aiSdk() {
+  if (!ai.sdk) ai.sdk = (await import('./vendor/anthropic-sdk.js')).default;
+  return ai.sdk;
+}
+function aiError(err, Sdk) {
+  const A = AT();
+  if (Sdk && err instanceof Sdk.AuthenticationError) return A.keyBad;
+  if (Sdk && err instanceof Sdk.PermissionDeniedError) return A.keyBad;
+  if (Sdk && (err instanceof Sdk.RateLimitError || err instanceof Sdk.InternalServerError)) return A.busy;
+  if (Sdk && err instanceof Sdk.APIConnectionError) return A.noNet;
+  if (Sdk && err instanceof Sdk.APIError && err.status === 529) return A.busy;
+  return A.fail((err && err.message) || String(err));
+}
+
+async function aiAsk(question) {
+  const A = AT();
+  question = String(question || '').trim();
+  if (!question || ai.busy) return;
+  if (!ai.key) { aiShowSetup(true); return; }
+  ai.busy = true; aiControls();
+  const scene0 = aiScene();
+  const user = { role: 'user', text: question, scene: scene0, saw: false };
+  ai.history.push(user);
+  const bot = { role: 'assistant', text: '', live: true, status: ai.eyes ? A.looking : A.thinking };
+  ai.history.push(bot);
+  aiRenderLog();
+  let Sdk = null;
+  try {
+    const img = await aiLook();
+    user.saw = !!img;
+    bot.status = A.thinking; aiRenderLog();
+    Sdk = await aiSdk();
+    const client = new Sdk({ apiKey: ai.key, dangerouslyAllowBrowser: true, maxRetries: 2 });
+    const msgs = aiApiMessages(img);
+    const stream = client.messages.stream({
+      model: AI_MODEL,
+      max_tokens: 16000,
+      system: [{ type: 'text', text: aiSystem(), cache_control: { type: 'ephemeral' } }],
+      messages: msgs,
+    });
+    ai.stream = stream;
+    stream.on('text', (_d, snap) => { bot.text = snap; aiUpdateLast(); });
+    const final = await stream.finalMessage();
+    const text = final.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
+    bot.text = text || bot.text;
+    if (final.stop_reason === 'refusal' && !bot.text) bot.text = A.refusal;
+    if (final.stop_reason === 'max_tokens') bot.text += '\n' + A.cut;
+  } catch (err) {
+    const aborted = Sdk && err instanceof Sdk.APIUserAbortError;
+    if (!aborted) bot.text = (bot.text ? bot.text + '\n\n' : '') + '⚠ ' + aiError(err, Sdk);
+    if (!bot.text) bot.text = '…';
+    if (Sdk && err instanceof Sdk.AuthenticationError) aiShowSetup(true);
+  } finally {
+    bot.live = false; delete bot.status;
+    ai.busy = false; ai.stream = null;
+    aiSave(); aiRenderLog(); aiControls();
+    if (ai.voice && bot.text && !bot.text.startsWith('⚠') && !aiPanel().hidden) aiSpeak(aiPanel().querySelector('.ai-msg.bot:last-child .ai-body').innerText.replace(/\s+/g, ' '));
+  }
+}
+
+function aiControls() {
+  const p = aiPanel(); if (!p) return;
+  const A = AT();
+  p.querySelector('.ai-send').textContent = ai.busy ? A.stop : A.send;
+  p.querySelector('.ai-eyes').textContent = ai.eyes ? A.eyesOn : A.eyesOff;
+  p.querySelector('.ai-eyes').setAttribute('aria-pressed', ai.eyes ? 'true' : 'false');
+  p.querySelector('.ai-voice').textContent = ai.voice ? A.voiceOn : A.voiceOff;
+  p.querySelector('.ai-name').textContent = `${aiName()} · ${A.title.toLowerCase()}`;
+}
+function aiShowSetup(on) {
+  ai.setup = on;
+  const p = aiPanel(); if (!p) return;
+  p.querySelector('.ai-setup').hidden = !on;
+  if (on) {
+    p.querySelector('.ai-key').value = ai.key;
+    p.querySelector('.ai-nameIn').value = ai.name;
+    const sel = p.querySelector('.ai-voiceSel');
+    const list = aiVoiceList();
+    sel.replaceChildren(Object.assign(document.createElement('option'), { value: '', textContent: AT().voiceSame }));
+    for (const v of list) sel.append(Object.assign(document.createElement('option'), { value: v.value, textContent: v.label }));
+    sel.value = aiVoice();
+    sel.closest('.ai-vrow').hidden = !list.length;
+    p.querySelector('.ai-key').focus();
+  }
+}
+function buildAiPanel() {
+  let p = aiPanel();
+  if (p) return p;
+  p = el2('section', 'hud glass'); p.id = 'aiPanel'; p.hidden = true;
+  const head = el2('div', 'ai-head');
+  const name = el2('div', 'ai-name');
+  const eyes = el2('button', 'btn ai-eyes'); eyes.type = 'button';
+  eyes.addEventListener('click', () => { ai.eyes = !ai.eyes; store.set('aiEyes', ai.eyes); aiControls(); });
+  const voice = el2('button', 'btn ai-voice'); voice.type = 'button';
+  voice.addEventListener('click', () => { ai.voice = !ai.voice; store.set('aiVoice', ai.voice); aiControls(); });
+  const gear = el2('button', 'btn ai-gear', '⚙'); gear.type = 'button';
+  gear.addEventListener('click', () => aiShowSetup(!ai.setup));
+  const clear = el2('button', 'btn ai-clear', '↺'); clear.type = 'button';
+  clear.addEventListener('click', () => { if (ai.busy && ai.stream) ai.stream.abort(); ai.history = []; aiSave(); aiRenderLog(); });
+  const close = el2('button', 'close', '✕'); close.type = 'button';
+  close.addEventListener('click', closeAi);
+  const tools = el2('div', 'ai-tools');
+  tools.append(eyes, voice, clear, gear);
+  head.append(name, close);
+  const setup = el2('div', 'ai-setup'); setup.hidden = true;
+  const help = el2('p', 'ai-help');
+  const kl = el2('label', 'ai-lbl'); const key = el2('input', 'ai-key'); key.type = 'password'; key.autocomplete = 'off'; key.spellcheck = false; key.placeholder = 'sk-ant-…';
+  const nl = el2('label', 'ai-lbl'); const nameIn = el2('input', 'ai-nameIn'); nameIn.maxLength = 30;
+  const vrow = el2('div', 'ai-vrow');
+  const vl = el2('label', 'ai-lbl ai-vl'); const vsel = el2('select', 'ai-voiceSel');
+  vsel.addEventListener('change', () => { ai.voices = { ...(ai.voices || {}), [LANG]: vsel.value || '-' }; store.set('aiVoices', ai.voices); });
+  const vtest = el2('button', 'btn ai-vtest'); vtest.type = 'button';
+  vtest.addEventListener('click', () => aiSpeak(AT().intro(nameIn.value.trim() || AT().defName)));
+  const vline = el2('div', 'ai-vline'); vline.append(vsel, vtest);
+  vrow.append(vl, vline);
+  const save = el2('button', 'btn primary ai-saveKey'); save.type = 'button';
+  save.addEventListener('click', () => {
+    const v = key.value.trim();
+    ai.name = nameIn.value.trim(); store.set('aiName', ai.name);
+    if (!v) { toast(AT().keyNeed, 4000); return; }
+    ai.key = v; store.set('aiKey', v);
+    aiShowSetup(false); aiControls(); aiRenderLog(); toast(AT().keySaved, 3000);
+    p.querySelector('.ai-q').focus();
+  });
+  setup.append(el2('h3', 'ai-st'), help, kl, key, nl, nameIn, vrow, save);
+  const log = el2('div', 'ai-log'); log.setAttribute('aria-live', 'polite');
+  const form = el2('form', 'ai-form');
+  const q = el2('textarea', 'ai-q'); q.rows = 2;
+  const send = el2('button', 'btn primary ai-send'); send.type = 'submit';
+  form.append(q, send);
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (ai.busy) { if (ai.stream) ai.stream.abort(); return; }
+    const v = q.value; q.value = ''; aiAsk(v);
+  });
+  q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+  p.append(head, tools, setup, log, form);
+  document.body.append(p);
+  return p;
+}
+function aiTexts() {
+  const p = aiPanel(); if (!p) return;
+  const A = AT();
+  p.setAttribute('aria-label', A.title);
+  p.querySelector('.ai-st').textContent = A.keyTitle;
+  p.querySelector('.ai-help').textContent = A.keyHelp;
+  p.querySelector('.ai-lbl').textContent = A.keyLabel;
+  p.querySelectorAll('.ai-lbl')[1].textContent = A.nameLabel;
+  p.querySelector('.ai-nameIn').placeholder = A.defName;
+  p.querySelector('.ai-saveKey').textContent = A.save;
+  p.querySelector('.ai-vl').textContent = A.voiceLabel;
+  p.querySelector('.ai-vtest').textContent = A.voiceTest;
+  p.querySelector('.ai-q').placeholder = A.ph;
+  p.querySelector('.ai-clear').title = A.clear;
+  p.querySelector('.ai-gear').title = A.setup;
+  aiControls();
+}
+function openAi(question) {
+  const p = buildAiPanel();
+  closeList(); closeProph();
+  aiTexts();
+  p.hidden = false;
+  document.body.classList.add('ai-open');
+  aiRenderLog();
+  aiShowSetup(!ai.key);
+  if (question && ai.key) aiAsk(question);
+  else if (ai.key && !MOBILE) p.querySelector('.ai-q').focus();
+}
+function closeAi() {
+  const p = aiPanel(); if (!p) return;
+  p.hidden = true;
+  document.body.classList.remove('ai-open');
+}
+
+document.getElementById('aiBtn').addEventListener('click', () => openAi());
+
 /* ---------- Старт ---------- */
 
 async function start() {
@@ -5952,6 +6402,7 @@ start();
 // Кнопка «Назад» телефона в APK: сначала закрываем окна и поднимаемся на уровень выше.
 window.__androidBack = () => {
   if (quiet.on) { exitQuiet(); return true; }
+  if (aiPanel() && !aiPanel().hidden) { closeAi(); return true; }
   if (!ui.parallelPanel.hidden) { ui.parallelPanel.hidden = true; return true; }
   if (!ui.mapPanel.hidden) { closeMap(); return true; }
   if (!ui.settingsPanel.hidden) { ui.settingsPanel.hidden = true; return true; }
@@ -5964,7 +6415,7 @@ window.__androidBack = () => {
 // Для проверки без шлема: построение VR-панелей можно вызвать из консоли.
 window.__bibleCosmos = {
   get look() { return look; }, pickAt(x, y) { const v = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); raycaster.setFromCamera(v, camera); const h = pick(raycaster.ray.clone()); return h && { type: h.type, vi: h.vi, bi: h.bi, ci: h.ci }; }, get busy() { return busy; },
-  get mapState() { return mapState; }, ROUTES, PLACE, fromRef, setLang, openProphecies, aplayer, chapterTimes, hasAudio, get audioIndex() { return audioIndex; }, showAudioPanel, get PROPH() { return PROPH; }, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
+  ai, aiScene, aiSystem, aiLook, openAi, aiAsk, aiApiMessages,   get mapState() { return mapState; }, ROUTES, PLACE, fromRef, setLang, openProphecies, aplayer, chapterTimes, hasAudio, get audioIndex() { return audioIndex; }, showAudioPanel, get PROPH() { return PROPH; }, go, tts, perf, bloomOn, applyGfx, LESSONS, showLesson, showLessons, renderReader, jumpTo, renderChapterInfo, showChapterLinksOnSky, nextAlongLinks, get books() { return BOOKS; }, get post() { return post; },
   buildVrDetail, buildVrQuiz, openQuiz, rebuildPanel, related, bookAbout, state, quiz, scene, galaxy, camera, markRead, settings, gyro, music, quiet, placesIn, versesAbout, buildVrMap, openMap, verseImage, chapterLinks, figuresInChapter, chapterSummary, quotesFor, parallelsFor, showTrail, get knowledge() { return { SUMMARIES, FIGURES, FACTS, PARALLELS, OTQ, GLOSSARY }; },
   get sky() { return sky; },
   project(bi) { const v = galaxy.items[bi].center.clone().project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, front: v.z < 1 }; },

@@ -101,6 +101,8 @@ const VOICE_DIR = path.join(RES, 'voices');
 const PIPER_VOICES = [
   { id: 'piper:ru-irina', lang: 'ru', file: 'ru_RU-irina-medium.onnx', label_ru: 'Ирина — нейросетевой голос (женский)', label_ro: 'Irina — voce neuronală' },
   { id: 'piper:ru-ruslan', lang: 'ru', file: 'ru_RU-ruslan-medium.onnx', label_ru: 'Руслан — нейросетевой голос (мужской, чётче)', label_ro: 'Ruslan — voce neuronală (bărbat)' },
+  { id: 'piper:ru-dmitri', lang: 'ru', file: 'ru_RU-dmitri-medium.onnx', label_ru: 'Дмитрий — нейросетевой голос (мужской, спокойный)', label_ro: 'Dmitri — voce neuronală (bărbat, calmă)' },
+  { id: 'piper:ru-denis', lang: 'ru', file: 'ru_RU-denis-medium.onnx', label_ru: 'Денис — нейросетевой голос (мужской, мягкий)', label_ro: 'Denis — voce neuronală (bărbat)' },
   { id: 'piper:ro-mihai', lang: 'ro', file: 'ro_RO-mihai-medium.onnx', label_ru: 'Михай — нейросетевой голос', label_ro: 'Mihai — voce neuronală' },
 ];
 const piperVoices = () => (fs.existsSync(PIPER)
@@ -283,6 +285,17 @@ function scanAudio() {
   audioFiles.clear();
   for (const d of [homeDir(), ...savedAudioDirs()]) scanDir(d, 0);
 }
+// «Глаза» советника: снимок окна программы (то, что видит пользователь), JPEG не больше 1280 точек.
+ipcMain.handle('eyes:capture', async (event) => {
+  const w = BrowserWindow.fromWebContents(event.sender);
+  if (!w) return null;
+  let img = await w.webContents.capturePage();
+  const { width, height } = img.getSize();
+  const k = Math.min(1, 1280 / Math.max(width, height, 1));
+  if (k < 1) img = img.resize({ width: Math.round(width * k), height: Math.round(height * k), quality: 'good' });
+  return 'data:image/jpeg;base64,' + img.toJPEG(75).toString('base64');
+});
+
 ipcMain.on('audio:list', (event) => { event.returnValue = { keys: [...audioFiles.keys()], dirs: [homeDir(), ...savedAudioDirs()] }; });
 ipcMain.handle('audio:addFolder', async () => {
   const r = await dialog.showOpenDialog(win, { properties: ['openDirectory'] });

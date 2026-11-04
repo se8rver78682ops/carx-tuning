@@ -9,6 +9,7 @@ rm -rf "$assets"
 mkdir -p "$assets/vendor"
 cp "$web/index.html" "$web/app.js" "$web/sky.js" "$web/bible-import.js" "$assets/"
 cp -r "$web/data" "$assets/data"
+cp "$web/vendor/anthropic-sdk.js" "$assets/vendor/anthropic-sdk.js"
 tmp="$(mktemp -d)"
 (cd "$tmp" && npm pack three@0.160.0 --silent >/dev/null && tar -xzf three-0.160.0.tgz)
 cp "$tmp/package/build/three.module.js" "$assets/vendor/three.module.js"

@@ -355,6 +355,46 @@
   #prophPanel .pverse .r { font: 600 14px var(--font-ui); color: var(--gold); }
   #prophPanel .pverse .t { font: 16px/1.5 var(--font-text); }
   #prophPanel .p-text { margin: 12px 0 10px; font: 17px/1.6 var(--font-text); color: #f6e7c1; }
+  /* Советник (ИИ) */
+  #aiPanel {
+    right: 12px; top: calc(70px + env(safe-area-inset-top, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: min(440px, calc(100vw - 24px));
+    z-index: 12; display: flex; flex-direction: column; gap: 8px; padding: 12px 12px 10px; background: rgba(8, 11, 24, 0.97);
+  }
+  #aiPanel[hidden] { display: none; }
+  body.ai-peek #aiPanel { visibility: hidden; }
+  #aiPanel .ai-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  #aiPanel .ai-name { font: 600 22px/1.1 var(--font-title); color: #f6e7c1; }
+  #aiPanel .ai-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  #aiPanel .ai-tools .btn { padding: 6px 10px; font-size: 13px; }
+  #aiPanel .ai-eyes[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+  #aiPanel .ai-setup { display: grid; gap: 6px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(16, 21, 42, 0.92); }
+  #aiPanel .ai-setup[hidden] { display: none; }
+  #aiPanel .ai-setup h3 { margin: 0; font: 600 18px var(--font-title); color: #f6e7c1; }
+  #aiPanel .ai-help { margin: 0; font: 14px/1.45 var(--font-ui); color: var(--dim); }
+  #aiPanel .ai-lbl { font: 600 12px var(--font-ui); color: var(--dim); }
+  #aiPanel input, #aiPanel textarea { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line);
+    background: rgba(4, 6, 14, 0.9); color: var(--ink); font: 15px/1.4 var(--font-ui); }
+  #aiPanel .ai-vrow { display: grid; gap: 6px; } #aiPanel .ai-vrow[hidden] { display: none; }
+  #aiPanel .ai-vline { display: flex; gap: 6px; } #aiPanel .ai-vline select { flex: 1; min-width: 0; padding: 7px; border-radius: 8px; border: 1px solid var(--line); background: rgba(4, 6, 14, 0.9); color: var(--ink); font: 14px var(--font-ui); }
+  #aiPanel .ai-log { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 10px; padding-right: 2px; }
+  #aiPanel .ai-msg { position: relative; max-width: 92%; padding: 9px 12px; border-radius: 12px; font: 16px/1.5 var(--font-text); }
+  #aiPanel .ai-msg p { margin: 0 0 6px; } #aiPanel .ai-msg p:last-child { margin-bottom: 0; }
+  #aiPanel .ai-msg ul, #aiPanel .ai-msg ol { margin: 0 0 6px; padding-left: 20px; }
+  #aiPanel .ai-msg.me { align-self: flex-end; background: rgba(240, 200, 120, 0.16); border: 1px solid rgba(240, 200, 120, 0.35); }
+  #aiPanel .ai-msg.bot { align-self: flex-start; background: rgba(20, 26, 50, 0.92); border: 1px solid var(--line); padding-bottom: 22px; }
+  #aiPanel .ai-msg.intro { padding-bottom: 9px; color: var(--dim); }
+  #aiPanel .ai-h { font-weight: 600; color: #f6e7c1; }
+  #aiPanel .ai-wait { color: var(--dim); font-style: italic; }
+  #aiPanel .ai-saw { display: block; margin-top: 4px; font: 11px var(--font-ui); color: var(--dim); }
+  #aiPanel .ai-say { all: unset; cursor: pointer; font-size: 15px; opacity: 0.75; }
+  #aiPanel .ai-msg.bot .ai-say { position: absolute; right: 8px; bottom: 3px; }
+  #aiPanel .ai-ref { all: unset; cursor: pointer; color: var(--gold); border-bottom: 1px dotted var(--gold); font-weight: 600; }
+  #aiPanel .ai-ref:hover, #aiPanel .ai-ref:focus-visible { color: #fff2c8; }
+  #aiPanel .ai-form { display: flex; gap: 6px; align-items: flex-end; }
+  #aiPanel .ai-form textarea { flex: 1; resize: none; }
+  @media (max-width: 720px) {
+    #aiPanel { left: 8px; right: 8px; width: auto; top: calc(56px + env(safe-area-inset-top, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  }
   /* Режим чтения: глава крупным текстом */
   #reader {
     left: 0; right: 0; top: 120px; bottom: 76px; z-index: 4; overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -454,6 +494,7 @@
     <div class="menu">
       <button id="menuBtn" class="btn" type="button" aria-haspopup="true" aria-expanded="false" data-i18n="menu">☰ Ещё</button>
       <div id="menuList" class="glass" hidden>
+        <button id="aiBtn" class="btn" type="button" data-i18n="advisor">🤖 Советник</button>
         <button id="planBtn" class="btn" type="button" data-i18n="plan">План чтения</button>
         <button id="bmBtn" class="btn" type="button" data-i18n="bookmarks">Закладки</button>
         <button id="notesBtn" class="btn" type="button" data-i18n="notes">Заметки</button>
